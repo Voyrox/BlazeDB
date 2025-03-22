@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/Frost-Lord/BlazeDB#readme",
   "dependencies": {
-    "axios": "^1.7.4"
+    "axios": "^1.8.2"
   }
 }
