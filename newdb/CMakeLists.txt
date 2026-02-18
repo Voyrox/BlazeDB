@@ -23,6 +23,7 @@ add_executable(blazedbd
     src/util/crc32.cpp
     src/util/encoding.cpp
     src/util/json.cpp
+    src/util/log.cpp
     src/util/murmur3.cpp
     src/util/uuid.cpp
 )

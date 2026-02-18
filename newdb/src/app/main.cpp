@@ -3,14 +3,13 @@
 #include <memory>
 #include <string>
 
+#include "util/log.h"
+
 #include "config/config.h"
 #include "core/db.h"
 #include "net/serverTcp.h"
 
-using std::cout;
 using std::string;
-using std::cerr;
-using std::endl;
 
 static string getArgValue(int argc, char **argv, const string &name, const string &defaultValue)
 {
@@ -40,7 +39,7 @@ int main(int argc, char **argv)
 {
     if (hasArg(argc, argv, "--version"))
     {
-        cout << "blazedbd 0.1" << endl;
+        std::cout << "blazedbd 0.1" << std::endl;
         return 0;
     }
 
@@ -52,23 +51,24 @@ int main(int argc, char **argv)
     }
     catch (const std::exception &e)
     {
-        cerr << e.what() << endl;
+        blazeDb::log(blazeDb::LogLevel::ERROR, e.what());
         return 1;
     }
 
-    cout << "blazedbd starting configPath=" << configPath << endl;
+    blazeDb::log(blazeDb::LogLevel::INFO, std::string("Loading configPath=") + configPath);
 
     auto db = std::make_shared<blazeDb::Db>(settings);
 
-    cout << "blazedbd config host=" << settings.host
-              << " port=" << settings.port
-              << " dataDir=" << db->dataDir().string()
-              << " walFsync=" << settings.walFsync
-              << " walFsyncIntervalMs=" << settings.walFsyncIntervalMs
-              << " walFsyncBytes=" << settings.walFsyncBytes
-              << " maxLineBytes=" << settings.maxLineBytes
-              << " maxConnections=" << settings.maxConnections
-              << endl;
+    blazeDb::log(
+        blazeDb::LogLevel::CONFIG,
+        std::string("Host=") + settings.host +
+            " port=" + std::to_string(settings.port) +
+            " dataDir=" + db->dataDir().string() +
+            " walFsync=" + settings.walFsync +
+            " walFsyncIntervalMs=" + std::to_string(settings.walFsyncIntervalMs) +
+            " walFsyncBytes=" + std::to_string(settings.walFsyncBytes) +
+            " maxLineBytes=" + std::to_string(settings.maxLineBytes) +
+            " maxConnections=" + std::to_string(settings.maxConnections));
 
     blazeDb::ServerTcp server(db, settings.host, settings.port, settings.maxLineBytes, settings.maxConnections);
 
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     }
     catch (const std::exception &e)
     {
-        cerr << e.what() << endl;
+        blazeDb::log(blazeDb::LogLevel::ERROR, e.what());
         return 1;
     }
     return 0;

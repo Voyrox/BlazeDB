@@ -3,10 +3,11 @@
 #include "util/json.h"
 #include "query/sql.h"
 
+#include "util/log.h"
+
 #include <cerrno>
 #include <cstring>
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <thread>
 
@@ -96,7 +97,12 @@ namespace blazeDb
             throw errnoError("listen failed");
         }
 
-        std::cout << "blazedbd listening host=" << host_ << " port=" << port_ << " maxLineBytes=" << maxLineBytes_ << " maxConnections=" << maxConnections_ << std::endl;
+        blazeDb::log(
+            blazeDb::LogLevel::INFO,
+            std::string("Listening host=") + host_ +
+                " port=" + std::to_string(port_) +
+                " maxLineBytes=" + std::to_string(maxLineBytes_) +
+                " maxConnections=" + std::to_string(maxConnections_));
 
         for (;;)
         {
