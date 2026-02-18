@@ -8,12 +8,29 @@ BlazeDB is fussy about the build environment. It requires a C++15 compliant comp
 
 ## Building BlazeDB
 
-Building BlazeDB is straightforward with CMake. You can use the provided Docker image for a hassle-free build process, or you can choose to build it natively on your machine if you prefer.
 
-### Using CMake
+Building BlazeDB is straightforward with CMake + Ninja. The provided Docker image is also available for a hassle-free build process.
+
+### Using Ninja
 ```bash
-make build # Builds the project using CMake and runs tests
-make run   # Runs the BlazeDB server
+# From inside newdb/
+cmake -S . -B build -G Ninja  # Configure project for Ninja
+ninja -C build                # Build the project
+
+# Common targets
+ninja -C build test           # Run test suite
+ninja -C build lint           # Run clang-tidy
+ninja -C build formatCheck    # Check formatting
+ninja -C build format         # Apply formatting
+ninja -C build run            # Run the server (config/settings.yml)
+
+# Cleaning
+ninja -C build clean          # Remove build outputs only
+ninja -C build wipeData       # Wipe database file contents (/var/lib/... and ./var/lib/...)
+ninja -C build purge          # wipeData + delete build contents
+
+# Optional: Full build (build + lint + tests)
+ninja -C build build
 ```
 
 ### Using Docker
@@ -51,10 +68,13 @@ sstable:
 
 ### Testing
 
-BlazeDB auto runs tests during the build process. You can also run tests separately using CMake:
+BlazeDB tests are `pytest` and are available via CTest (Ninja/CMake).
+
+With Ninja/CMake:
 ```bash
-make test # Runs all tests for BlazeDB
+ninja -C build test
 ```
+
 
 ## Documentation
 The documentation for BlazeDB is currently a work in progress. We are actively working on creating comprehensive documentation to help users get started and make the most of BlazeDB. In the meantime, you can refer to the source code and comments for insights into how BlazeDB works.

@@ -5,7 +5,7 @@ RUN apt-get update && \
     cmake \
     gcc \
     g++ \
-    make \
+    ninja-build \
     build-essential \
     git \
     ca-certificates \
@@ -17,6 +17,6 @@ COPY . /app
 RUN mkdir -p build
 WORKDIR /app/build
 
-RUN cmake .. && make
+RUN cmake .. -G Ninja && ninja
 
 CMD ["/bin/bash"]

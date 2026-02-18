@@ -34,14 +34,14 @@ Usage: install.sh [options]
 Options:
   -h, --help              Show this help message and exit
   -d, --directory DIR     Install prefix (default: /usr/local/blazedb)
-      --config PATH       Config path (default: /etc/blazedb/settings.yml)
-      --data-dir PATH     Data directory (default: /var/lib/blazedb/data)
-      --host HOST         Bind host (default: 0.0.0.0)
-      --port PORT         Bind port (default: 9876)
-      --full              Run full build (lint + tests) via `make build`
-      --force             Overwrite existing config and unit files
-      --yes               Skip confirmation prompt
-      --no-start          Install unit but do not enable/start
+  --config PATH       Config path (default: /etc/blazedb/settings.yml)
+  --data-dir PATH     Data directory (default: /var/lib/blazedb/data)
+  --host HOST         Bind host (default: 0.0.0.0)
+  --port PORT         Bind port (default: 9876)
+  --full              Run full build (lint + tests) via Ninja target `build`
+  --force             Overwrite existing config and unit files
+  --yes               Skip confirmation prompt
+  --no-start          Install unit but do not enable/start
 
 Run as root:
   sudo ./install.sh
@@ -118,7 +118,8 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-needCmd make
+needCmd cmake
+needCmd ninja
 needCmd g++
 needCmd python3
 
@@ -139,9 +140,9 @@ confirmInstall() {
 	echo "  Host:           $HOST"
 	echo "  Port:           $PORT"
 	if [ "$FULL_BUILD" -eq 1 ]; then
-		echo "  Build:          make build (full)"
+		echo "  Build:          cmake -S $SCRIPT_DIR -B $SCRIPT_DIR/build -G Ninja && ninja -C $SCRIPT_DIR/build build (full)"
 	else
-		echo "  Build:          make build/blazedbd"
+		echo "  Build:          cmake -S $SCRIPT_DIR -B $SCRIPT_DIR/build -G Ninja && ninja -C $SCRIPT_DIR/build blazedbd"
 	fi
 	if [ "$NO_START" -eq 1 ]; then
 		echo "  Service:        will NOT auto-start"
@@ -171,13 +172,23 @@ if [ "$ASSUME_YES" -ne 1 ]; then
 fi
 
 echo "Building BlazeDB server..."
+BUILD_DIR="$SCRIPT_DIR/build"
+
 if [ "$FULL_BUILD" -eq 1 ]; then
-	make -C "$SCRIPT_DIR" build
-else
-	make -C "$SCRIPT_DIR" build/blazedbd
+	needCmd clang-tidy
+	py=python3; if [ -x "$SCRIPT_DIR/.venv/bin/python3" ]; then py="$SCRIPT_DIR/.venv/bin/python3"; fi
+	"$py" -c "import pytest" >/dev/null 2>&1 || die "pytest not installed. recommended: python3 -m venv $SCRIPT_DIR/.venv && $SCRIPT_DIR/.venv/bin/pip install -r $SCRIPT_DIR/tests/requirementsDev.txt"
 fi
 
-BIN_SRC="$SCRIPT_DIR/build/blazedbd"
+cmake -S "$SCRIPT_DIR" -B "$BUILD_DIR" -G Ninja
+
+if [ "$FULL_BUILD" -eq 1 ]; then
+	ninja -C "$BUILD_DIR" build
+else
+	ninja -C "$BUILD_DIR" blazedbd
+fi
+
+BIN_SRC="$BUILD_DIR/blazedbd"
 [ -x "$BIN_SRC" ] || die "Build did not produce executable: $BIN_SRC"
 
 BIN_DST="$INSTALL_PREFIX/bin/blazedbd"

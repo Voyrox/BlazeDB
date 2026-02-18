@@ -114,8 +114,9 @@ def assertAliceRow(row):
 
 
 def startServer(repoRoot, configPath):
+    exe = os.environ.get("BLAZEDB_EXECUTABLE", "./build/blazedbd")
     proc = subprocess.Popen(
-        ["./build/blazedbd", "--config", configPath],
+        [exe, "--config", configPath],
         cwd=repoRoot,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
