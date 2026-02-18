@@ -36,7 +36,7 @@ def waitForListening(proc, timeoutSec=3.0):
             if proc.poll() is not None:
                 raise RuntimeError("server exited")
             continue
-        if "listening host=" in line:
+        if "Listening host=" in line:
             return
     raise RuntimeError("server not listening")
 
