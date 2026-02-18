@@ -19,7 +19,7 @@ make run   # Runs the BlazeDB server
 ### Using Docker
 ```bash
 docker build -t blazedb . # Builds the Docker image for BlazeDB
-docker run --rm -it blazedb # Runs the BlazeDB server in a Docker container
+docker run --name blazedb # Runs the BlazeDB server in a Docker container
 ```
 
 ### Testing
