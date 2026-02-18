@@ -4,24 +4,26 @@
 
 #include <string>
 
+using std::string;
+
 namespace blazeDb
 {
 
     struct Settings
     {
-        std::string host;
+        string host;
         u16 port;
-        std::string dataDir;
+        string dataDir;
         usize maxLineBytes;
         usize maxConnections;
-        std::string walFsync;
+        string walFsync;
         u64 walFsyncIntervalMs;
         usize walFsyncBytes;
         usize memtableMaxBytes;
         usize sstableIndexStride;
     };
 
-    Settings loadSettings(const std::string &filePath);
-    std::string resolveDataDir(const std::string &preferredDataDir);
+    Settings loadSettings(const string &filePath);
+    string resolveDataDir(const string &preferredDataDir);
 
 }
