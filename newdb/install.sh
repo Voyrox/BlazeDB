@@ -40,6 +40,7 @@ Options:
       --port PORT         Bind port (default: 9876)
       --full              Run full build (lint + tests) via `make build`
       --force             Overwrite existing config and unit files
+      --yes               Skip confirmation prompt
       --no-start          Install unit but do not enable/start
 
 Run as root:
@@ -56,6 +57,7 @@ HOST="0.0.0.0"
 PORT="9876"
 FULL_BUILD=0
 FORCE=0
+ASSUME_YES=0
 NO_START=0
 
 while [ $# -gt 0 ]; do
@@ -102,6 +104,10 @@ while [ $# -gt 0 ]; do
 			FORCE=1
 			shift
 			;;
+		--yes)
+			ASSUME_YES=1
+			shift
+			;;
 		--no-start)
 			NO_START=1
 			shift
@@ -121,6 +127,47 @@ if command -v systemctl >/dev/null 2>&1; then
 else
 	echo "Warning: systemctl not found; will install files but not enable/start service." >&2
 	NO_START=1
+fi
+
+confirmInstall() {
+	echo
+	echo "About to install BlazeDB system-wide with these settings:"
+	echo "  Install prefix: $INSTALL_PREFIX"
+	echo "  Binary dest:    $INSTALL_PREFIX/bin/blazedbd"
+	echo "  Config path:    $CONFIG_PATH"
+	echo "  Data dir:       $DATA_DIR"
+	echo "  Host:           $HOST"
+	echo "  Port:           $PORT"
+	if [ "$FULL_BUILD" -eq 1 ]; then
+		echo "  Build:          make build (full)"
+	else
+		echo "  Build:          make build/blazedbd"
+	fi
+	if [ "$NO_START" -eq 1 ]; then
+		echo "  Service:        will NOT auto-start"
+	else
+		echo "  Service:        systemd enable --now blazedbd"
+	fi
+	if [ "$FORCE" -eq 1 ]; then
+		echo "  Overwrite:      yes (--force)"
+	else
+		echo "  Overwrite:      no"
+	fi
+	echo
+	printf "Continue? [y/N] "
+	read -r reply
+	case "${reply}" in
+		y|Y|yes|YES) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+if [ "$ASSUME_YES" -ne 1 ]; then
+	if [ -t 0 ]; then
+		confirmInstall || die "Aborted by user"
+	else
+		die "Non-interactive install requires --yes"
+	fi
 fi
 
 echo "Building BlazeDB server..."
