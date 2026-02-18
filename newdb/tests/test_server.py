@@ -212,3 +212,69 @@ def testFlushRestartPersists(tmp_path):
         assertAliceRow(r["row"])
     finally:
         stopServer(proc2)
+
+
+def testInsertMultiRow(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS multiRow;"))
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS multiRow.people (id int64, name varchar, PRIMARY KEY (id));",
+            )
+        )
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                'INSERT INTO multiRow.people (id,name) VALUES (1,"a"), (2,"b");',
+            )
+        )
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM multiRow.people WHERE id=1;"))
+        assert r["found"] is True
+        assert r["row"]["id"] == 1
+        assert r["row"]["name"] == "a"
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM multiRow.people WHERE id=2;"))
+        assert r["found"] is True
+        assert r["row"]["id"] == 2
+        assert r["row"]["name"] == "b"
+    finally:
+        stopServer(proc)
+
+
+def testDeleteByPk(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS deleteTest;"))
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS deleteTest.items (id int64, name varchar, PRIMARY KEY (id));",
+            )
+        )
+        mustOk(tcpQuery("127.0.0.1", port, 'INSERT INTO deleteTest.items (id,name) VALUES (1,"x");'))
+        mustOk(tcpQuery("127.0.0.1", port, "DELETE FROM deleteTest.items WHERE id=1;"))
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM deleteTest.items WHERE id=1;"))
+        assert r["found"] is False
+    finally:
+        stopServer(proc)

@@ -36,7 +36,7 @@ struct SqlInsert
     string keyspace;
     string table;
     vector<string> columns;
-    vector<SqlLiteral> values;
+    vector<vector<SqlLiteral>> rows;
 };
 
 struct SqlSelect
@@ -54,7 +54,15 @@ struct SqlFlush
     string table;
 };
 
-using SqlCommand = std::variant<SqlPing, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush>;
+struct SqlDelete
+{
+    string keyspace;
+    string table;
+    string whereColumn;
+    SqlLiteral whereValue;
+};
+
+using SqlCommand = std::variant<SqlPing, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete>;
 
 std::optional<SqlCommand> parseSqlLine(const string& line, string& error);
 

@@ -52,6 +52,7 @@ public:
         void recover();
 
     void putRow(const byteVec &pkBytes, const byteVec &rowBytes);
+    void deleteRow(const byteVec &pkBytes);
     std::optional<byteVec> getRow(const byteVec &pkBytes);
         void flush();
 

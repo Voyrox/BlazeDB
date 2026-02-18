@@ -232,10 +232,14 @@ namespace blazeDb
                         }
                         if (!pkPos.has_value())
                             throw runtimeError("Missing pk");
-                        auto pkLit = insert->values[*pkPos];
-                        byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, pkLit);
-                        byteVec rowBytes = encodeRowBytes(retTable->schema(), insert->columns, insert->values, pkBytes);
-                        retTable->putRow(pkBytes, rowBytes);
+
+                        for (const auto &row : insert->rows)
+                        {
+                            auto pkLit = row[*pkPos];
+                            byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, pkLit);
+                            byteVec rowBytes = encodeRowBytes(retTable->schema(), insert->columns, row, pkBytes);
+                            retTable->putRow(pkBytes, rowBytes);
+                        }
                         response = jsonOk();
                     }
                     else if (auto *select = std::get_if<SqlSelect>(&cmd))
@@ -261,6 +265,17 @@ namespace blazeDb
                     {
                         auto retTable = db_->openTable(flush->keyspace, flush->table);
                         retTable->flush();
+                        response = jsonOk();
+                    }
+                    else if (auto *del = std::get_if<SqlDelete>(&cmd))
+                    {
+                        auto retTable = db_->openTable(del->keyspace, del->table);
+                        auto pkIndex = retTable->schema().primaryKeyIndex;
+                        auto pkName = retTable->schema().columns[pkIndex].name;
+                        if (del->whereColumn != pkName)
+                            throw runtimeError("Where must use primary key");
+                        byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, del->whereValue);
+                        retTable->deleteRow(pkBytes);
                         response = jsonOk();
                     }
                     else

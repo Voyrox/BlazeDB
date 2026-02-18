@@ -311,19 +311,39 @@ void Table::putRow(const byteVec& pkBytes, const byteVec& rowBytes)
     memTable_.put(dkey, seq, rowBytes);
 }
 
+void Table::deleteRow(const byteVec& pkBytes)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    u64 seq = nextSeq_++;
+    string dkey = decoratedKeyString(pkBytes);
+    byteVec tombstone;
+    commitLog_.append(seq, std::string_view(dkey.data(), dkey.size()), tombstone);
+    if (settings_.walFsync == "always")
+        commitLog_.fsyncNow();
+    memTable_.put(dkey, seq, tombstone);
+}
+
 std::optional<byteVec> Table::getRow(const byteVec& pkBytes)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     string dkey = decoratedKeyString(pkBytes);
     auto memory = memTable_.get(dkey);
     if (memory.has_value())
+    {
+        if (memory->value.empty())
+            return std::nullopt;
         return memory->value;
+    }
     auto dkeyBytes = decoratedKeyBytes(pkBytes);
     for (usize i = ssTables_.size(); i-- > 0;)
     {
         auto table = ssTableGet(ssTables_[i], dkeyBytes);
         if (table.has_value())
+        {
+            if (table->empty())
+                return std::nullopt;
             return table;
+        }
     }
     return std::nullopt;
 }
