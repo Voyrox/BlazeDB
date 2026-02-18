@@ -1,0 +1,10 @@
+host: 0.0.0.0
+port: 9876
+dataDir: /var/lib/blazedb/data
+maxLineBytes: 1048576
+maxConnections: 1024
+walFsync: periodic
+walFsyncIntervalMs: 50
+walFsyncBytes: 1048576
+memtableMaxBytes: 33554432
+sstableIndexStride: 16

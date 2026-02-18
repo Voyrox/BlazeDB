@@ -1,0 +1,67 @@
+#pragma once
+
+#include "prelude.h"
+
+#include <optional>
+
+using std::string;
+
+namespace blazeDb
+{
+
+enum class ColumnType : u8
+{
+    Char = 1,
+    Text = 2,
+    Blob = 3,
+    Int32 = 4,
+    Int64 = 5,
+    Boolean = 6,
+    Float32 = 7,
+    Date = 8,
+    Timestamp = 9
+};
+
+struct ColumnDef
+{
+    std::string name;
+    ColumnType type;
+};
+
+struct TableSchema
+{
+    std::vector<ColumnDef> columns;
+    usize primaryKeyIndex;
+};
+
+struct SqlLiteral
+{
+    enum class Kind : u8
+    {
+        Null = 1,
+        Number = 2,
+        Bool = 3,
+        Quoted = 4,
+        Hex = 5,
+        Base64 = 6
+    };
+
+    Kind kind;
+    string text;
+};
+
+std::optional<ColumnType> columnTypeFromName(const string& s);
+std::string columnTypeName(ColumnType t);
+
+std::optional<usize> findColumnIndex(const TableSchema& schema, const string& name);
+
+byteVec encodePartitionKeyBytes(ColumnType type, const SqlLiteral& lit);
+
+byteVec encodeRowBytes(const TableSchema& schema, const std::vector<string>& columnNames, const std::vector<SqlLiteral>& values, const byteVec& pkBytes);
+
+string formatDateFromDays(i32 days);
+string formatTimestampFromMs(i64 ms);
+
+string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns);
+
+}
