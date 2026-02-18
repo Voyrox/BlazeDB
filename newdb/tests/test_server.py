@@ -54,6 +54,29 @@ def tcpQuery(host, port, sql):
     return json.loads(data.decode("utf-8").strip())
 
 
+def tcpSession(host, port, sqlList):
+    s = socket.create_connection((host, port), timeout=2)
+    buf = b""
+
+    def recvLine():
+        nonlocal buf
+        while b"\n" not in buf:
+            chunk = s.recv(4096)
+            if not chunk:
+                raise RuntimeError("server closed")
+            buf += chunk
+        line, rest = buf.split(b"\n", 1)
+        buf = rest
+        return line.decode("utf-8").strip()
+
+    out = []
+    for sql in sqlList:
+        s.sendall((sql + "\n").encode("utf-8"))
+        out.append(json.loads(recvLine()))
+    s.close()
+    return out
+
+
 def mustOk(r):
     assert r["ok"] is True
     return r
@@ -61,15 +84,14 @@ def mustOk(r):
 
 def ensureSchema(host, port):
     mustOk(tcpQuery(host, port, "CREATE KEYSPACE IF NOT EXISTS myapp;"))
-    r = mustOk(
+    mustOk(
         tcpQuery(
             host,
             port,
             "CREATE TABLE IF NOT EXISTS myapp.users (id int64, name varchar, active boolean, born date, createdAt timestamp, avatar binary, PRIMARY KEY (id));",
         )
     )
-    assert "tablePath" in r
-    return r["tablePath"]
+    return True
 
 
 def insertAlice(host, port):
@@ -276,5 +298,39 @@ def testDeleteByPk(tmp_path):
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM deleteTest.items WHERE id=1;"))
         assert r["found"] is False
+    finally:
+        stopServer(proc)
+
+
+def testUseKeyspaceUnqualified(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        res = tcpSession(
+            "127.0.0.1",
+            port,
+            [
+                "CREATE KEYSPACE IF NOT EXISTS sessionKs;",
+                "USE sessionKs;",
+                "CREATE TABLE IF NOT EXISTS sessionTable (id int64, name varchar, PRIMARY KEY (id));",
+                'INSERT INTO sessionTable (id,name) VALUES (1,"alice"), (2,"bob");',
+                "SELECT * FROM sessionTable WHERE id=1;",
+                "SELECT * FROM sessionTable WHERE id=2;",
+            ],
+        )
+        for i in range(4):
+            mustOk(res[i])
+        assert res[4]["ok"] is True and res[4]["found"] is True
+        assert res[4]["row"]["id"] == 1
+        assert res[4]["row"]["name"] == "alice"
+        assert res[5]["ok"] is True and res[5]["found"] is True
+        assert res[5]["row"]["id"] == 2
+        assert res[5]["row"]["name"] == "bob"
     finally:
         stopServer(proc)

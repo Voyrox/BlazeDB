@@ -17,6 +17,11 @@ struct SqlPing
 {
 };
 
+struct SqlUse
+{
+    string keyspace;
+};
+
 struct SqlCreateKeyspace
 {
     string keyspace;
@@ -62,7 +67,7 @@ struct SqlDelete
     SqlLiteral whereValue;
 };
 
-using SqlCommand = std::variant<SqlPing, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete>;
+using SqlCommand = std::variant<SqlPing, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete>;
 
 std::optional<SqlCommand> parseSqlLine(const string& line, string& error);
 

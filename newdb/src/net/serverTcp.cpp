@@ -135,6 +135,8 @@ namespace blazeDb
         buf.reserve(4096);
         char tmp[4096];
 
+        string currentKeyspace;
+
         while (true)
         {
             ssize_t recieved = ::recv(clientFd, tmp, sizeof(tmp), 0);
@@ -183,6 +185,11 @@ namespace blazeDb
                     {
                         response = jsonString("result", "PONG");
                     }
+                    else if (auto *use = std::get_if<SqlUse>(&cmd))
+                    {
+                        currentKeyspace = use->keyspace;
+                        response = jsonOk();
+                    }
                     else if (auto *createKeyspace = std::get_if<SqlCreateKeyspace>(&cmd))
                     {
                         db_->createKeyspace(createKeyspace->keyspace);
@@ -190,25 +197,27 @@ namespace blazeDb
                     }
                     else if (auto *createTable = std::get_if<SqlCreateTable>(&cmd))
                     {
-                        std::filesystem::path tablePath;
+                        auto keyspace = createTable->keyspace.empty() ? currentKeyspace : createTable->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
                         if (!createTable->ifNotExists)
                         {
-                            tablePath = db_->createTable(createTable->keyspace, createTable->table, createTable->schema);
+                            (void)db_->createTable(keyspace, createTable->table, createTable->schema);
                         }
                         else
                         {
                             try
                             {
-                                tablePath = db_->createTable(createTable->keyspace, createTable->table, createTable->schema);
+                                (void)db_->createTable(keyspace, createTable->table, createTable->schema);
                             }
                             catch (const std::exception &e)
                             {
                                 if (string(e.what()) == "Table exists")
                                 {
-                                    auto t = db_->openTable(createTable->keyspace, createTable->table);
+                                    auto t = db_->openTable(keyspace, createTable->table);
                                     if (!schemaEquals(t->schema(), createTable->schema))
                                         throw runtimeError("Schema mismatch");
-                                    tablePath = t->dir();
                                 }
                                 else
                                 {
@@ -216,11 +225,16 @@ namespace blazeDb
                                 }
                             }
                         }
-                        response = string("{\"ok\":true,\"tablePath\":\"") + jsonEscape(tablePath.string()) + "\"}";
+
+                        response = jsonOk();
                     }
                     else if (auto *insert = std::get_if<SqlInsert>(&cmd))
                     {
-                        auto retTable = db_->openTable(insert->keyspace, insert->table);
+                        auto keyspace = insert->keyspace.empty() ? currentKeyspace : insert->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
+                        auto retTable = db_->openTable(keyspace, insert->table);
                         auto pkIndex = retTable->schema().primaryKeyIndex;
                         auto pkName = retTable->schema().columns[pkIndex].name;
 
@@ -244,7 +258,11 @@ namespace blazeDb
                     }
                     else if (auto *select = std::get_if<SqlSelect>(&cmd))
                     {
-                        auto retTable = db_->openTable(select->keyspace, select->table);
+                        auto keyspace = select->keyspace.empty() ? currentKeyspace : select->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
+                        auto retTable = db_->openTable(keyspace, select->table);
                         auto pkIndex = retTable->schema().primaryKeyIndex;
                         auto pkName = retTable->schema().columns[pkIndex].name;
                         if (select->whereColumn != pkName)
@@ -263,13 +281,21 @@ namespace blazeDb
                     }
                     else if (auto *flush = std::get_if<SqlFlush>(&cmd))
                     {
-                        auto retTable = db_->openTable(flush->keyspace, flush->table);
+                        auto keyspace = flush->keyspace.empty() ? currentKeyspace : flush->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
+                        auto retTable = db_->openTable(keyspace, flush->table);
                         retTable->flush();
                         response = jsonOk();
                     }
                     else if (auto *del = std::get_if<SqlDelete>(&cmd))
                     {
-                        auto retTable = db_->openTable(del->keyspace, del->table);
+                        auto keyspace = del->keyspace.empty() ? currentKeyspace : del->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
+                        auto retTable = db_->openTable(keyspace, del->table);
                         auto pkIndex = retTable->schema().primaryKeyIndex;
                         auto pkName = retTable->schema().columns[pkIndex].name;
                         if (del->whereColumn != pkName)

@@ -282,6 +282,21 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
 
     {
         usize j = i;
+        if (matchKeyword(s, j, "use"))
+        {
+            i = j;
+            SqlUse cmd;
+            if (!parseIdentifier(s, i, cmd.keyspace))
+            {
+                error = "Expected keyspace";
+                return std::nullopt;
+            }
+            return cmd;
+        }
+    }
+
+    {
+        usize j = i;
         if (matchKeyword(s, j, "create"))
         {
             i = j;
@@ -308,20 +323,26 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
                     error = "Expected not exists";
                     return std::nullopt;
                 }
-                if (!parseIdentifier(s, i, cmd.keyspace))
-                {
-                    error = "Expected keyspace";
-                    return std::nullopt;
-                }
-                if (!consumeChar(s, i, '.'))
-                {
-                    error = "Expected dot";
-                    return std::nullopt;
-                }
-                if (!parseIdentifier(s, i, cmd.table))
+
+                string firstName;
+                if (!parseIdentifier(s, i, firstName))
                 {
                     error = "Expected table";
                     return std::nullopt;
+                }
+                if (consumeChar(s, i, '.'))
+                {
+                    cmd.keyspace = firstName;
+                    if (!parseIdentifier(s, i, cmd.table))
+                    {
+                        error = "Expected table";
+                        return std::nullopt;
+                    }
+                }
+                else
+                {
+                    cmd.keyspace.clear();
+                    cmd.table = firstName;
                 }
                 if (!consumeChar(s, i, '('))
                 {
@@ -428,20 +449,26 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
                 return std::nullopt;
             }
             SqlInsert cmd;
-            if (!parseIdentifier(s, i, cmd.keyspace))
-            {
-                error = "Expected keyspace";
-                return std::nullopt;
-            }
-            if (!consumeChar(s, i, '.'))
-            {
-                error = "Expected dot";
-                return std::nullopt;
-            }
-            if (!parseIdentifier(s, i, cmd.table))
+
+            string firstName;
+            if (!parseIdentifier(s, i, firstName))
             {
                 error = "Expected table";
                 return std::nullopt;
+            }
+            if (consumeChar(s, i, '.'))
+            {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table))
+                {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
             }
             if (!consumeChar(s, i, '('))
             {
@@ -524,20 +551,26 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
                 return std::nullopt;
             }
             SqlDelete cmd;
-            if (!parseIdentifier(s, i, cmd.keyspace))
-            {
-                error = "Expected keyspace";
-                return std::nullopt;
-            }
-            if (!consumeChar(s, i, '.'))
-            {
-                error = "Expected dot";
-                return std::nullopt;
-            }
-            if (!parseIdentifier(s, i, cmd.table))
+
+            string firstName;
+            if (!parseIdentifier(s, i, firstName))
             {
                 error = "Expected table";
                 return std::nullopt;
+            }
+            if (consumeChar(s, i, '.'))
+            {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table))
+                {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
             }
             if (!matchKeyword(s, i, "where"))
             {
@@ -593,20 +626,26 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
                 error = "Expected from";
                 return std::nullopt;
             }
-            if (!parseIdentifier(s, i, cmd.keyspace))
-            {
-                error = "Expected keyspace";
-                return std::nullopt;
-            }
-            if (!consumeChar(s, i, '.'))
-            {
-                error = "Expected dot";
-                return std::nullopt;
-            }
-            if (!parseIdentifier(s, i, cmd.table))
+
+            string firstName;
+            if (!parseIdentifier(s, i, firstName))
             {
                 error = "Expected table";
                 return std::nullopt;
+            }
+            if (consumeChar(s, i, '.'))
+            {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table))
+                {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
             }
             if (!matchKeyword(s, i, "where"))
             {
@@ -638,20 +677,26 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
         {
             i = j;
             SqlFlush cmd;
-            if (!parseIdentifier(s, i, cmd.keyspace))
-            {
-                error = "Expected keyspace";
-                return std::nullopt;
-            }
-            if (!consumeChar(s, i, '.'))
-            {
-                error = "Expected dot";
-                return std::nullopt;
-            }
-            if (!parseIdentifier(s, i, cmd.table))
+
+            string firstName;
+            if (!parseIdentifier(s, i, firstName))
             {
                 error = "Expected table";
                 return std::nullopt;
+            }
+            if (consumeChar(s, i, '.'))
+            {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table))
+                {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
             }
             return cmd;
         }

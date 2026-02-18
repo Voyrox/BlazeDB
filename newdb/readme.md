@@ -22,6 +22,33 @@ docker build -t blazedb . # Builds the Docker image for BlazeDB
 docker run --name blazedb # Runs the BlazeDB server in a Docker container
 ```
 
+## Configuration
+BlazeDB can be configured using a configuration file. The configuration file allows you to specify various settings such as the server port, data directory, and logging options. Environment variables can also be used to override specific configuration settings without modifying the configuration file.
+
+```yml
+network:
+  host: 0.0.0.0
+  port: 9876
+
+storage:
+  dataDir: /var/lib/blazedb/data
+
+limits:
+  maxLineBytes: 1048576
+  maxConnections: 1024
+
+wal:
+  walFsync: periodic
+  walFsyncIntervalMs: 50
+  walFsyncBytes: 1048576
+
+memtable:
+  memtableMaxBytes: 33554432
+
+sstable:
+  sstableIndexStride: 16
+```
+
 ### Testing
 
 BlazeDB auto runs tests during the build process. You can also run tests separately using CMake:
