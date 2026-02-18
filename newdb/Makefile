@@ -39,6 +39,17 @@ run: build/blazedbd
 
 clean:
 	rm -rf build
+	@set +e; \
+	for dir in /var/lib/blazedb/data ./var/lib/blazedb/data; do \
+		if [ -d "$$dir" ]; then \
+			shopt -s dotglob nullglob; \
+			if rm -rf -- "$$dir"/*; then \
+				echo "wiped dataDir $$dir"; \
+			else \
+				echo "warning: could not wipe dataDir $$dir (permissions?)"; \
+			fi; \
+		fi; \
+	done
 
 test: build/blazedbd
 	py=python3; if [ -x .venv/bin/python3 ]; then py=.venv/bin/python3; fi; \

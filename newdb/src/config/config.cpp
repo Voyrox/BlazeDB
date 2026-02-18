@@ -1,5 +1,7 @@
 #include "config/config.h"
 
+#include "util/log.h"
+
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
@@ -146,39 +148,82 @@ namespace blazeDb
     {
         namespace fs = std::filesystem;
 
-        auto canUse = [](const fs::path &p) -> bool
+        auto canUse = [](const fs::path &p, bool *createdDirs, string *reason) -> bool
         {
             std::error_code ec;
-            fs::create_directories(p, ec);
+            const bool created = fs::create_directories(p, ec);
+            if (createdDirs != nullptr)
+            {
+                *createdDirs = created;
+            }
             if (ec)
             {
+                if (reason != nullptr)
+                {
+                    *reason = "Create Directories: " + ec.message();
+                }
                 return false;
             }
             fs::path testFile = p / ".blazeDbWriteTest";
             std::ofstream out(testFile, std::ios::binary | std::ios::trunc);
             if (!out.is_open())
             {
+                if (reason != nullptr)
+                {
+                    *reason = "cannot open write test file";
+                }
                 return false;
             }
             out.write("x", 1);
             out.close();
             fs::remove(testFile, ec);
+            if (ec && reason != nullptr)
+            {
+                *reason = "remove write test file: " + ec.message();
+            }
             return true;
         };
 
-        fs::path preferred(preferredDataDir);
-        if (canUse(preferred))
+        fs::path preferred = preferredDataDir.empty() ? fs::path("/var/lib/blazedb/data") : fs::path(preferredDataDir);
+
+        bool preferredCreated = false;
+        string preferredReason;
+        if (canUse(preferred, &preferredCreated, &preferredReason))
         {
             return preferred.string();
         }
 
         fs::path fallback = fs::path(".") / "var" / "lib" / "blazedb" / "data";
-        if (canUse(fallback))
+
+        bool fallbackCreated = false;
+        string fallbackReason;
+        if (canUse(fallback, &fallbackCreated, &fallbackReason))
         {
+            string msg = "Cannot use dataDir=" + preferred.string();
+            if (!preferredReason.empty())
+            {
+                msg += " (" + preferredReason + ")";
+            }
+            msg += ". Using local dataDir=" + fallback.string();
+            if (fallbackCreated)
+            {
+                msg += " (created)";
+            }
+            blazeDb::log(blazeDb::LogLevel::WARN, msg);
             return fallback.string();
         }
 
-        throw runtimeError("Cannot create usable dataDir");
+        string err = "Cannot create usable dataDir. preferred=" + preferred.string();
+        if (!preferredReason.empty())
+        {
+            err += " (" + preferredReason + ")";
+        }
+        err += " fallback=" + fallback.string();
+        if (!fallbackReason.empty())
+        {
+            err += " (" + fallbackReason + ")";
+        }
+        throw runtimeError(err);
     }
 
 }
