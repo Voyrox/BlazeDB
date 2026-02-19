@@ -1,4 +1,5 @@
 site_name: Xeondb Documentation
+site_url: https://voyrox.github.io/Xeondb/
 
 nav:
   - Home: index.md
