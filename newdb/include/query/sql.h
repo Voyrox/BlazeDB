@@ -67,7 +67,17 @@ struct SqlDelete
     SqlLiteral whereValue;
 };
 
-using SqlCommand = std::variant<SqlPing, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete>;
+struct SqlUpdate
+{
+    string keyspace;
+    string table;
+    vector<string> setColumns;
+    vector<SqlLiteral> setValues;
+    string whereColumn;
+    SqlLiteral whereValue;
+};
+
+using SqlCommand = std::variant<SqlPing, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate>;
 
 std::optional<SqlCommand> parseSqlLine(const string& line, string& error);
 

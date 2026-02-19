@@ -26,6 +26,12 @@ async function runTest() {
             `INSERT INTO ${table} (id,value) VALUES (1,"hello"), (2,"world");`
         );
 
+        await client.queryTable(`UPDATE ${table} SET value="HELLO" WHERE id=1;`);
+        await client.queryTable(`SELECT * FROM ${table} WHERE id=1;`);
+
+        await client.queryTable(`UPDATE ${table} SET value="new" WHERE id=3;`);
+        await client.queryTable(`SELECT * FROM ${table} WHERE id=3;`);
+
         await client.queryTable(`SELECT * FROM ${table} WHERE id=1;`);
         await client.queryTable(`DELETE FROM ${table} WHERE id=1;`);
         await client.queryTable(`SELECT * FROM ${table} WHERE id=1;`);

@@ -64,4 +64,10 @@ string formatTimestampFromMs(i64 ms);
 
 string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns);
 
+byteVec mergeRowBytesForUpdate(
+    const TableSchema& schema,
+    const std::optional<byteVec>& existingRowBytes,
+    const std::vector<string>& setColumns,
+    const std::vector<SqlLiteral>& setValues);
+
 }

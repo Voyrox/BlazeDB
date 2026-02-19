@@ -35,4 +35,5 @@ clang_build
 nuke
 rust/target
 .venv/
+venv/
 var/

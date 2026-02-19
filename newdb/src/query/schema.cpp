@@ -358,6 +358,40 @@ namespace blazeDb
         }
     }
 
+    static void skipValueBytes(ColumnType type, const byteVec &b, usize &o)
+    {
+        if (type == ColumnType::Text || type == ColumnType::Char || type == ColumnType::Blob)
+        {
+            u32 len = readU32(b, o);
+            if (o + len > b.size())
+                throw runtimeError("bad row");
+            o += len;
+            return;
+        }
+        if (type == ColumnType::Int32 || type == ColumnType::Float32 || type == ColumnType::Date)
+        {
+            if (o + 4 > b.size())
+                throw runtimeError("bad row");
+            o += 4;
+            return;
+        }
+        if (type == ColumnType::Int64 || type == ColumnType::Timestamp)
+        {
+            if (o + 8 > b.size())
+                throw runtimeError("bad row");
+            o += 8;
+            return;
+        }
+        if (type == ColumnType::Boolean)
+        {
+            if (o + 1 > b.size())
+                throw runtimeError("bad row");
+            o += 1;
+            return;
+        }
+        throw runtimeError("bad type");
+    }
+
     byteVec encodeRowBytes(const TableSchema &schema, const std::vector<string> &columnNames, const std::vector<SqlLiteral> &values, const byteVec &pkBytes)
     {
         (void)pkBytes;
@@ -648,6 +682,106 @@ namespace blazeDb
             }
         }
         out += "}";
+        return out;
+    }
+
+    byteVec mergeRowBytesForUpdate(
+        const TableSchema &schema,
+        const std::optional<byteVec> &existingRowBytes,
+        const std::vector<string> &setColumns,
+        const std::vector<SqlLiteral> &setValues)
+    {
+        if (setColumns.size() != setValues.size())
+            throw runtimeError("set column/value count");
+
+        std::vector<std::optional<SqlLiteral>> byIndex;
+        byIndex.resize(schema.columns.size());
+        for (usize i = 0; i < setColumns.size(); i++)
+        {
+            auto idx = findColumnIndex(schema, setColumns[i]);
+            if (!idx.has_value())
+                throw runtimeError("unknown column");
+            if (*idx == schema.primaryKeyIndex)
+                throw runtimeError("cannot update pk");
+            if (byIndex[*idx].has_value())
+                throw runtimeError("duplicate column");
+            byIndex[*idx] = setValues[i];
+        }
+
+        std::vector<bool> existingIsNull;
+        std::vector<usize> existingValueOffsets;
+        std::vector<usize> existingValueSizes;
+        existingIsNull.resize(schema.columns.size(), true);
+        existingValueOffsets.resize(schema.columns.size(), 0);
+        existingValueSizes.resize(schema.columns.size(), 0);
+
+        if (existingRowBytes.has_value())
+        {
+            const auto &rowBytes = *existingRowBytes;
+            usize o = 0;
+            auto version = readU32(rowBytes, o);
+            if (version != 1)
+                throw runtimeError("bad row version");
+
+            for (usize i = 0; i < schema.columns.size(); i++)
+            {
+                if (i == schema.primaryKeyIndex)
+                    continue;
+                if (o >= rowBytes.size())
+                    throw runtimeError("bad row");
+                u8 nullMarker = rowBytes[o++];
+                if (nullMarker != 0)
+                {
+                    existingIsNull[i] = true;
+                    continue;
+                }
+                existingIsNull[i] = false;
+                usize before = o;
+                skipValueBytes(schema.columns[i].type, rowBytes, o);
+                existingValueOffsets[i] = before;
+                existingValueSizes[i] = o - before;
+            }
+        }
+
+        byteVec out;
+        appendU32(out, 1);
+        for (usize i = 0; i < schema.columns.size(); i++)
+        {
+            if (i == schema.primaryKeyIndex)
+                continue;
+
+            if (byIndex[i].has_value())
+            {
+                const auto &lit = *byIndex[i];
+                if (lit.kind == SqlLiteral::Kind::Null)
+                {
+                    out.push_back(1);
+                }
+                else
+                {
+                    out.push_back(0);
+                    appendValueBytes(out, schema.columns[i].type, lit);
+                }
+            }
+            else
+            {
+                if (existingRowBytes.has_value() && !existingIsNull[i])
+                {
+                    out.push_back(0);
+                    const auto &rowBytes = *existingRowBytes;
+                    usize off = existingValueOffsets[i];
+                    usize sz = existingValueSizes[i];
+                    if (off + sz > rowBytes.size())
+                        throw runtimeError("bad row");
+                    using Diff = std::vector<u8>::difference_type;
+                    out.insert(out.end(), rowBytes.begin() + static_cast<Diff>(off), rowBytes.begin() + static_cast<Diff>(off + sz));
+                }
+                else
+                {
+                    out.push_back(1);
+                }
+            }
+        }
         return out;
     }
 

@@ -542,6 +542,102 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
 
     {
         usize j = i;
+        if (matchKeyword(s, j, "update"))
+        {
+            i = j;
+            SqlUpdate cmd;
+
+            string firstName;
+            if (!parseIdentifier(s, i, firstName))
+            {
+                error = "Expected table";
+                return std::nullopt;
+            }
+            if (consumeChar(s, i, '.'))
+            {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table))
+                {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
+            }
+
+            if (!matchKeyword(s, i, "set"))
+            {
+                error = "Expected set";
+                return std::nullopt;
+            }
+
+            bool anySet = false;
+            while (true)
+            {
+                string col;
+                if (!parseIdentifier(s, i, col))
+                {
+                    if (!anySet)
+                        error = "Expected column";
+                    else
+                        error = "Expected column";
+                    return std::nullopt;
+                }
+                if (!consumeChar(s, i, '='))
+                {
+                    error = "Expected =";
+                    return std::nullopt;
+                }
+                SqlLiteral lit;
+                if (!parseLiteral(s, i, lit))
+                {
+                    error = "Expected literal";
+                    return std::nullopt;
+                }
+                cmd.setColumns.push_back(col);
+                cmd.setValues.push_back(lit);
+                anySet = true;
+
+                skipWhitespace(s, i);
+                if (consumeChar(s, i, ','))
+                    continue;
+                break;
+            }
+
+            if (!matchKeyword(s, i, "where"))
+            {
+                error = "Expected where";
+                return std::nullopt;
+            }
+            if (!parseIdentifier(s, i, cmd.whereColumn))
+            {
+                error = "Expected where column";
+                return std::nullopt;
+            }
+            if (!consumeChar(s, i, '='))
+            {
+                error = "Expected =";
+                return std::nullopt;
+            }
+            if (!parseLiteral(s, i, cmd.whereValue))
+            {
+                error = "Expected literal";
+                return std::nullopt;
+            }
+            if (!anySet)
+            {
+                error = "Expected set assignments";
+                return std::nullopt;
+            }
+            return cmd;
+        }
+    }
+
+    {
+        usize j = i;
         if (matchKeyword(s, j, "delete"))
         {
             i = j;

@@ -304,6 +304,33 @@ namespace blazeDb
                         retTable->deleteRow(pkBytes);
                         response = jsonOk();
                     }
+                    else if (auto *upd = std::get_if<SqlUpdate>(&cmd))
+                    {
+                        auto keyspace = upd->keyspace.empty() ? currentKeyspace : upd->keyspace;
+                        if (keyspace.empty())
+                            throw runtimeError("No keyspace selected");
+
+                        auto retTable = db_->openTable(keyspace, upd->table);
+                        auto pkIndex = retTable->schema().primaryKeyIndex;
+                        auto pkName = retTable->schema().columns[pkIndex].name;
+                        if (upd->whereColumn != pkName)
+                            throw runtimeError("Where must use primary key");
+
+                        if (upd->setColumns.size() != upd->setValues.size())
+                            throw runtimeError("set column/value count");
+
+                        for (const auto &c : upd->setColumns)
+                        {
+                            if (c == pkName)
+                                throw runtimeError("cannot update pk");
+                        }
+
+                        byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, upd->whereValue);
+                        auto existing = retTable->getRow(pkBytes);
+                        byteVec newRowBytes = mergeRowBytesForUpdate(retTable->schema(), existing, upd->setColumns, upd->setValues);
+                        retTable->putRow(pkBytes, newRowBytes);
+                        response = jsonOk();
+                    }
                     else
                     {
                         response = jsonError("Unsupported command");

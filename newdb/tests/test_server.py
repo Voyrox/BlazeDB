@@ -303,6 +303,77 @@ def testDeleteByPk(tmp_path):
         stopServer(proc)
 
 
+def testUpdatePreservesOtherColumns(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        ensureSchema("127.0.0.1", port)
+        insertAlice("127.0.0.1", port)
+        mustOk(tcpQuery("127.0.0.1", port, 'UPDATE myapp.users SET name="alice2" WHERE id=1;'))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM myapp.users WHERE id=1;"))
+        assert r["found"] is True
+        row = r["row"]
+        assert row["id"] == 1
+        assert row["name"] == "alice2"
+        assert row["active"] is True
+        assert row["born"] == "2026-02-18"
+        assert row["createdAt"] == "2026-02-18T12:34:56.123Z"
+        assert base64.b64decode(row["avatar"].encode("ascii")) == b"\x01\x02\x03\x04"
+    finally:
+        stopServer(proc)
+
+
+def testUpdateUpsertCreatesRow(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        ensureSchema("127.0.0.1", port)
+        mustOk(tcpQuery("127.0.0.1", port, 'UPDATE myapp.users SET name="bob", active=false WHERE id=2;'))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM myapp.users WHERE id=2;"))
+        assert r["found"] is True
+        row = r["row"]
+        assert row["id"] == 2
+        assert row["name"] == "bob"
+        assert row["active"] is False
+        assert row["born"] is None
+        assert row["createdAt"] is None
+        assert row["avatar"] is None
+    finally:
+        stopServer(proc)
+
+
+def testUpdateSetNull(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        ensureSchema("127.0.0.1", port)
+        insertAlice("127.0.0.1", port)
+        mustOk(tcpQuery("127.0.0.1", port, "UPDATE myapp.users SET avatar=null WHERE id=1;"))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT avatar FROM myapp.users WHERE id=1;"))
+        assert r["found"] is True
+        assert r["row"]["avatar"] is None
+    finally:
+        stopServer(proc)
+
+
 def testUseKeyspaceUnqualified(tmp_path):
     repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     dataDir = tmp_path / "data"
