@@ -1,24 +1,39 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-.vscode/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.cproject
+.project
+.settings
+build
+build.ninja
+cmake-build-*
+build.ninja.new
+cscope.*
+/debian/
+*.pyc
+Cql.tokens
+.kdev4
+*.kdev4
+.idea
+CMakeLists.txt.user
+.cache
+.tox
+*.egg-info
+__pycache__CMakeLists.txt.user
+.gdbinit
+/resources
+.pytest_cache
+/expressions.tokens
+tags
+!db/tags/
+testlog
+test/*/*.reject
+.vscode
+compile_commands.json
+.ccls-cache/
+.mypy_cache
+.envrc
+clang_build
+.idea/
+nuke
+rust/target
+.venv/
+venv/
+var/
