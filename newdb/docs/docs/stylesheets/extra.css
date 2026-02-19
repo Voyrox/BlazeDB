@@ -1,0 +1,156 @@
+:root {
+  --Xeondb-bg: #282828;
+  --Xeondb-nav: #1d2021;
+  --Xeondb-text: #d7d3ba;
+
+  --bs-primary: var(--Xeondb-nav);
+  --bs-primary-rgb: 29, 32, 33;
+  --bs-link-color: var(--Xeondb-text);
+  --bs-link-hover-color: #f2efe4;
+}
+
+html,
+body {
+  background: var(--Xeondb-bg);
+  color: var(--Xeondb-text);
+}
+
+a {
+  color: var(--Xeondb-text);
+}
+
+a:hover {
+  color: #f2efe4;
+}
+
+.container,
+.col-md-9,
+.col-md-3 {
+  background: transparent;
+}
+
+.navbar,
+.navbar.bg-primary,
+.navbar.navbar-default {
+  background-color: var(--Xeondb-nav);
+  border-color: var(--Xeondb-nav);
+}
+
+.navbar {
+  border-bottom-color: var(--Xeondb-nav) !important;
+}
+
+.navbar-default .navbar-brand,
+.navbar-default .navbar-nav > li > a {
+  color: var(--Xeondb-text);
+}
+
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-brand:hover {
+  color: var(--Xeondb-text);
+  opacity: 0.9;
+}
+
+.bs-sidebar,
+.bs-sidebar .nav > li > a,
+.dropdown-menu > li > a {
+  color: var(--Xeondb-text);
+}
+
+.dropdown-menu {
+  background-color: var(--Xeondb-nav);
+  border-color: var(--Xeondb-nav);
+}
+
+.bg-primary {
+  --bs-primary-rgb: 29, 32, 33;
+  background-color: var(--Xeondb-nav) !important;
+  background-image: none !important;
+}
+
+.navbar.bg-primary {
+  background-color: var(--Xeondb-nav) !important;
+  background-image: none !important;
+}
+
+.navbar a,
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: var(--Xeondb-text) !important;
+}
+
+:focus-visible {
+  outline-color: var(--Xeondb-text);
+}
+
+.btn:focus,
+.btn:focus-visible,
+.form-control:focus,
+.form-control:focus-visible,
+.form-select:focus,
+.form-select:focus-visible,
+.navbar-toggler:focus,
+.nav-link:focus,
+.nav-link:focus-visible {
+  box-shadow: none !important;
+}
+
+.btn,
+.form-control,
+.form-select,
+.navbar-toggler {
+  border-color: #3a3a3a;
+}
+
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.navbar-toggler:focus {
+  border-color: #4a4a4a !important;
+}
+
+.bs-sidebar .nav > .active > a,
+.bs-sidebar .nav > .active:hover > a,
+.bs-sidebar .nav > .active:focus > a {
+  border-left-color: var(--Xeondb-nav) !important;
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link,
+.nav-link.active {
+  border-color: var(--Xeondb-nav) !important;
+}
+
+.bg-body-tertiary {
+  --bs-bg-opacity: 1;
+  background-color: rgb(49, 49, 49) !important;
+}
+
+.hljs {
+  color: #c9c9c9;
+  background: #333;
+}
+
+.hljs-meta .hljs-string, .hljs-regexp, .hljs-string {
+  color: #fe8019;
+}
+
+.hljs-attr, .hljs-attribute, .hljs-literal, .hljs-meta, .hljs-number, .hljs-operator, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-id, .hljs-variable {
+  color: #fe8019;
+}
+
+.modal-content {
+  background-color: #222121;
+}
+
+.form-control {
+  background-color: #222121;
+  color: var(--Xeondb-text);
+  border-color: #3a3a3a;
+}
+
+code {
+  background-color: rgba(40, 40, 40, 0.75);
+  border: solid 1px #3f4142;
+  color: #cb6c1e;
+}

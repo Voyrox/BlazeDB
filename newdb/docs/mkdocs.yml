@@ -1,0 +1,9 @@
+site_name: Xeondb Documentation
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Deployment: deployment.md
+
+extra_css:
+  - stylesheets/extra.css

@@ -33,9 +33,9 @@ Usage: install.sh [options]
 
 Options:
   -h, --help              Show this help message and exit
-  -d, --directory DIR     Install prefix (default: /usr/local/blazedb)
-  --config PATH       Config path (default: /etc/blazedb/settings.yml)
-  --data-dir PATH     Data directory (default: /var/lib/blazedb/data)
+  -d, --directory DIR     Install prefix (default: /usr/local/xeondb)
+  --config PATH       Config path (default: /etc/xeondb/settings.yml)
+  --data-dir PATH     Data directory (default: /var/lib/xeondb/data)
   --host HOST         Bind host (default: 0.0.0.0)
   --port PORT         Bind port (default: 9876)
   --full              Run full build (lint + tests) via Ninja target `build`
@@ -50,9 +50,9 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-INSTALL_PREFIX="/usr/local/blazedb"
-CONFIG_PATH="/etc/blazedb/settings.yml"
-DATA_DIR="/var/lib/blazedb/data"
+INSTALL_PREFIX="/usr/local/xeondb"
+CONFIG_PATH="/etc/xeondb/settings.yml"
+DATA_DIR="/var/lib/xeondb/data"
 HOST="0.0.0.0"
 PORT="9876"
 FULL_BUILD=0

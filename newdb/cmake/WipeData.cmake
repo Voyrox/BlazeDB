@@ -3,8 +3,8 @@ if(NOT DEFINED SOURCE_DIR)
 endif()
 
 set(_dirs
-    "/var/lib/blazedb/data"
-    "${SOURCE_DIR}/var/lib/blazedb/data"
+    "/var/lib/xeondb/data"
+    "${SOURCE_DIR}/var/lib/xeondb/data"
 )
 
 foreach(_dir IN LISTS _dirs)

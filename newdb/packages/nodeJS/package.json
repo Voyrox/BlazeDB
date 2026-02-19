@@ -1,12 +1,12 @@
 {
-  "name": "blazedb-driver",
+  "name": "xeondb-driver",
   "version": "0.1.0",
   "description": "Node.js client for BlazeDB.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"No tests specified\" && exit 0"
   },
-  "keywords": ["database", "blazedb", "client"],
+  "keywords": ["database", "xeondb", "client"],
   "author": "Voyrox",
   "license": "MIT"
 }

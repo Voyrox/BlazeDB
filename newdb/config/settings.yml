@@ -3,7 +3,7 @@ network:
   port: 9876
 
 storage:
-  dataDir: /var/lib/blazedb/data
+  dataDir: /var/lib/xeondb/data
 
 limits:
   maxLineBytes: 1048576

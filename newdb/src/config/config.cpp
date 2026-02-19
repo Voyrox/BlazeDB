@@ -68,7 +68,7 @@ namespace blazeDb
         Settings s;
         s.host = "0.0.0.0";
         s.port = 9876;
-        s.dataDir = "/var/lib/blazedb/data";
+        s.dataDir = "/var/lib/xeondb/data";
         s.maxLineBytes = 1024 * 1024;
         s.maxConnections = 1024;
         s.walFsync = "periodic";
@@ -184,7 +184,7 @@ namespace blazeDb
             return true;
         };
 
-        fs::path preferred = preferredDataDir.empty() ? fs::path("/var/lib/blazedb/data") : fs::path(preferredDataDir);
+        fs::path preferred = preferredDataDir.empty() ? fs::path("/var/lib/xeondb/data") : fs::path(preferredDataDir);
 
         bool preferredCreated = false;
         string preferredReason;
@@ -193,7 +193,7 @@ namespace blazeDb
             return preferred.string();
         }
 
-        fs::path fallback = fs::path(".") / "var" / "lib" / "blazedb" / "data";
+        fs::path fallback = fs::path(".") / "var" / "lib" / "xeondb" / "data";
 
         bool fallbackCreated = false;
         string fallbackReason;

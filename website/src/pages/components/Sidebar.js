@@ -10,7 +10,7 @@ const Sidebar = () => {
         <header>
           <div className="image-text">
             <span className="image">
-              <img src="/blazedb.png" alt="logo"></img>
+              <img src="/xeondb.png" alt="logo"></img>
             </span>
 
             <div className="text logo-text">
