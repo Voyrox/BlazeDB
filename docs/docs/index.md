@@ -8,8 +8,8 @@
       </p>
 
       <div class="home-cta">
-        <a class="btn btn-primary" href="quickstart.md">Getting started</a>
-        <a class="btn btn-outline-light" href="deployment.md">Deploy</a>
+        <a class="btn btn-primary" href="quickstart">Getting started</a>
+        <a class="btn btn-outline-light" href="deployment">Deploy</a>
         <a class="btn btn-link home-cta__link" href="https://github.com/Voyrox/Xeondb">GitHub</a>
       </div>
 
@@ -23,22 +23,28 @@
   <section class="home-section">
     <h2>Getting started</h2>
     <div class="home-grid">
-      <a class="home-card" href="quickstart.md">
+      <a class="home-card" href="quickstart">
         <div class="home-card__title">First steps</div>
         <div class="home-card__body">Build, run locally, and send your first queries.</div>
         <div class="home-card__link">Open Quick Start</div>
       </a>
 
-      <a class="home-card" href="deployment.md">
+      <a class="home-card" href="deployment">
         <div class="home-card__title">Deployment</div>
         <div class="home-card__body">Run natively or via Docker and keep data durable.</div>
         <div class="home-card__link">Open Deployment</div>
       </a>
 
-      <a class="home-card" href="quickstart.md#try-queries">
+      <a class="home-card" href="query-examples">
         <div class="home-card__title">Query examples</div>
         <div class="home-card__body">Create tables, insert rows, scan with ORDER BY.</div>
         <div class="home-card__link">See examples</div>
+      </a>
+
+      <a class="home-card" href="drivers">
+        <div class="home-card__title">Drivers</div>
+        <div class="home-card__body">Connect from your app with the official Node.js driver.</div>
+        <div class="home-card__link">See drivers</div>
       </a>
     </div>
   </section>

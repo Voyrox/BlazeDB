@@ -23,53 +23,45 @@ If you want a custom config, run the binary directly:
 ./build/xeondb --config path/to/settings.yml
 ```
 
-## Try queries
-
-Xeondb speaks a simple line-based TCP protocol: send one SQL statement per line, receive one JSON response per line.
-
-With `nc` (netcat):
-
-```bash
-printf 'PING;\n' | nc 127.0.0.1 9876
-```
+## Example queries
 
 Create a keyspace + table:
 
-```bash
-printf 'CREATE KEYSPACE IF NOT EXISTS myapp;\n' | nc 127.0.0.1 9876
-printf 'USE myapp;\n' | nc 127.0.0.1 9876
-printf 'CREATE TABLE IF NOT EXISTS users (id int64, name varchar, active boolean, PRIMARY KEY (id));\n' | nc 127.0.0.1 9876
+```sql
+CREATE KEYSPACE IF NOT EXISTS myapp;
+USE myapp;
+CREATE TABLE IF NOT EXISTS users (id int64, name varchar, active boolean, PRIMARY KEY (id));
 ```
 
 Insert and read a row:
 
-```bash
-printf 'INSERT INTO users (id,name,active) VALUES (1,"alice",true);\n' | nc 127.0.0.1 9876
-printf 'SELECT * FROM users WHERE id=1;\n' | nc 127.0.0.1 9876
+```sql
+INSERT INTO users (id,name,active) VALUES (1,"alice",true);
+SELECT * FROM users WHERE id=1;
 ```
 
 Scan a table (ordered by primary key):
 
-```bash
-printf 'SELECT * FROM users ORDER BY id ASC;\n' | nc 127.0.0.1 9876
-printf 'SELECT * FROM users ORDER BY id DESC;\n' | nc 127.0.0.1 9876
+```sql
+SELECT * FROM users ORDER BY id ASC;
+SELECT * FROM users ORDER BY id DESC;
 ```
 
 Update (UPSERT) and read it back:
 
-```bash
-printf 'UPDATE users SET name="alice2" WHERE id=1;\n' | nc 127.0.0.1 9876
-printf 'SELECT * FROM users WHERE id=1;\n' | nc 127.0.0.1 9876
+```sql
+UPDATE users SET name="alice2" WHERE id=1;
+SELECT * FROM users WHERE id=1;
 
-printf 'UPDATE users SET name="bob", active=false WHERE id=2;\n' | nc 127.0.0.1 9876
-printf 'SELECT * FROM users WHERE id=2;\n' | nc 127.0.0.1 9876
+UPDATE users SET name="bob", active=false WHERE id=2;
+SELECT * FROM users WHERE id=2;
 ```
 
 Delete:
 
-```bash
-printf 'DELETE FROM users WHERE id=1;\n' | nc 127.0.0.1 9876
-printf 'SELECT * FROM users WHERE id=1;\n' | nc 127.0.0.1 9876
+```sql
+DELETE FROM users WHERE id=1;
+SELECT * FROM users WHERE id=1;
 ```
 
 ## Run tests

@@ -25,6 +25,9 @@ For real deployments you will typically also:
 - mount a persistent volume for `dataDir`
 - mount a config file into the container
 
+## Option 3: ISO
+Coming soon: a standalone ISO image with everything included, for easy deployment on bare metal or in the cloud.
+
 ## Configuration
 
 Xeondb is configured via YAML. The config controls networking, storage, limits, and storage-engine tuning.

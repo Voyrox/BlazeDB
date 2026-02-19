@@ -1,12 +1,29 @@
 {
   "name": "xeondb-driver",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Node.js client for Xeondb.",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "echo \"No tests specified\" && exit 0"
   },
-  "keywords": ["database", "xeondb", "client"],
+  "keywords": [
+    "database",
+    "xeondb",
+    "client",
+    "nodejs",
+    "driver"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Voyrox/Xeondb.git",
+    "directory": "packages/nodeJS"
+  },
+  "bugs": {
+    "url": "https://github.com/Voyrox/Xeondb/issues"
+  },
+  "homepage": "https://github.com/Voyrox/Xeondb",
   "author": "Voyrox",
-  "license": "MIT"
+  "license": "MIT",
+  "readme": "README.md"
 }

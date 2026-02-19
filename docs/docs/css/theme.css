@@ -262,7 +262,7 @@ body.homepage .home-section {
 
 body.homepage .home-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
   margin-top: 10px;
 }
@@ -278,9 +278,7 @@ body.homepage .home-card {
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(215, 211, 186, 0.12);
-  background:
-    radial-gradient(900px 260px at 10% 0%, rgba(18, 24, 68, 0.55), rgba(4, 5, 13, 0.0)),
-    linear-gradient(180deg, rgba(18, 20, 34, 0.55), rgba(13, 14, 19, 0.55));
+  background: #0d102b;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.26);
   color: var(--Xeondb-text);
   text-decoration: none;
@@ -294,7 +292,6 @@ body.homepage .home-card::after {
   right: 0;
   top: 0;
   height: 2px;
-  background: linear-gradient(90deg, rgba(94, 231, 255, 0.0), rgba(94, 231, 255, 0.75), rgba(94, 231, 255, 0.0));
   opacity: 0.35;
 }
 
