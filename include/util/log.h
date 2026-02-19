@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace blazeDb
+namespace xeondb
 {
 
     enum class LogLevel

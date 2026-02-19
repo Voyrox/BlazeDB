@@ -8,7 +8,7 @@
 
 using std::filesystem::path;
 
-namespace blazeDb
+namespace xeondb
 {
 
     struct Manifest

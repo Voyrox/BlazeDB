@@ -25,7 +25,7 @@ If you want a custom config, run the binary directly:
 
 ## Try queries
 
-BlazeDB speaks a simple line-based TCP protocol: send one SQL statement per line, receive one JSON response per line.
+Xeondb speaks a simple line-based TCP protocol: send one SQL statement per line, receive one JSON response per line.
 
 With `nc` (netcat):
 
@@ -46,6 +46,13 @@ Insert and read a row:
 ```bash
 printf 'INSERT INTO users (id,name,active) VALUES (1,"alice",true);\n' | nc 127.0.0.1 9876
 printf 'SELECT * FROM users WHERE id=1;\n' | nc 127.0.0.1 9876
+```
+
+Scan a table (ordered by primary key):
+
+```bash
+printf 'SELECT * FROM users ORDER BY id ASC;\n' | nc 127.0.0.1 9876
+printf 'SELECT * FROM users ORDER BY id DESC;\n' | nc 127.0.0.1 9876
 ```
 
 Update (UPSERT) and read it back:

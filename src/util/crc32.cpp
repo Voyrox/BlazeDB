@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace blazeDb
+namespace xeondb
 {
 
     static std::array<u32, 256> makeTable()

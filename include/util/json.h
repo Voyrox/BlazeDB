@@ -5,7 +5,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     string jsonEscape(const string &s);

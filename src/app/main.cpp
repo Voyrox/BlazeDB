@@ -39,28 +39,28 @@ int main(int argc, char **argv)
 {
     if (hasArg(argc, argv, "--version"))
     {
-        std::cout << "blazedbd 0.1" << std::endl;
+        std::cout << "xeondbd 0.1" << std::endl;
         return 0;
     }
 
     string configPath = getArgValue(argc, argv, "--config", "config/settings.yml");
-    blazeDb::Settings settings;
+    xeondb::Settings settings;
     try
     {
-        settings = blazeDb::loadSettings(configPath);
+        settings = xeondb::loadSettings(configPath);
     }
     catch (const std::exception &e)
     {
-        blazeDb::log(blazeDb::LogLevel::ERROR, e.what());
+        xeondb::log(xeondb::LogLevel::ERROR, e.what());
         return 1;
     }
 
-    blazeDb::log(blazeDb::LogLevel::INFO, std::string("Loading configPath=") + configPath);
+    xeondb::log(xeondb::LogLevel::INFO, std::string("Loading configPath=") + configPath);
 
-    auto db = std::make_shared<blazeDb::Db>(settings);
+    auto db = std::make_shared<xeondb::Db>(settings);
 
-    blazeDb::log(
-        blazeDb::LogLevel::CONFIG,
+    xeondb::log(
+        xeondb::LogLevel::CONFIG,
         std::string("Host=") + settings.host +
             " port=" + std::to_string(settings.port) +
             " dataDir=" + db->dataDir().string() +
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
             " maxLineBytes=" + std::to_string(settings.maxLineBytes) +
             " maxConnections=" + std::to_string(settings.maxConnections));
 
-    blazeDb::ServerTcp server(db, settings.host, settings.port, settings.maxLineBytes, settings.maxConnections);
+    xeondb::ServerTcp server(db, settings.host, settings.port, settings.maxLineBytes, settings.maxConnections);
 
     try
     {
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     }
     catch (const std::exception &e)
     {
-        blazeDb::log(blazeDb::LogLevel::ERROR, e.what());
+        xeondb::log(xeondb::LogLevel::ERROR, e.what());
         return 1;
     }
     return 0;

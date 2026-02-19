@@ -9,7 +9,7 @@ using std::string ;
 using std::shared_ptr;
 using std::filesystem::path;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static string tableKey(const string &keyspace, const string &table)

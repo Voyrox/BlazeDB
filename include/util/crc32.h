@@ -2,7 +2,7 @@
 
 #include "prelude.h"
 
-namespace blazeDb
+namespace xeondb
 {
 
     u32 crc32(const u8 *data, usize size);

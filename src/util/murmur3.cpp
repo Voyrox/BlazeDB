@@ -1,7 +1,7 @@
 #include "util/murmur3.h"
 // Reference: https://github.com/PeterScott/murmur3
 
-namespace blazeDb
+namespace xeondb
 {
 
 static u64 rotateLeft64(u64 value, int bits)

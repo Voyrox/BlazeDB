@@ -8,7 +8,7 @@ using std::ofstream;
 using std::ifstream;
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
 void writeU32(ofstream& out, u32 v);

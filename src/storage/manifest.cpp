@@ -6,7 +6,7 @@ using std::ifstream;
 using std::ofstream;
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static constexpr const char *manifestMagic = "BZMF001";

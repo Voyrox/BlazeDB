@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2026 BlazeDB. All rights reserved.
+# Copyright 2026 Xeondb. All rights reserved.
 
 set -euo pipefail
 
@@ -132,9 +132,9 @@ fi
 
 confirmInstall() {
 	echo
-	echo "About to install BlazeDB system-wide with these settings:"
+	echo "About to install Xeondb system-wide with these settings:"
 	echo "  Install prefix: $INSTALL_PREFIX"
-	echo "  Binary dest:    $INSTALL_PREFIX/bin/blazedbd"
+	echo "  Binary dest:    $INSTALL_PREFIX/bin/xeondb"
 	echo "  Config path:    $CONFIG_PATH"
 	echo "  Data dir:       $DATA_DIR"
 	echo "  Host:           $HOST"
@@ -142,12 +142,12 @@ confirmInstall() {
 	if [ "$FULL_BUILD" -eq 1 ]; then
 		echo "  Build:          cmake -S $SCRIPT_DIR -B $SCRIPT_DIR/build -G Ninja && ninja -C $SCRIPT_DIR/build build (full)"
 	else
-		echo "  Build:          cmake -S $SCRIPT_DIR -B $SCRIPT_DIR/build -G Ninja && ninja -C $SCRIPT_DIR/build blazedbd"
+		echo "  Build:          cmake -S $SCRIPT_DIR -B $SCRIPT_DIR/build -G Ninja && ninja -C $SCRIPT_DIR/build Xeondb"
 	fi
 	if [ "$NO_START" -eq 1 ]; then
 		echo "  Service:        will NOT auto-start"
 	else
-		echo "  Service:        systemd enable --now blazedbd"
+		echo "  Service:        systemd enable --now xeondb"
 	fi
 	if [ "$FORCE" -eq 1 ]; then
 		echo "  Overwrite:      yes (--force)"
@@ -171,7 +171,7 @@ if [ "$ASSUME_YES" -ne 1 ]; then
 	fi
 fi
 
-echo "Building BlazeDB server..."
+echo "Building Xeondb server..."
 BUILD_DIR="$SCRIPT_DIR/build"
 
 if [ "$FULL_BUILD" -eq 1 ]; then
@@ -185,15 +185,15 @@ cmake -S "$SCRIPT_DIR" -B "$BUILD_DIR" -G Ninja
 if [ "$FULL_BUILD" -eq 1 ]; then
 	ninja -C "$BUILD_DIR" build
 else
-	ninja -C "$BUILD_DIR" blazedbd
+	ninja -C "$BUILD_DIR" Xeondb
 fi
 
-BIN_SRC="$BUILD_DIR/blazedbd"
+BIN_SRC="$BUILD_DIR/Xeondb"
 [ -x "$BIN_SRC" ] || die "Build did not produce executable: $BIN_SRC"
 
-BIN_DST="$INSTALL_PREFIX/bin/blazedbd"
+BIN_DST="$INSTALL_PREFIX/bin/xeondb"
 
-echo "Installing blazedbd to $BIN_DST"
+echo "Installing xeondb to $BIN_DST"
 install -Dm755 "$BIN_SRC" "$BIN_DST"
 
 echo "Ensuring data directory exists: $DATA_DIR"
@@ -218,14 +218,14 @@ sstableIndexStride: 16
 EOF
 fi
 
-UNIT_PATH="/etc/systemd/system/blazedbd.service"
+UNIT_PATH="/etc/systemd/system/xeondb.service"
 echo "Installing systemd unit: $UNIT_PATH"
 if [ -e "$UNIT_PATH" ] && [ "$FORCE" -ne 1 ]; then
 	echo "Unit exists; leaving as-is (use --force to overwrite): $UNIT_PATH"
 else
 	cat >"$UNIT_PATH" <<EOF
 [Unit]
-Description=BlazeDB Server
+Description=Xeondb Server
 After=network.target
 
 [Service]
@@ -244,7 +244,7 @@ if [ "$NO_START" -eq 1 ]; then
 	echo "Install complete."
 	echo "To start manually: $BIN_DST --config $CONFIG_PATH"
 	if command -v systemctl >/dev/null 2>&1; then
-		echo "To enable/start: systemctl daemon-reload && systemctl enable --now blazedbd"
+		echo "To enable/start: systemctl daemon-reload && systemctl enable --now xeondb"
 	fi
 	exit 0
 fi
@@ -252,8 +252,8 @@ fi
 echo "Reloading systemd..."
 systemctl daemon-reload
 
-echo "Enabling and starting blazedbd..."
-systemctl enable --now blazedbd
+echo "Enabling and starting xeondb..."
+systemctl enable --now xeondb
 
 echo "Done. Service status:"
-systemctl --no-pager --full status blazedbd || true
+systemctl --no-pager --full status xeondb || true

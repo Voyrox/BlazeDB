@@ -13,7 +13,7 @@ using std::filesystem::path;
 using std::shared_ptr;
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     class Db

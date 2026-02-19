@@ -3,9 +3,10 @@
 #include "prelude.h"
 
 #include <optional>
+#include <vector>
 #include <utility>
 
-namespace blazeDb
+namespace xeondb
 {
 
     struct SsEntry
@@ -30,5 +31,7 @@ namespace blazeDb
     void writeSsTable(const path &path, const std::vector<SsEntry> &entries, usize indexStride);
     SsTableFile loadSsTableIndex(const path &path);
     std::optional<byteVec> ssTableGet(const SsTableFile &file, const byteVec &key);
+
+    std::vector<SsEntry> ssTableScanAll(const SsTableFile &file);
 
 }

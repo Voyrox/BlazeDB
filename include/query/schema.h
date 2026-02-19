@@ -6,7 +6,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
 enum class ColumnType : u8

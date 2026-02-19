@@ -1,6 +1,6 @@
 #include "storage/memTable.h"
 
-namespace blazeDb
+namespace xeondb
 {
 
     MemTable::MemTable() : bytes_(0) {}

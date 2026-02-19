@@ -1,6 +1,6 @@
 const net = require('net');
 
-class BlazeDBClient {
+class XeondbClient {
 	/**
 	 * @param {Object} options
 	 * @param {string} options.host - The database server IP or hostname
@@ -17,7 +17,7 @@ class BlazeDBClient {
 	}
 
 	/**
-	 * Connect to the BlazeDB server
+	 * Connect to the Xeondb server
 	 * @returns {Promise<boolean>} true if connected, false otherwise
 	 */
 	connect() {
@@ -76,7 +76,7 @@ class BlazeDBClient {
 	 */
 	async selectKeyspace(keyspace) {
 		if (!this.connected) throw new Error('Not connected');
-		if (!BlazeDBClient._isIdentifier(keyspace)) throw new Error('Invalid keyspace');
+		if (!XeondbClient._isIdentifier(keyspace)) throw new Error('Invalid keyspace');
 		const res = await this.query(`USE ${keyspace};`);
 		if (!res || res.ok !== true) throw new Error(res && res.error ? res.error : 'Failed to select keyspace');
 		this.keyspace = keyspace;
@@ -145,6 +145,18 @@ class BlazeDBClient {
 
 	async queryTable(cmd) {
 		const res = await this.query(cmd);
+		if (res && typeof res === 'object' && Array.isArray(res.rows)) {
+			if (res.rows.length === 0) {
+				console.log('(no rows)');
+				return res;
+			}
+			const headers = Object.keys(res.rows[0] || {});
+			const rows = res.rows.map((row) =>
+				headers.map((h) => XeondbClient._truncateCell(XeondbClient._cellString(row ? row[h] : undefined)))
+			);
+			XeondbClient._printTable(headers, rows);
+			return res;
+		}
 		if (res && typeof res === 'object' && Object.prototype.hasOwnProperty.call(res, 'found')) {
 			if (!res.found) {
 				console.log('(no rows)');
@@ -152,14 +164,14 @@ class BlazeDBClient {
 			}
 			const row = res.row || {};
 			const headers = Object.keys(row);
-			const values = headers.map((h) => BlazeDBClient._truncateCell(BlazeDBClient._cellString(row[h])));
-			BlazeDBClient._printTable(headers, [values]);
+			const values = headers.map((h) => XeondbClient._truncateCell(XeondbClient._cellString(row[h])));
+			XeondbClient._printTable(headers, [values]);
 			return res;
 		}
 
 		const entries = res && typeof res === 'object' ? Object.entries(res) : [['result', res]];
-		const rows = entries.map(([k, v]) => [k, BlazeDBClient._truncateCell(BlazeDBClient._cellString(v))]);
-		BlazeDBClient._printTable(['key', 'value'], rows);
+		const rows = entries.map(([k, v]) => [k, XeondbClient._truncateCell(XeondbClient._cellString(v))]);
+		XeondbClient._printTable(['key', 'value'], rows);
 		return res;
 	}
 
@@ -179,4 +191,4 @@ class BlazeDBClient {
 	}
 }
 
-module.exports = { BlazeDBClient };
+module.exports = { XeondbClient };

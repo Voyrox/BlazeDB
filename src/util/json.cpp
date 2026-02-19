@@ -4,7 +4,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static string hex2(unsigned char v)

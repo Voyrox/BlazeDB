@@ -8,7 +8,7 @@ using std::ofstream;
 using std::ifstream;
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static constexpr const char *schemaMagic = "BZSC001";

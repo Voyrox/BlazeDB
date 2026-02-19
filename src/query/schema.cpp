@@ -16,7 +16,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static string toLower(string s)

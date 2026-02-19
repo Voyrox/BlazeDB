@@ -10,7 +10,7 @@
 
 #include <unistd.h>
 
-namespace blazeDb
+namespace xeondb
 {
 
     static std::mutex g_logMutex;

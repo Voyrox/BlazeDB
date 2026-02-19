@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <string>
 
-namespace blazeDb
+namespace xeondb
 {
 
     class CommitLog

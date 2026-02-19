@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <fstream>
 
-namespace blazeDb
+namespace xeondb
 {
 
 static constexpr const char* ssMagic = "BZST001";
@@ -98,6 +98,36 @@ SsTableFile loadSsTableIndex(const path& path)
         tableFile.index.push_back(SsIndexEntry{std::move(k), off});
     }
     return tableFile;
+}
+
+std::vector<SsEntry> ssTableScanAll(const SsTableFile& file)
+{
+    std::ifstream in(file.filePath, std::ios::binary);
+    if (!in.is_open())
+        throw runtimeError("cannot open sstable");
+
+    char header[8]{};
+    in.read(header, 8);
+    if (!in || std::string(header, 7) != std::string(ssMagic, 7))
+        throw runtimeError("bad sstable header");
+
+    u32 ver = readU32(in);
+    if (ver != ssVersion)
+        throw runtimeError("bad sstable version");
+
+    u64 count = readU64(in);
+    std::vector<SsEntry> out;
+    out.reserve(static_cast<usize>(count));
+
+    for (u64 i = 0; i < count; i++)
+    {
+        SsEntry e;
+        e.key = readBytes(in);
+        e.seq = readU64(in);
+        e.value = readBytes(in);
+        out.push_back(std::move(e));
+    }
+    return out;
 }
 
 static std::optional<usize> findIndexFloor(const std::vector<SsIndexEntry>& index, const byteVec& key)

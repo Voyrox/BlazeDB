@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace blazeDb
+namespace xeondb
 {
 
     std::string newUuidHex();

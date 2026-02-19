@@ -114,7 +114,8 @@ def assertAliceRow(row):
 
 
 def startServer(repoRoot, configPath):
-    exe = os.environ.get("BLAZEDB_EXECUTABLE", "./build/blazedbd")
+
+    exe = os.environ.get("XEONDB_EXECUTABLE") or os.environ.get("xeondb_EXECUTABLE") or "./build/Xeondb"
     proc = subprocess.Popen(
         [exe, "--config", configPath],
         cwd=repoRoot,
@@ -404,5 +405,42 @@ def testUseKeyspaceUnqualified(tmp_path):
         assert res[5]["ok"] is True and res[5]["found"] is True
         assert res[5]["row"]["id"] == 2
         assert res[5]["row"]["name"] == "bob"
+    finally:
+        stopServer(proc)
+
+
+def testSelectScanOrderByAscDesc(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS orderTest;"))
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS orderTest.people (id int64, name varchar, PRIMARY KEY (id));",
+            )
+        )
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                'INSERT INTO orderTest.people (id,name) VALUES (2,"b"), (1,"a"), (3,"c");',
+            )
+        )
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id ASC;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [1, 2, 3]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [3, 2, 1]
     finally:
         stopServer(proc)

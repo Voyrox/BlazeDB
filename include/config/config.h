@@ -6,7 +6,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     struct Settings

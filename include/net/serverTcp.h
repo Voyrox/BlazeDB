@@ -7,7 +7,7 @@
 #include "core/db.h"
 #include "prelude.h"
 
-namespace blazeDb
+namespace xeondb
 {
 
     class ServerTcp

@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace blazeDb
+namespace xeondb
 {
     static constexpr const char *walMagic = "BZWAL001";
     static constexpr u32 walVersion = 1;

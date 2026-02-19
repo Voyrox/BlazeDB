@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace blazeDb
+namespace xeondb
 {
 
 using u8 = std::uint8_t;

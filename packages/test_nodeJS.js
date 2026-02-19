@@ -1,9 +1,9 @@
-const { BlazeDBClient } = require('./nodeJS');
+const { XeondbClient } = require('./nodeJS');
 
 async function runTest() {
-    const host = process.env.BLAZEDB_HOST || '127.0.0.1';
-    const port = Number(process.env.BLAZEDB_PORT || 9876);
-    const client = new BlazeDBClient({ host, port });
+    const host = process.env.Xeondb_HOST || '127.0.0.1';
+    const port = Number(process.env.Xeondb_PORT || 9876);
+    const client = new XeondbClient({ host, port });
     try {
         const connected = await client.connect();
         if (!connected) {

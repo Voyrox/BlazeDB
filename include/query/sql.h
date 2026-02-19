@@ -10,7 +10,7 @@
 using std::string;
 using std::vector;
 
-namespace blazeDb
+namespace xeondb
 {
 
 struct SqlPing
@@ -49,8 +49,11 @@ struct SqlSelect
     string keyspace;
     string table;
     vector<string> columns;
-    string whereColumn;
-    SqlLiteral whereValue;
+    std::optional<string> whereColumn;
+    std::optional<SqlLiteral> whereValue;
+
+    std::optional<string> orderByColumn;
+    bool orderDesc = false;
 };
 
 struct SqlFlush

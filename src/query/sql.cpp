@@ -6,7 +6,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
 static bool isIdentChar(char c)
@@ -238,6 +238,51 @@ static bool parseLiteral(stringView s, usize& i, SqlLiteral& out)
     }
 
     return false;
+}
+
+static bool parseOrderByClause(stringView s, usize& i, string& outColumn, bool& outDesc, string& error)
+{
+    skipWhitespace(s, i);
+    usize j = i;
+    if (!matchKeyword(s, j, "order"))
+        return true;
+
+    i = j;
+    if (!matchKeyword(s, i, "by"))
+    {
+        error = "Expected by";
+        return false;
+    }
+
+    string col;
+    if (!parseIdentifier(s, i, col))
+    {
+        error = "Expected order by column";
+        return false;
+    }
+
+    bool desc = false;
+    {
+        usize k = i;
+        if (matchKeyword(s, k, "asc"))
+        {
+            i = k;
+            desc = false;
+        }
+        else
+        {
+            k = i;
+            if (matchKeyword(s, k, "desc"))
+            {
+                i = k;
+                desc = true;
+            }
+        }
+    }
+
+    outColumn = col;
+    outDesc = desc;
+    return true;
 }
 
 static bool parseTypeName(stringView s, usize& i, string& out)
@@ -743,24 +788,50 @@ std::optional<SqlCommand> parseSqlLine(const string& rawLine, string& error)
                 cmd.keyspace.clear();
                 cmd.table = firstName;
             }
-            if (!matchKeyword(s, i, "where"))
+
             {
-                error = "Expected where";
-                return std::nullopt;
+                usize k = i;
+                if (matchKeyword(s, k, "where"))
+                {
+                    i = k;
+                    string col;
+                    if (!parseIdentifier(s, i, col))
+                    {
+                        error = "Expected where column";
+                        return std::nullopt;
+                    }
+                    if (!consumeChar(s, i, '='))
+                    {
+                        error = "Expected =";
+                        return std::nullopt;
+                    }
+                    SqlLiteral lit;
+                    if (!parseLiteral(s, i, lit))
+                    {
+                        error = "Expected literal";
+                        return std::nullopt;
+                    }
+                    cmd.whereColumn = col;
+                    cmd.whereValue = lit;
+                }
             }
-            if (!parseIdentifier(s, i, cmd.whereColumn))
+
             {
-                error = "Expected where column";
-                return std::nullopt;
+                string col;
+                bool desc = false;
+                if (!parseOrderByClause(s, i, col, desc, error))
+                    return std::nullopt;
+                if (!col.empty())
+                {
+                    cmd.orderByColumn = col;
+                    cmd.orderDesc = desc;
+                }
             }
-            if (!consumeChar(s, i, '='))
+
+            skipWhitespace(s, i);
+            if (i != s.size())
             {
-                error = "Expected =";
-                return std::nullopt;
-            }
-            if (!parseLiteral(s, i, cmd.whereValue))
-            {
-                error = "Expected literal";
+                error = "Unexpected trailing input";
                 return std::nullopt;
             }
             return cmd;

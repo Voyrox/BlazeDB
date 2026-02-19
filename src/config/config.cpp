@@ -12,7 +12,7 @@ using std::string;
 using std::ifstream;
 using std::ofstream;
 
-namespace blazeDb
+namespace xeondb
 {
 
     static string trim(const string &s)
@@ -164,7 +164,7 @@ namespace blazeDb
                 }
                 return false;
             }
-            fs::path testFile = p / ".blazeDbWriteTest";
+            fs::path testFile = p / ".xeondbWriteTest";
             std::ofstream out(testFile, std::ios::binary | std::ios::trunc);
             if (!out.is_open())
             {
@@ -209,7 +209,7 @@ namespace blazeDb
             {
                 msg += " (created)";
             }
-            blazeDb::log(blazeDb::LogLevel::WARN, msg);
+            xeondb::log(xeondb::LogLevel::WARN, msg);
             return fallback.string();
         }
 

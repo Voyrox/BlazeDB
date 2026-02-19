@@ -6,7 +6,7 @@
 #include <random>
 #include <string>
 
-namespace blazeDb
+namespace xeondb
 {
 
     static char hexChar(u8 v)

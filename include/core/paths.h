@@ -7,7 +7,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     path keyspaceDir(const path &dataDir, const string &keyspace);

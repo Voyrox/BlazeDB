@@ -4,7 +4,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
 byteVec hexToBytes(const string& hex);

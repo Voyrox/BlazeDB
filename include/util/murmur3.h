@@ -2,7 +2,7 @@
 
 #include "prelude.h"
 
-namespace blazeDb
+namespace xeondb
 {
 
 i64 murmur3Token(const byteVec& bytes);

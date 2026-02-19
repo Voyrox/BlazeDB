@@ -19,7 +19,7 @@
 using std::string;
 using std::vector;
 
-namespace blazeDb
+namespace xeondb
 {
 
     TableSchema readSchemaFromMetadata(const path& tableDirPath);
@@ -54,7 +54,13 @@ public:
     void putRow(const byteVec &pkBytes, const byteVec &rowBytes);
     void deleteRow(const byteVec &pkBytes);
     std::optional<byteVec> getRow(const byteVec &pkBytes);
-        void flush();
+    struct ScanRow
+    {
+        byteVec pkBytes;
+        byteVec rowBytes;
+    };
+    std::vector<ScanRow> scanAllRowsByPk(bool desc);
+    void flush();
 
     private:
         void startWalThread();

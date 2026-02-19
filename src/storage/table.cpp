@@ -4,52 +4,55 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <cstring>
 #include <cstdio>
 #include <fstream>
+#include <unordered_map>
 
 using std::ifstream;
 using std::ofstream;
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
 static constexpr const char* metaMagic = "BZMD002";
 static constexpr u32 metaVersion = 2;
 
-static void writeU32(ofstream& out, u32 v)
+static void metaWriteU32(ofstream& out, u32 v)
 {
     out.write(reinterpret_cast<const char*>(&v), sizeof(v));
 }
 
-static void writeU64(ofstream& out, u64 v)
+static void metaWriteU64(ofstream& out, u64 v)
 {
     out.write(reinterpret_cast<const char*>(&v), sizeof(v));
 }
 
-static u32 readU32(ifstream& in)
+static u32 metaReadU32(ifstream& in)
 {
     u32 value = 0;
     in.read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
 
-static u64 readU64(ifstream& in)
+static u64 metaReadU64(ifstream& in)
 {
     u64 value = 0;
     in.read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
 
-static void writeString(ofstream& out, const string& s)
+static void metaWriteString(ofstream& out, const string& s)
 {
-    writeU32(out, static_cast<u32>(s.size()));
+    metaWriteU32(out, static_cast<u32>(s.size()));
     out.write(s.data(), s.size());
 }
 
-static string readString(ifstream& stream)
+static string metaReadString(ifstream& stream)
 {
-    auto len = readU32(stream);
+    auto len = metaReadU32(stream);
     string s;
     s.resize(len);
     stream.read(s.data(), len);
@@ -89,6 +92,117 @@ static byteVec decoratedKeyBytes(const byteVec& pkBytes)
     return out;
 }
 
+static byteVec pkBytesFromDecoratedKeyString(const string& decorated)
+{
+    if (decorated.size() < 8)
+        return {};
+    const u8* p = reinterpret_cast<const u8*>(decorated.data());
+    return byteVec(p + 8, p + decorated.size());
+}
+
+static int comparePkBytes(ColumnType type, const byteVec& a, const byteVec& b)
+{
+    auto readBe32Local = [](const byteVec& v) -> i32 {
+        u32 val = 0;
+        val |= static_cast<u32>(v[0]) << 24;
+        val |= static_cast<u32>(v[1]) << 16;
+        val |= static_cast<u32>(v[2]) << 8;
+        val |= static_cast<u32>(v[3]) << 0;
+        return static_cast<i32>(val);
+    };
+    auto readBe64Local = [](const byteVec& v) -> i64 {
+        u64 val = 0;
+        for (int i = 0; i < 8; i++)
+            val = (val << 8) | static_cast<u64>(v[static_cast<usize>(i)]);
+        return static_cast<i64>(val);
+    };
+
+    if (type == ColumnType::Text || type == ColumnType::Char || type == ColumnType::Blob)
+    {
+        if (std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end()))
+            return -1;
+        if (std::lexicographical_compare(b.begin(), b.end(), a.begin(), a.end()))
+            return 1;
+        return 0;
+    }
+
+    if (type == ColumnType::Boolean)
+    {
+        u8 av = a.empty() ? 0 : a[0];
+        u8 bv = b.empty() ? 0 : b[0];
+        if (av < bv)
+            return -1;
+        if (av > bv)
+            return 1;
+        return 0;
+    }
+
+    if (type == ColumnType::Int32 || type == ColumnType::Date)
+    {
+        if (a.size() != 4 || b.size() != 4)
+            return (a.size() < b.size()) ? -1 : (a.size() > b.size() ? 1 : 0);
+        i32 av = readBe32Local(a);
+        i32 bv = readBe32Local(b);
+        if (av < bv)
+            return -1;
+        if (av > bv)
+            return 1;
+        return 0;
+    }
+
+    if (type == ColumnType::Int64 || type == ColumnType::Timestamp)
+    {
+        if (a.size() != 8 || b.size() != 8)
+            return (a.size() < b.size()) ? -1 : (a.size() > b.size() ? 1 : 0);
+        i64 av = readBe64Local(a);
+        i64 bv = readBe64Local(b);
+        if (av < bv)
+            return -1;
+        if (av > bv)
+            return 1;
+        return 0;
+    }
+
+    if (type == ColumnType::Float32)
+    {
+        if (a.size() != 4 || b.size() != 4)
+            return (a.size() < b.size()) ? -1 : (a.size() > b.size() ? 1 : 0);
+        u32 au = 0;
+        au |= static_cast<u32>(a[0]) << 24;
+        au |= static_cast<u32>(a[1]) << 16;
+        au |= static_cast<u32>(a[2]) << 8;
+        au |= static_cast<u32>(a[3]) << 0;
+        u32 bu = 0;
+        bu |= static_cast<u32>(b[0]) << 24;
+        bu |= static_cast<u32>(b[1]) << 16;
+        bu |= static_cast<u32>(b[2]) << 8;
+        bu |= static_cast<u32>(b[3]) << 0;
+        float af;
+        float bf;
+        std::memcpy(&af, &au, 4);
+        std::memcpy(&bf, &bu, 4);
+        bool aNan = std::isnan(af);
+        bool bNan = std::isnan(bf);
+        if (aNan && bNan)
+            return 0;
+        if (aNan)
+            return -1;
+        if (bNan)
+            return 1;
+        if (af < bf)
+            return -1;
+        if (af > bf)
+            return 1;
+        return 0;
+    }
+
+    if (std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end()))
+        return -1;
+    if (std::lexicographical_compare(b.begin(), b.end(), a.begin(), a.end()))
+        return 1;
+    return 0;
+}
+
 static string decoratedKeyString(const byteVec& pkBytes)
 {
     auto bytes = decoratedKeyBytes(pkBytes);
@@ -106,20 +220,20 @@ TableSchema readSchemaFromMetadata(const path& tableDirPath)
         throw runtimeError("Bad metadata");
     char pad = 0;
     stream.read(&pad, 1);
-    auto version = readU32(stream);
+    auto version = metaReadU32(stream);
     if (version != metaVersion)
         throw runtimeError("Bad metadata");
-    (void)readString(stream);
-    (void)readString(stream);
-    (void)readString(stream);
-    (void)readU64(stream);
-    auto pkIndex = readU32(stream);
-    auto colCount = readU32(stream);
+    (void)metaReadString(stream);
+    (void)metaReadString(stream);
+    (void)metaReadString(stream);
+    (void)metaReadU64(stream);
+    auto pkIndex = metaReadU32(stream);
+    auto colCount = metaReadU32(stream);
     TableSchema schema;
     schema.columns.reserve(colCount);
     for (u32 i = 0; i < colCount; i++)
     {
-        auto name = readString(stream);
+        auto name = metaReadString(stream);
         u8 typeId = 0;
         stream.read(reinterpret_cast<char*>(&typeId), 1);
         schema.columns.push_back(ColumnDef{name, static_cast<ColumnType>(typeId)});
@@ -173,17 +287,17 @@ void Table::writeMetadata()
     stream.write(metaMagic, 7);
     char pad = 0;
     stream.write(&pad, 1);
-    writeU32(stream, metaVersion);
-    writeString(stream, uuid_);
-    writeString(stream, keyspace_);
-    writeString(stream, table_);
+    metaWriteU32(stream, metaVersion);
+    metaWriteString(stream, uuid_);
+    metaWriteString(stream, keyspace_);
+    metaWriteString(stream, table_);
     auto now = static_cast<u64>(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    writeU64(stream, now);
-    writeU32(stream, static_cast<u32>(schema_.primaryKeyIndex));
-    writeU32(stream, static_cast<u32>(schema_.columns.size()));
+    metaWriteU64(stream, now);
+    metaWriteU32(stream, static_cast<u32>(schema_.primaryKeyIndex));
+    metaWriteU32(stream, static_cast<u32>(schema_.columns.size()));
     for (const auto& cols : schema_.columns)
     {
-        writeString(stream, cols.name);
+        metaWriteString(stream, cols.name);
         u8 typeId = static_cast<u8>(cols.type);
         stream.write(reinterpret_cast<const char*>(&typeId), 1);
     }
@@ -346,6 +460,75 @@ std::optional<byteVec> Table::getRow(const byteVec& pkBytes)
         }
     }
     return std::nullopt;
+}
+
+std::vector<Table::ScanRow> Table::scanAllRowsByPk(bool desc)
+{
+    TableSchema schemaSnap;
+    std::vector<std::pair<string, MemValue>> memSnap;
+    std::vector<SsTableFile> ssSnap;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        schemaSnap = schema_;
+        memSnap = memTable_.snapshot();
+        ssSnap = ssTables_;
+    }
+
+    std::unordered_map<string, std::pair<u64, byteVec>> latest;
+    latest.reserve(memSnap.size() + 32);
+
+    for (const auto& kv : memSnap)
+    {
+        const auto& key = kv.first;
+        const auto& mv = kv.second;
+        auto it = latest.find(key);
+        if (it == latest.end() || mv.seq > it->second.first)
+            latest[key] = {mv.seq, mv.value};
+    }
+
+    for (const auto& ss : ssSnap)
+    {
+        auto entries = ssTableScanAll(ss);
+        for (const auto& e : entries)
+        {
+            string key(reinterpret_cast<const char*>(e.key.data()), reinterpret_cast<const char*>(e.key.data() + e.key.size()));
+            auto it = latest.find(key);
+            if (it == latest.end() || e.seq > it->second.first)
+                latest[key] = {e.seq, e.value};
+        }
+    }
+
+    std::vector<Table::ScanRow> out;
+    out.reserve(latest.size());
+    for (auto& kv : latest)
+    {
+        const string& dkey = kv.first;
+        const byteVec& rowBytes = kv.second.second;
+        if (rowBytes.empty())
+            continue;
+
+        Table::ScanRow r;
+        r.pkBytes = pkBytesFromDecoratedKeyString(dkey);
+        r.rowBytes = rowBytes;
+        out.push_back(std::move(r));
+    }
+
+    ColumnType pkType = schemaSnap.columns[schemaSnap.primaryKeyIndex].type;
+    std::sort(out.begin(), out.end(), [&](const Table::ScanRow& a, const Table::ScanRow& b) {
+        int cmp = comparePkBytes(pkType, a.pkBytes, b.pkBytes);
+        if (cmp == 0)
+        {
+            if (std::lexicographical_compare(a.pkBytes.begin(), a.pkBytes.end(), b.pkBytes.begin(), b.pkBytes.end()))
+                cmp = -1;
+            else if (std::lexicographical_compare(b.pkBytes.begin(), b.pkBytes.end(), a.pkBytes.begin(), a.pkBytes.end()))
+                cmp = 1;
+            else
+                cmp = 0;
+        }
+        return desc ? (cmp > 0) : (cmp < 0);
+    });
+
+    return out;
 }
 
 void Table::flush()

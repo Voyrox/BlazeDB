@@ -19,7 +19,7 @@
 
 using std::string;
 
-namespace blazeDb
+namespace xeondb
 {
 
     ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections)
@@ -97,8 +97,8 @@ namespace blazeDb
             throw errnoError("listen failed");
         }
 
-        blazeDb::log(
-            blazeDb::LogLevel::INFO,
+        xeondb::log(
+            xeondb::LogLevel::INFO,
             std::string("Listening host=") + host_ +
                 " port=" + std::to_string(port_) +
                 " maxLineBytes=" + std::to_string(maxLineBytes_) +
@@ -265,18 +265,43 @@ namespace blazeDb
                         auto retTable = db_->openTable(keyspace, select->table);
                         auto pkIndex = retTable->schema().primaryKeyIndex;
                         auto pkName = retTable->schema().columns[pkIndex].name;
-                        if (select->whereColumn != pkName)
-                            throw runtimeError("Where must use primary key");
-                        byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, select->whereValue);
-                        auto rowBytes = retTable->getRow(pkBytes);
-                        if (!rowBytes.has_value())
+
+                        if (select->whereColumn.has_value())
                         {
-                            response = string("{\"ok\":true,\"found\":false}");
+                            if (!select->whereValue.has_value())
+                                throw runtimeError("Expected where value");
+                            if (*select->whereColumn != pkName)
+                                throw runtimeError("Where must use primary key");
+                            byteVec pkBytes = encodePartitionKeyBytes(retTable->schema().columns[pkIndex].type, *select->whereValue);
+                            auto rowBytes = retTable->getRow(pkBytes);
+                            if (!rowBytes.has_value())
+                            {
+                                response = string("{\"ok\":true,\"found\":false}");
+                            }
+                            else
+                            {
+                                string rowJson = rowToJson(retTable->schema(), pkBytes, *rowBytes, select->columns);
+                                response = string("{\"ok\":true,\"found\":true,\"row\":") + rowJson + "}";
+                            }
                         }
                         else
                         {
-                            string rowJson = rowToJson(retTable->schema(), pkBytes, *rowBytes, select->columns);
-                            response = string("{\"ok\":true,\"found\":true,\"row\":") + rowJson + "}";
+                            if (select->orderByColumn.has_value() && *select->orderByColumn != pkName)
+                                throw runtimeError("ORDER BY must use primary key");
+
+                            bool desc = select->orderByColumn.has_value() ? select->orderDesc : false;
+                            auto rows = retTable->scanAllRowsByPk(desc);
+                            string out = "{\"ok\":true,\"rows\":[";
+                            bool first = true;
+                            for (const auto& r : rows)
+                            {
+                                if (!first)
+                                    out += ",";
+                                first = false;
+                                out += rowToJson(retTable->schema(), r.pkBytes, r.rowBytes, select->columns);
+                            }
+                            out += "]}";
+                            response = out;
                         }
                     }
                     else if (auto *flush = std::get_if<SqlFlush>(&cmd))
