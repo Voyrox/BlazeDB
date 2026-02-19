@@ -42,8 +42,7 @@ jobs:
         run: |
           mkdocs build \
             -f docs/mkdocs.yml \
-            --site-dir "${GITHUB_WORKSPACE}/_site" \
-            --site-url "${{ steps.pages.outputs.base_url }}/"
+            --site-dir "${GITHUB_WORKSPACE}/_site"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
