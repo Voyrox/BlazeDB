@@ -1,10 +1,18 @@
-site_name: Xeondb Documentation
+site_name: XeonDB Documentation
 site_url: https://voyrox.github.io/Xeondb/
+site_description: Xeondb is a real-time big data database that is designed to be fast, efficient, and easy to use. It is built on top of a custom storage engine that is optimized for high performance and low latency. 
 
+repo_name: Github
+repo_url: https://github.com/Voyrox/Xeondb
+
+theme:
+  name: mkdocs
+  locale: en
+  custom_dir: overrides
 nav:
   - Home: index.md
   - Quick Start: quickstart.md
   - Deployment: deployment.md
 
 extra_css:
-  - stylesheets/extra.css
+  - css/theme.css

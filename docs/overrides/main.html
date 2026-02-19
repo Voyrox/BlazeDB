@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block site_name %}
+  <a class="navbar-brand" href="{{ nav.homepage.url|url }}">
+    <img src="{{ 'img/logo.png'|url }}" alt="logo">
+    {{ config.site_name }}
+  </a>
+{% endblock %}

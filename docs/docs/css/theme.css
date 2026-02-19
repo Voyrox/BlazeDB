@@ -1,6 +1,6 @@
 :root {
-  --Xeondb-bg: #282828;
-  --Xeondb-nav: #1d2021;
+  --Xeondb-bg: #04050d;
+  --Xeondb-nav: #121844;
   --Xeondb-text: #d7d3ba;
 
   --bs-primary: var(--Xeondb-nav);
@@ -123,7 +123,7 @@ a:hover {
 
 .bg-body-tertiary {
   --bs-bg-opacity: 1;
-  background-color: rgb(49, 49, 49) !important;
+  background-color: rgb(18, 20, 34) !important;
 }
 
 .hljs {
@@ -132,15 +132,15 @@ a:hover {
 }
 
 .hljs-meta .hljs-string, .hljs-regexp, .hljs-string {
-  color: #fe8019;
+  color: #8f91aa;
 }
 
 .hljs-attr, .hljs-attribute, .hljs-literal, .hljs-meta, .hljs-number, .hljs-operator, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-id, .hljs-variable {
-  color: #fe8019;
+  color: #8f91aa;
 }
 
 .modal-content {
-  background-color: #222121;
+  background-color: #0d0e13;
 }
 
 .form-control {
@@ -152,5 +152,25 @@ a:hover {
 code {
   background-color: rgba(40, 40, 40, 0.75);
   border: solid 1px #3f4142;
-  color: #cb6c1e;
+  color: #8f91aa;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0;
+}
+
+.navbar-brand::after {
+  content: "| Documentation";
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--Xeondb-text);
+}
+
+.navbar-brand img {
+  height: 28px;
+  width: auto;
 }
