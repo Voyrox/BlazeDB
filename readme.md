@@ -1,5 +1,7 @@
 # Xeondb
 
+<img src="banner.png" alt="Xeondb Logo" width="100%"/>
+
 ## What is Xeondb?
 Xeondb is a real-time big data database that is designed to be fast, efficient, and easy to use. It is built on top of a custom storage engine that is optimized for high performance and low latency.
 
@@ -75,7 +77,7 @@ ninja -C build test
 
 
 ## Documentation
-The documentation for Xeondb is currently a work in progress. We are actively working on creating comprehensive documentation to help users get started and make the most of Xeondb. In the meantime, you can refer to the source code and comments for insights into how Xeondb works.
+Docs can be found [here](https://voyrox.github.io/Xeondb/). The documentation includes a quick start guide, deployment instructions, and detailed information about the database's features and configuration options.
 
 ## Contributing
 If you want to report a bug, suggest a feature, or contribute to the development of Xeondb, please feel free to open an issue or submit a pull request on our GitHub repository. We welcome contributions from the community and are always looking for ways to improve Xeondb.

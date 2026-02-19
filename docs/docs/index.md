@@ -12,7 +12,7 @@ This docs site covers the database server: how to build it, run it locally, and 
 - Use a small SQL subset:
   - `PING`, `USE`
   - `CREATE KEYSPACE`, `CREATE TABLE`
-  - `INSERT`, `SELECT`, `UPDATE`, `DELETE`
+  - `INSERT`, `SELECT`, `UPDATE`, `DELETE`, `ORDER BY`
   - `FLUSH`
 
 ## Next steps
