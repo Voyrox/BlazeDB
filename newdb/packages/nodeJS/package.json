@@ -1,5 +1,5 @@
 {
-  "name": "blazedb",
+  "name": "blazedb-driver",
   "version": "0.1.0",
   "description": "Node.js client for BlazeDB.",
   "main": "index.js",
