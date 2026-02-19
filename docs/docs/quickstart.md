@@ -1,10 +1,8 @@
 # Quick Start
 
-This quick start builds the `newdb/` server, runs it locally, and executes a few example queries over TCP.
+This quick start builds the database server, runs it locally, and executes a few example queries over TCP.
 
 ## Build
-
-From the `newdb/` directory:
 
 ```bash
 cmake -S . -B build -G Ninja

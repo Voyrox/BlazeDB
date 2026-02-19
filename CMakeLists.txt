@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(blazedbNewdb LANGUAGES CXX)
+project(Xeondb LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -49,13 +49,13 @@ else()
 endif()
 
 add_test(
-    NAME newdb_pytest
+    NAME xeondb_pytest
     COMMAND
         ${CMAKE_COMMAND} -E env
-            "BLAZEDB_EXECUTABLE=$<TARGET_FILE:blazedbd>"
+            "XEONDB_EXECUTABLE=$<TARGET_FILE:blazedbd>"
             "${BLAZEDB_PYTHON}" -m pytest -vv --durations=10
 )
-set_tests_properties(newdb_pytest PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+set_tests_properties(xeondb_pytest PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 find_program(CLANG_TIDY_EXE NAMES clang-tidy)
 if(CLANG_TIDY_EXE)

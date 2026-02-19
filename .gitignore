@@ -37,3 +37,4 @@ rust/target
 .venv/
 venv/
 var/
+.pytest_cache

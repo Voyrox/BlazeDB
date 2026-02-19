@@ -8,12 +8,10 @@ Xeondb is fussy about the build environment. It requires a C++15 compliant compi
 
 ## Building Xeondb
 
-
 Building Xeondb is straightforward with CMake + Ninja. The provided Docker image is also available for a hassle-free build process.
 
 ### Using Ninja
 ```bash
-# From inside newdb/
 cmake -S . -B build -G Ninja  # Configure project for Ninja
 ninja -C build                # Build the project
 

@@ -2,7 +2,7 @@
 
 Xeondb is a blazing fast NoSQL database built for modern applications. It aims to be lightweight, easy to run, and straightforward to integrate into your app.
 
-This docs site covers the `newdb/` server: how to build it, run it locally, and send SQL over the TCP protocol.
+This docs site covers the database server: how to build it, run it locally, and send SQL over the TCP protocol.
 
 ## What you can do
 
