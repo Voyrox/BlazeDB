@@ -55,12 +55,12 @@ std::string columnTypeName(ColumnType t);
 
 std::optional<usize> findColumnIndex(const TableSchema& schema, const string& name);
 
-byteVec encodePartitionKeyBytes(ColumnType type, const SqlLiteral& lit);
+byteVec partitionKeyBytes(ColumnType type, const SqlLiteral& lit);
 
-byteVec encodeRowBytes(const TableSchema& schema, const std::vector<string>& columnNames, const std::vector<SqlLiteral>& values, const byteVec& pkBytes);
+byteVec rowBytes(const TableSchema& schema, const std::vector<string>& columnNames, const std::vector<SqlLiteral>& values, const byteVec& pkBytes);
 
-string formatDateFromDays(i32 days);
-string formatTimestampFromMs(i64 ms);
+string dateFromDays(i32 days);
+string timestampFromMs(i64 ms);
 
 string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns);
 

@@ -10,31 +10,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 
-set(Xeondb_SOURCES
-    src/app/main.cpp
-    src/config/config.cpp
-    src/core/db.cpp
-    src/core/paths.cpp
-    src/net/serverTcp.cpp
-    src/query/schema.cpp
-    src/query/sql.cpp
-    src/storage/commitLog.cpp
-    src/storage/manifest.cpp
-    src/storage/memTable.cpp
-    src/storage/ssTable.cpp
-    src/storage/table.cpp
-    src/util/binIo.cpp
-    src/util/crc32.cpp
-    src/util/encoding.cpp
-    src/util/json.cpp
-    src/util/log.cpp
-    src/util/murmur3.cpp
-    src/util/uuid.cpp
-)
+file(GLOB_RECURSE Xeondb_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 add_executable(Xeondb ${Xeondb_SOURCES})
 
-target_include_directories(Xeondb PRIVATE include)
+target_include_directories(Xeondb PRIVATE include src)
 target_compile_options(Xeondb PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(Xeondb PRIVATE Threads::Threads)
 

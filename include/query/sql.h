@@ -82,6 +82,6 @@ struct SqlUpdate
 
 using SqlCommand = std::variant<SqlPing, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate>;
 
-std::optional<SqlCommand> parseSqlLine(const string& line, string& error);
+std::optional<SqlCommand> sqlCommand(const string& line, string& error);
 
 }
