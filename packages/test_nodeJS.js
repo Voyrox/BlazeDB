@@ -3,7 +3,9 @@ const { XeondbClient } = require('./nodeJS');
 async function main() {
     const host = process.env.Xeondb_HOST || '127.0.0.1';
     const port = Number(process.env.Xeondb_PORT || 9876);
-    const client = new XeondbClient({ host, port });
+    const username = process.env.Xeondb_USERNAME;
+    const password = process.env.Xeondb_PASSWORD;
+    const client = new XeondbClient({ host, port, username, password });
 
     const keyspace = 'testKeyspace';
     const table = 'testTable';

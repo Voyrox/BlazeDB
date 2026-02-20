@@ -6,6 +6,7 @@
 #include "util/log.h"
 
 #include <cerrno>
+#include <cctype>
 #include <cstring>
 #include <filesystem>
 #include <string>
@@ -21,12 +22,15 @@ using std::string;
 
 namespace xeondb {
 
-ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections)
+ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections, string authUsername, string authPassword)
     : db_(std::move(db))
     , host_(std::move(host))
     , port_(port)
     , maxLineBytes_(maxLineBytes)
     , maxConnections_(maxConnections)
+    , authUsername_(std::move(authUsername))
+    , authPassword_(std::move(authPassword))
+    , authEnabled_(!authUsername_.empty() && !authPassword_.empty())
     , connectionCount_(0) {
 }
 
@@ -92,7 +96,8 @@ void ServerTcp::run() {
     }
 
     xeondb::log(xeondb::LogLevel::INFO, std::string("Listening host=") + host_ + " port=" + std::to_string(port_) +
-                                                " maxLineBytes=" + std::to_string(maxLineBytes_) + " maxConnections=" + std::to_string(maxConnections_));
+                                                " maxLineBytes=" + std::to_string(maxLineBytes_) + " maxConnections=" + std::to_string(maxConnections_) +
+                                                " auth=" + (authEnabled_ ? "enabled" : "disabled"));
 
     for (;;) {
         int clientSocketDesc = ::accept(socketFileDesc, nullptr, nullptr);
@@ -122,6 +127,7 @@ void ServerTcp::handleClient(int clientFd) {
     char tmp[4096];
 
     string currentKeyspace;
+    bool authed = !authEnabled_;
 
     while (true) {
         ssize_t recieved = ::recv(clientFd, tmp, sizeof(tmp), 0);
@@ -150,6 +156,21 @@ void ServerTcp::handleClient(int clientFd) {
             if (line.empty())
                 continue;
 
+            if (authEnabled_ && !authed) {
+                usize k = 0;
+                while (k < line.size() && std::isspace(static_cast<unsigned char>(line[k])))
+                    k++;
+                auto eq = [](char a, char b) {
+                    return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+                };
+                const bool isAuth = (k + 4 <= line.size()) && eq(line[k + 0], 'a') && eq(line[k + 1], 'u') && eq(line[k + 2], 't') && eq(line[k + 3], 'h') &&
+                                    (k + 4 == line.size() || std::isspace(static_cast<unsigned char>(line[k + 4])));
+                if (!isAuth) {
+                    sendAll(clientFd, jsonError("unauthorized") + "\n");
+                    continue;
+                }
+            }
+
             string parseError;
             auto cmdOpt = sqlCommand(line, parseError);
             if (!cmdOpt.has_value()) {
@@ -160,7 +181,18 @@ void ServerTcp::handleClient(int clientFd) {
             string response;
             try {
                 auto& cmd = *cmdOpt;
-                if (std::holds_alternative<SqlPing>(cmd)) {
+                if (auto* auth = std::get_if<SqlAuth>(&cmd)) {
+                    if (!authEnabled_) {
+                        response = jsonOk();
+                    } else if (auth->username == authUsername_ && auth->password == authPassword_) {
+                        authed = true;
+                        response = jsonOk();
+                    } else {
+                        response = jsonError("bad_auth");
+                    }
+                } else if (!authed) {
+                    response = jsonError("unauthorized");
+                } else if (std::holds_alternative<SqlPing>(cmd)) {
                     response = jsonString("result", "PONG");
                 } else if (auto* use = std::get_if<SqlUse>(&cmd)) {
                     currentKeyspace = use->keyspace;

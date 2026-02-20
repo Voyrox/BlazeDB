@@ -5,15 +5,33 @@ class XeondbClient {
 	 * @param {Object} options
 	 * @param {string} options.host - The database server IP or hostname
 	 * @param {number} options.port - The database server port
+	 * @param {string} [options.username] - Optional username (enables auth)
+	 * @param {string} [options.password] - Optional password (enables auth)
 	 */
-	constructor({ host = '127.0.0.1', port = 8080 } = {}) {
+	constructor({ host = '127.0.0.1', port = 9876, username = undefined, password = undefined } = {}) {
 		this.host = host;
 		this.port = port;
+		this.username = username;
+		this.password = password;
 		this.socket = null;
 		this.keyspace = null;
 		this.connected = false;
 		this._buffer = '';
 		this._pending = [];
+	}
+
+	static _sqlQuoted(v) {
+		const s = String(v);
+		return (
+			'"' +
+			s
+				.replace(/\\/g, '\\\\')
+				.replace(/\"/g, '\\"')
+				.replace(/\n/g, '\\n')
+				.replace(/\r/g, '\\r')
+				.replace(/\t/g, '\\t') +
+			'"'
+		);
 	}
 
 	/**
@@ -22,16 +40,35 @@ class XeondbClient {
 	 */
 	connect() {
 		return new Promise((resolve) => {
-			this.socket = net.createConnection({ host: this.host, port: this.port }, () => {
+			this.socket = net.createConnection({ host: this.host, port: this.port }, async () => {
 				this.connected = true;
 				this._installSocketHandlers();
-				resolve(true);
+				try {
+					const hasUser = this.username !== undefined && this.username !== null && String(this.username) !== '';
+					const hasPass = this.password !== undefined && this.password !== null && String(this.password) !== '';
+					if (hasUser || hasPass) {
+						const res = await this.auth(this.username || '', this.password || '');
+						if (!res || res.ok !== true) {
+							throw new Error(res && res.error ? res.error : 'Authentication failed');
+						}
+					}
+					resolve(true);
+				} catch {
+					this.close();
+					resolve(false);
+				}
 			});
 			this.socket.on('error', () => {
 				this.connected = false;
 				resolve(false);
 			});
 		});
+	}
+
+	async auth(username, password) {
+		const u = XeondbClient._sqlQuoted(username);
+		const p = XeondbClient._sqlQuoted(password);
+		return await this.query(`AUTH ${u} ${p};`);
 	}
 
 	_installSocketHandlers() {

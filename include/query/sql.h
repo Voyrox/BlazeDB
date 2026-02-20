@@ -10,42 +10,39 @@
 using std::string;
 using std::vector;
 
-namespace xeondb
-{
+namespace xeondb {
 
-struct SqlPing
-{
+struct SqlPing {};
+
+struct SqlAuth {
+    string username;
+    string password;
 };
 
-struct SqlUse
-{
+struct SqlUse {
     string keyspace;
 };
 
-struct SqlCreateKeyspace
-{
+struct SqlCreateKeyspace {
     string keyspace;
     bool ifNotExists;
 };
 
-struct SqlCreateTable
-{
+struct SqlCreateTable {
     string keyspace;
     string table;
     bool ifNotExists;
     TableSchema schema;
 };
 
-struct SqlInsert
-{
+struct SqlInsert {
     string keyspace;
     string table;
     vector<string> columns;
     vector<vector<SqlLiteral>> rows;
 };
 
-struct SqlSelect
-{
+struct SqlSelect {
     string keyspace;
     string table;
     vector<string> columns;
@@ -56,22 +53,19 @@ struct SqlSelect
     bool orderDesc = false;
 };
 
-struct SqlFlush
-{
+struct SqlFlush {
     string keyspace;
     string table;
 };
 
-struct SqlDelete
-{
+struct SqlDelete {
     string keyspace;
     string table;
     string whereColumn;
     SqlLiteral whereValue;
 };
 
-struct SqlUpdate
-{
+struct SqlUpdate {
     string keyspace;
     string table;
     vector<string> setColumns;
@@ -80,7 +74,7 @@ struct SqlUpdate
     SqlLiteral whereValue;
 };
 
-using SqlCommand = std::variant<SqlPing, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate>;
+using SqlCommand = std::variant<SqlPing, SqlAuth, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate>;
 
 std::optional<SqlCommand> sqlCommand(const string& line, string& error);
 

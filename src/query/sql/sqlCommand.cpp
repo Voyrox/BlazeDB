@@ -29,6 +29,23 @@ std::optional<SqlCommand> sqlCommand(const string& rawLine, string& error) {
 
     {
         usize j = i;
+        if (matchKeyword(s, j, "auth")) {
+            i = j;
+            SqlAuth cmd;
+            if (!parseQuoted(s, i, cmd.username)) {
+                error = "Expected username";
+                return std::nullopt;
+            }
+            if (!parseQuoted(s, i, cmd.password)) {
+                error = "Expected password";
+                return std::nullopt;
+            }
+            return cmd;
+        }
+    }
+
+    {
+        usize j = i;
         if (matchKeyword(s, j, "use")) {
             i = j;
             SqlUse cmd;

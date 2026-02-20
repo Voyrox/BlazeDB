@@ -43,27 +43,53 @@ docker run --name xeondb # Runs the Xeondb server in a Docker container
 Xeondb can be configured using a configuration file. The configuration file allows you to specify various settings such as the server port, data directory, and logging options. Environment variables can also be used to override specific configuration settings without modifying the configuration file.
 
 ```yml
+# XeonDB server configuration
+
+# Network configuration
+# - host: IP address to bind to (0.0.0.0 = all interfaces)
+# - port: TCP port to listen on
 network:
   host: 0.0.0.0
   port: 9876
 
+# Storage configuration
+# - Directory where all keyspaces/tables/WAL live
 storage:
   dataDir: /var/lib/xeondb/data
 
+# Limits / safety valves
+# - maxLineBytes: maximum bytes per request line (SQL + newline)
+# - maxConnections: max concurrent TCP connections
 limits:
   maxLineBytes: 1048576
   maxConnections: 1024
 
+# Write-ahead log (WAL)
+# - walFsync: "always" or "periodic" (periodic is faster, slightly less durable)
+# - walFsyncIntervalMs: periodic fsync interval
+# - walFsyncBytes: optional size hint for fsync batching
 wal:
   walFsync: periodic
   walFsyncIntervalMs: 50
   walFsyncBytes: 1048576
 
+# In-memory write buffer
+# - Max bytes in memtable before flush is needed
 memtable:
   memtableMaxBytes: 33554432
 
+# SSTable configuration
+# - Index entry frequency (smaller = faster reads, larger = smaller files)
 sstable:
   sstableIndexStride: 16
+
+# Optional authentication.
+# - If both username and password are set, clients must authenticate first.
+# - If either is missing/empty, auth is disabled.
+# - Client must send: AUTH "<username>" "<password>";
+auth:
+  # username: admin
+  # password: change-me
 ```
 
 ### Testing

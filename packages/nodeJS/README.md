@@ -35,7 +35,10 @@ const { XeondbClient } = require('./nodeJS');
 async function main() {
     const host = process.env.Xeondb_HOST || '127.0.0.1';
     const port = Number(process.env.Xeondb_PORT || 9876);
-    const client = new XeondbClient({ host, port });
+    // Optional auth (only required if the server has auth enabled)
+    const username = process.env.Xeondb_USERNAME;
+    const password = process.env.Xeondb_PASSWORD;
+    const client = new XeondbClient({ host, port, username, password });
 
     const keyspace = 'testKeyspace';
     const table = 'testTable';
@@ -92,6 +95,26 @@ async function main() {
 
 main();
 ``` 
+
+## Authentication
+
+Server-side (config snippet):
+
+```yml
+auth:
+  username: admin
+  password: change-me
+```
+
+Client-side:
+
+```javascript
+const client = new XeondbClient({ host, port, username: 'admin', password: 'change-me' });
+await client.connect();
+
+// or, if you want to auth explicitly
+await client.auth('admin', 'change-me');
+```
 
 
 ## Devnotes

@@ -14,7 +14,7 @@ def pickFreePort():
     return port
 
 
-def writeConfig(path, port, dataDir):
+def writeConfig(path, port, dataDir, username=None, password=None):
     with open(path, "w", encoding="utf-8") as f:
         f.write("host: 127.0.0.1\n")
         f.write(f"port: {port}\n")
@@ -26,6 +26,10 @@ def writeConfig(path, port, dataDir):
         f.write("walFsyncBytes: 1048576\n")
         f.write("memtableMaxBytes: 33554432\n")
         f.write("sstableIndexStride: 16\n")
+        if username is not None and password is not None:
+            f.write("auth:\n")
+            f.write(f"  username: {username}\n")
+            f.write(f"  password: {password}\n")
 
 
 def waitForListening(proc, timeoutSec=3.0):
@@ -149,6 +153,37 @@ def testPing(tmp_path):
     try:
         r = mustOk(tcpQuery("127.0.0.1", port, "PING;"))
         assert r["result"] == "PONG"
+    finally:
+        stopServer(proc)
+
+
+def testAuthRequired(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir), username="admin", password="secret")
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        r = tcpQuery("127.0.0.1", port, "PING;")
+        assert r["ok"] is False
+        assert r["error"] == "unauthorized"
+
+        res = tcpSession(
+            "127.0.0.1",
+            port,
+            [
+                'AUTH "admin" "wrong";',
+                'AUTH "admin" "secret";',
+                "PING;",
+            ],
+        )
+        assert res[0]["ok"] is False
+        assert res[0]["error"] == "bad_auth"
+        mustOk(res[1])
+        assert mustOk(res[2])["result"] == "PONG"
     finally:
         stopServer(proc)
 
