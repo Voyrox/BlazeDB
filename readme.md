@@ -101,9 +101,30 @@ With Ninja/CMake:
 ninja -C build test
 ```
 
-
 ## Documentation
 Docs can be found [here](https://voyrox.github.io/Xeondb/). The documentation includes a quick start guide, deployment instructions, and detailed information about the database's features and configuration options.
 
 ## Contributing
 If you want to report a bug, suggest a feature, or contribute to the development of Xeondb, please feel free to open an issue or submit a pull request on our GitHub repository. We welcome contributions from the community and are always looking for ways to improve Xeondb.
+
+## References
+- O’Neil, P., Cheng, E., Gawlick, D., & O’Neil, E. (1996). The Log-Structured Merge-Tree (LSM-Tree). ACM SIGMOD. https://dl.acm.org/doi/10.1145/230784.230785
+- Chang, F. et al. (2006). Bigtable: A Distributed Storage System for Structured Data. OSDI. https://research.google/pubs/pub27898/
+- Mohan, C., Haderle, D., Lindsay, B., Pirahesh, H., & Schwarz, P. (1992). ARIES: A Transaction Recovery Method Supporting Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead Logging. ACM TODS. https://dl.acm.org/doi/10.1145/128765.128770
+- Gray, J., & Reuter, A. (1992). Transaction Processing: Concepts and Techniques. Morgan Kaufmann. (classic WAL/recovery book reference)
+- Rosenblum, M., & Ousterhout, J. (1992). The Design and Implementation of a Log-Structured File System. ACM TOCS. https://dl.acm.org/doi/10.1145/146941.146943
+- Lakshman, A., & Malik, P. (2009). Cassandra: A Decentralized Structured Storage System. LADIS. https://www.cs.cornell.edu/projects/ladis2009/papers/lakshman-ladis2009.pdf
+- DeCandia, G. et al. (2007). Dynamo: Amazon’s Highly Available Key-value Store. SOSP. (partitioning/consistent-hashing lineage) https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
+- Bloom, B. (1970). Space/Time Trade-offs in Hash Coding with Allowable Errors. CACM. https://dl.acm.org/doi/10.1145/362686.362692
+- https://github.com/PeterScott/murmur3
+- Sears, R., & Ramakrishnan, R. (2012). bLSM: a general purpose log structured merge tree. SIGMOD. https://doi.org/10.1145/2213836.2213862
+- Dayan, N., Athanassoulis, M., & Idreos, S. (2018). Optimal Bloom Filters and Adaptive Merging for LSM-Trees. ACM TODS. https://doi.org/10.1145/3276980
+- Lu, L., Pillai, T. S., Arpaci-Dusseau, A. C., & Arpaci-Dusseau, R. H. (2016). WiscKey: Separating Keys from Values in SSD-conscious Storage. FAST. https://www.usenix.org/system/files/conference/fast16/fast16-papers-lu.pdf
+- Guo, L., Teng, D., Lee, R., Chen, F., Ma, S., & Zhang, X. (2016). Re-enabling high-speed caching for LSM-trees (dLSM). arXiv. https://arxiv.org/abs/1606.02015
+- Zhong, W., Chen, C., Wu, X., & Jiang, S. (2020). REMIX: Efficient Range Query for LSM-trees. arXiv. https://arxiv.org/abs/2010.12734
+- Mishra, S. (2024). A survey of LSM-Tree based Indexes, Data Systems and KV-stores. arXiv. https://arxiv.org/abs/2402.10460
+- Lv, Y., Li, Q., Xu, Q., Gao, C., Yang, C., Wang, X., & Xue, C. J. (2025). Rethinking LSM-tree based Key-Value Stores: A Survey. arXiv. https://arxiv.org/abs/2507.09642
+- Huynh, A., Chaudhari, H. A., Terzi, E., & Athanassoulis, M. (2023). Towards Flexibility and Robustness of LSM Trees. arXiv. https://arxiv.org/abs/2311.10005
+- Cooper, B. F., Silberstein, A., Tam, E., Ramakrishnan, R., & Sears, R. (2010). Benchmarking cloud serving systems with YCSB. SoCC. https://doi.org/10.1145/1807128.1807152
+- Karger, D. R., Lehman, E., Leighton, F. T., Panigrahy, R., Levine, M. S., & Lewin, D. (1997). Consistent Hashing and Random Trees: Distributed Caching Protocols for Relieving Hot Spots on the World Wide Web. STOC. https://doi.org/10.1145/258533.258660 (alt PDF: https://www.cs.princeton.edu/courses/archive/fall09/cos518/papers/chash.pdf)
+- Ghemawat, S., Gobioff, H., & Leung, S.-T. (2003). The Google File System. SOSP. https://storage.googleapis.com/gweb-research2023-media/pubtools/4446.pdf
