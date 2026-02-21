@@ -99,6 +99,18 @@ void upsertTableUuidToSchema(const path& schemaFile, const string& table, const 
     writeSchemaMapAtomic(schemaFile, map);
 }
 
+bool removeTableFromSchema(const path& schemaFile, const string& table) {
+    auto map = readSchemaMap(schemaFile);
+    auto it = map.find(table);
+    if (it == map.end()) {
+        return false;
+    }
+    map.erase(it);
+    std::filesystem::create_directories(schemaFile.parent_path());
+    writeSchemaMapAtomic(schemaFile, map);
+    return true;
+}
+
 std::optional<string> findTableUuidByScan(const path& keyspaceDirPath, const string& table) {
     std::error_code errorCode;
     if (!std::filesystem::exists(keyspaceDirPath, errorCode)) {

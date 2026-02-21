@@ -7,16 +7,16 @@
 
 using std::string;
 
-namespace xeondb
-{
+namespace xeondb {
 
-    path keyspaceDir(const path &dataDir, const string &keyspace);
-    path schemaPath(const path &dataDir, const string &keyspace);
+path keyspaceDir(const path& dataDir, const string& keyspace);
+path schemaPath(const path& dataDir, const string& keyspace);
 
-    std::optional<string> findTableUuidFromSchema(const path &schemaFile, const string &table);
-    void upsertTableUuidToSchema(const path &schemaFile, const string &table, const string &uuid);
-    std::optional<string> findTableUuidByScan(const path &keyspaceDirPath, const string &table);
+std::optional<string> findTableUuidFromSchema(const path& schemaFile, const string& table);
+void upsertTableUuidToSchema(const path& schemaFile, const string& table, const string& uuid);
+bool removeTableFromSchema(const path& schemaFile, const string& table);
+std::optional<string> findTableUuidByScan(const path& keyspaceDirPath, const string& table);
 
-    path tableDir(const path &dataDir, const string &keyspace, const string &table, const string &uuid);
+path tableDir(const path& dataDir, const string& keyspace, const string& table, const string& uuid);
 
 }

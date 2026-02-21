@@ -222,6 +222,83 @@ void ServerTcp::handleClient(int clientFd) {
                     }
 
                     response = jsonOk();
+                } else if (auto* dropTable = std::get_if<SqlDropTable>(&cmd)) {
+                    auto keyspace = dropTable->keyspace.empty() ? currentKeyspace : dropTable->keyspace;
+                    if (keyspace.empty())
+                        throw runtimeError("No keyspace selected");
+                    db_->dropTable(keyspace, dropTable->table, dropTable->ifExists);
+                    response = jsonOk();
+                } else if (auto* dropKeyspace = std::get_if<SqlDropKeyspace>(&cmd)) {
+                    db_->dropKeyspace(dropKeyspace->keyspace, dropKeyspace->ifExists);
+                    if (currentKeyspace == dropKeyspace->keyspace)
+                        currentKeyspace.clear();
+                    response = jsonOk();
+                } else if (std::holds_alternative<SqlShowKeyspaces>(cmd)) {
+                    auto keyspaces = db_->listKeyspaces();
+                    string out = "{\"ok\":true,\"keyspaces\":[";
+                    for (usize i = 0; i < keyspaces.size(); i++) {
+                        if (i)
+                            out += ",";
+                        out += "\"" + jsonEscape(keyspaces[i]) + "\"";
+                    }
+                    out += "]}";
+                    response = out;
+                } else if (auto* showTables = std::get_if<SqlShowTables>(&cmd)) {
+                    string keyspace;
+                    if (showTables->inKeyspace.has_value()) {
+                        keyspace = *showTables->inKeyspace;
+                    } else {
+                        keyspace = currentKeyspace;
+                    }
+                    if (keyspace.empty())
+                        throw runtimeError("No keyspace selected");
+                    auto tables = db_->listTables(keyspace);
+                    string out = "{\"ok\":true,\"tables\":[";
+                    for (usize i = 0; i < tables.size(); i++) {
+                        if (i)
+                            out += ",";
+                        out += "\"" + jsonEscape(tables[i]) + "\"";
+                    }
+                    out += "]}";
+                    response = out;
+                } else if (auto* describe = std::get_if<SqlDescribeTable>(&cmd)) {
+                    auto keyspace = describe->keyspace.empty() ? currentKeyspace : describe->keyspace;
+                    if (keyspace.empty())
+                        throw runtimeError("No keyspace selected");
+                    auto t = db_->openTable(keyspace, describe->table);
+                    const auto& schema = t->schema();
+                    string out = "{\"ok\":true,\"keyspace\":\"" + jsonEscape(keyspace) + "\",\"table\":\"" + jsonEscape(describe->table) + "\",";
+                    auto pkName = schema.columns[schema.primaryKeyIndex].name;
+                    out += "\"primaryKey\":\"" + jsonEscape(pkName) + "\",\"columns\":[";
+                    for (usize c = 0; c < schema.columns.size(); c++) {
+                        if (c)
+                            out += ",";
+                        out += "{\"name\":\"" + jsonEscape(schema.columns[c].name) + "\",\"type\":\"" + jsonEscape(columnTypeName(schema.columns[c].type)) +
+                               "\"}";
+                    }
+                    out += "]}";
+                    response = out;
+                } else if (auto* showCreate = std::get_if<SqlShowCreateTable>(&cmd)) {
+                    auto keyspace = showCreate->keyspace.empty() ? currentKeyspace : showCreate->keyspace;
+                    if (keyspace.empty())
+                        throw runtimeError("No keyspace selected");
+                    auto t = db_->openTable(keyspace, showCreate->table);
+                    const auto& schema = t->schema();
+                    auto pkName = schema.columns[schema.primaryKeyIndex].name;
+                    string stmt = "CREATE TABLE " + keyspace + "." + showCreate->table + " (";
+                    for (usize c = 0; c < schema.columns.size(); c++) {
+                        if (c)
+                            stmt += ", ";
+                        stmt += schema.columns[c].name + " " + columnTypeName(schema.columns[c].type);
+                    }
+                    stmt += ", PRIMARY KEY (" + pkName + "));";
+                    response = string("{\"ok\":true,\"create\":\"") + jsonEscape(stmt) + "\"}";
+                } else if (auto* trunc = std::get_if<SqlTruncateTable>(&cmd)) {
+                    auto keyspace = trunc->keyspace.empty() ? currentKeyspace : trunc->keyspace;
+                    if (keyspace.empty())
+                        throw runtimeError("No keyspace selected");
+                    db_->truncateTable(keyspace, trunc->table);
+                    response = jsonOk();
                 } else if (auto* insert = std::get_if<SqlInsert>(&cmd)) {
                     auto keyspace = insert->keyspace.empty() ? currentKeyspace : insert->keyspace;
                     if (keyspace.empty())

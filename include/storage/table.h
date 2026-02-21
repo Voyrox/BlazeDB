@@ -19,13 +19,11 @@
 using std::string;
 using std::vector;
 
-namespace xeondb
-{
+namespace xeondb {
 
-    TableSchema readSchemaFromMetadata(const path& tableDirPath);
+TableSchema readSchemaFromMetadata(const path& tableDirPath);
 
-struct TableSettings
-{
+struct TableSettings {
     string walFsync;
     u64 walFsyncIntervalMs;
     usize walFsyncBytes;
@@ -33,60 +31,61 @@ struct TableSettings
     usize sstableIndexStride;
 };
 
-class Table
-{
+class Table {
 public:
     Table(path tableDirPath, string keyspace, string table, string uuid, TableSchema schema, TableSettings settings);
-        ~Table();
+    ~Table();
 
-        Table(const Table &) = delete;
-        Table &operator=(const Table &) = delete;
+    Table(const Table&) = delete;
+    Table& operator=(const Table&) = delete;
 
-    const path &dir() const;
-        const string &keyspace() const;
-        const string &table() const;
-        const string &uuid() const;
-        const TableSchema &schema() const;
+    const path& dir() const;
+    const string& keyspace() const;
+    const string& table() const;
+    const string& uuid() const;
+    const TableSchema& schema() const;
 
-        void openOrCreateFiles(bool createNew);
-        void recover();
+    void shutdown();
+    void truncate();
 
-    void putRow(const byteVec &pkBytes, const byteVec &rowBytes);
-    void deleteRow(const byteVec &pkBytes);
-    std::optional<byteVec> getRow(const byteVec &pkBytes);
-    struct ScanRow
-    {
+    void openOrCreateFiles(bool createNew);
+    void recover();
+
+    void putRow(const byteVec& pkBytes, const byteVec& rowBytes);
+    void deleteRow(const byteVec& pkBytes);
+    std::optional<byteVec> getRow(const byteVec& pkBytes);
+    struct ScanRow {
         byteVec pkBytes;
         byteVec rowBytes;
     };
     std::vector<ScanRow> scanAllRowsByPk(bool desc);
     void flush();
 
-    private:
-        void startWalThread();
-        void stopWalThread();
-        void walThreadMain();
+private:
+    void startWalThread();
+    void stopWalThread();
+    void walThreadMain();
 
-        void writeMetadata();
-        void loadMetadata();
+    void writeMetadata();
+    void loadMetadata();
 
     path tableDirPath_;
-        string keyspace_;
-        string table_;
-        string uuid_;
-        TableSchema schema_;
-        TableSettings settings_;
+    string keyspace_;
+    string table_;
+    string uuid_;
+    TableSchema schema_;
+    TableSettings settings_;
 
-        mutable std::mutex mutex_;
+    mutable std::mutex mutex_;
     u64 nextSeq_;
 
-        CommitLog commitLog_;
-        MemTable memTable_;
-        Manifest manifest_;
+    CommitLog commitLog_;
+    MemTable memTable_;
+    Manifest manifest_;
     std::vector<SsTableFile> ssTables_;
 
-        std::atomic<bool> walStop_;
-        std::thread walThread_;
-    };
+    std::atomic<bool> walStop_;
+    std::thread walThread_;
+};
 
 }

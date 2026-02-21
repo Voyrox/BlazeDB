@@ -58,6 +58,38 @@ struct SqlFlush {
     string table;
 };
 
+struct SqlDropTable {
+    string keyspace;
+    string table;
+    bool ifExists;
+};
+
+struct SqlDropKeyspace {
+    string keyspace;
+    bool ifExists;
+};
+
+struct SqlShowKeyspaces {};
+
+struct SqlShowTables {
+    std::optional<string> inKeyspace;
+};
+
+struct SqlDescribeTable {
+    string keyspace;
+    string table;
+};
+
+struct SqlShowCreateTable {
+    string keyspace;
+    string table;
+};
+
+struct SqlTruncateTable {
+    string keyspace;
+    string table;
+};
+
 struct SqlDelete {
     string keyspace;
     string table;
@@ -74,7 +106,8 @@ struct SqlUpdate {
     SqlLiteral whereValue;
 };
 
-using SqlCommand = std::variant<SqlPing, SqlAuth, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate>;
+using SqlCommand = std::variant<SqlPing, SqlAuth, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate, SqlDropTable,
+        SqlDropKeyspace, SqlShowKeyspaces, SqlShowTables, SqlDescribeTable, SqlShowCreateTable, SqlTruncateTable>;
 
 std::optional<SqlCommand> sqlCommand(const string& line, string& error);
 

@@ -14,14 +14,14 @@ byteVec mergeRowBytesForUpdate(const TableSchema& schema, const std::optional<by
     std::vector<std::optional<SqlLiteral>> byIndex;
     byIndex.resize(schema.columns.size());
     for (usize i = 0; i < setColumns.size(); i++) {
-        auto idx = findColumnIndex(schema, setColumns[i]);
-        if (!idx.has_value())
+        auto col = findColumnIndex(schema, setColumns[i]);
+        if (!col.has_value())
             throw runtimeError("unknown column");
-        if (*idx == schema.primaryKeyIndex)
+        if (*col == schema.primaryKeyIndex)
             throw runtimeError("cannot update pk");
-        if (byIndex[*idx].has_value())
+        if (byIndex[*col].has_value())
             throw runtimeError("duplicate column");
-        byIndex[*idx] = setValues[i];
+        byIndex[*col] = setValues[i];
     }
 
     std::vector<bool> existingIsNull;

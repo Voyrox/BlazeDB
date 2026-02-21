@@ -23,6 +23,8 @@ std::string stripTrailingSemicolon(std::string s);
 
 bool ifNotExists(stringView s, usize& i, bool& out);
 
+bool ifExists(stringView s, usize& i, bool& out);
+
 bool hexLiteral(stringView s, usize& i, std::string& out);
 
 bool numberToken(stringView s, usize& i, std::string& out);

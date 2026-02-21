@@ -161,16 +161,228 @@ std::optional<SqlCommand> sqlCommand(const string& rawLine, string& error) {
 
                 TableSchema schema;
                 schema.columns = std::move(cols);
-                auto pkIdx = findColumnIndex(schema, pkName);
-                if (!pkIdx.has_value()) {
+                auto col = findColumnIndex(schema, pkName);
+                if (!col.has_value()) {
                     error = "pk not in columns";
                     return std::nullopt;
                 }
-                schema.primaryKeyIndex = *pkIdx;
+                schema.primaryKeyIndex = *col;
                 cmd.schema = std::move(schema);
                 return cmd;
             }
             error = "Expected keyspace or table";
+            return std::nullopt;
+        }
+    }
+
+    {
+        usize j = i;
+        if (matchKeyword(s, j, "drop")) {
+            i = j;
+            if (matchKeyword(s, i, "table")) {
+                SqlDropTable cmd;
+                if (!ifExists(s, i, cmd.ifExists)) {
+                    error = "Expected exists";
+                    return std::nullopt;
+                }
+
+                string firstName;
+                if (!parseIdentifier(s, i, firstName)) {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+                if (consumeChar(s, i, '.')) {
+                    cmd.keyspace = firstName;
+                    if (!parseIdentifier(s, i, cmd.table)) {
+                        error = "Expected table";
+                        return std::nullopt;
+                    }
+                } else {
+                    cmd.keyspace.clear();
+                    cmd.table = firstName;
+                }
+
+                skipWhitespace(s, i);
+                if (i != s.size()) {
+                    error = "Unexpected trailing input";
+                    return std::nullopt;
+                }
+                return cmd;
+            }
+
+            if (matchKeyword(s, i, "keyspace")) {
+                SqlDropKeyspace cmd;
+                if (!ifExists(s, i, cmd.ifExists)) {
+                    error = "Expected exists";
+                    return std::nullopt;
+                }
+                if (!parseIdentifier(s, i, cmd.keyspace)) {
+                    error = "Expected keyspace";
+                    return std::nullopt;
+                }
+                skipWhitespace(s, i);
+                if (i != s.size()) {
+                    error = "Unexpected trailing input";
+                    return std::nullopt;
+                }
+                return cmd;
+            }
+
+            error = "Expected table or keyspace";
+            return std::nullopt;
+        }
+    }
+
+    {
+        usize j = i;
+        if (matchKeyword(s, j, "truncate")) {
+            i = j;
+            if (!matchKeyword(s, i, "table")) {
+                error = "Expected table";
+                return std::nullopt;
+            }
+
+            SqlTruncateTable cmd;
+            string firstName;
+            if (!parseIdentifier(s, i, firstName)) {
+                error = "Expected table";
+                return std::nullopt;
+            }
+            if (consumeChar(s, i, '.')) {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table)) {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            } else {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
+            }
+
+            skipWhitespace(s, i);
+            if (i != s.size()) {
+                error = "Unexpected trailing input";
+                return std::nullopt;
+            }
+            return cmd;
+        }
+    }
+
+    {
+        usize j = i;
+        if (matchKeyword(s, j, "describe")) {
+            i = j;
+            if (!matchKeyword(s, i, "table")) {
+                error = "Expected table";
+                return std::nullopt;
+            }
+            SqlDescribeTable cmd;
+            string firstName;
+            if (!parseIdentifier(s, i, firstName)) {
+                error = "Expected table";
+                return std::nullopt;
+            }
+            if (consumeChar(s, i, '.')) {
+                cmd.keyspace = firstName;
+                if (!parseIdentifier(s, i, cmd.table)) {
+                    error = "Expected table";
+                    return std::nullopt;
+                }
+            } else {
+                cmd.keyspace.clear();
+                cmd.table = firstName;
+            }
+            skipWhitespace(s, i);
+            if (i != s.size()) {
+                error = "Unexpected trailing input";
+                return std::nullopt;
+            }
+            return cmd;
+        }
+    }
+
+    {
+        usize j = i;
+        if (matchKeyword(s, j, "show")) {
+            i = j;
+
+            {
+                usize k = i;
+                if (matchKeyword(s, k, "keyspaces")) {
+                    i = k;
+                    skipWhitespace(s, i);
+                    if (i != s.size()) {
+                        error = "Unexpected trailing input";
+                        return std::nullopt;
+                    }
+                    return SqlShowKeyspaces{};
+                }
+            }
+
+            {
+                usize k = i;
+                if (matchKeyword(s, k, "tables")) {
+                    i = k;
+                    SqlShowTables cmd;
+                    cmd.inKeyspace.reset();
+
+                    {
+                        usize m = i;
+                        if (matchKeyword(s, m, "in")) {
+                            i = m;
+                            string ks;
+                            if (!parseIdentifier(s, i, ks)) {
+                                error = "Expected keyspace";
+                                return std::nullopt;
+                            }
+                            cmd.inKeyspace = ks;
+                        }
+                    }
+
+                    skipWhitespace(s, i);
+                    if (i != s.size()) {
+                        error = "Unexpected trailing input";
+                        return std::nullopt;
+                    }
+                    return cmd;
+                }
+            }
+
+            {
+                usize k = i;
+                if (matchKeyword(s, k, "create")) {
+                    i = k;
+                    if (!matchKeyword(s, i, "table")) {
+                        error = "Expected table";
+                        return std::nullopt;
+                    }
+
+                    SqlShowCreateTable cmd;
+                    string firstName;
+                    if (!parseIdentifier(s, i, firstName)) {
+                        error = "Expected table";
+                        return std::nullopt;
+                    }
+                    if (consumeChar(s, i, '.')) {
+                        cmd.keyspace = firstName;
+                        if (!parseIdentifier(s, i, cmd.table)) {
+                            error = "Expected table";
+                            return std::nullopt;
+                        }
+                    } else {
+                        cmd.keyspace.clear();
+                        cmd.table = firstName;
+                    }
+                    skipWhitespace(s, i);
+                    if (i != s.size()) {
+                        error = "Unexpected trailing input";
+                        return std::nullopt;
+                    }
+                    return cmd;
+                }
+            }
+
+            error = "Expected keyspaces, tables, or create";
             return std::nullopt;
         }
     }

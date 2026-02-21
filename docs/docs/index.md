@@ -52,12 +52,12 @@
   <section class="home-section">
     <h2>Core concepts</h2>
     <div class="home-grid home-grid--2">
-      <div class="home-card home-card--static">
-        <div class="home-card__title">SQL subset</div>
-        <div class="home-card__body">
-          PING, USE, CREATE, INSERT, SELECT, UPDATE, DELETE, FLUSH, ORDER BY.
-        </div>
-      </div>
+       <div class="home-card home-card--static">
+         <div class="home-card__title">SQL subset</div>
+         <div class="home-card__body">
+           PING, AUTH, USE, CREATE, INSERT, SELECT, UPDATE, DELETE, FLUSH, SHOW, DESCRIBE, DROP, TRUNCATE, ORDER BY.
+         </div>
+       </div>
 
       <div class="home-card home-card--static">
         <div class="home-card__title">Protocol</div>

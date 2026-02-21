@@ -479,3 +479,97 @@ def testSelectScanOrderByAscDesc(tmp_path):
         assert [row["id"] for row in r["rows"]] == [3, 2, 1]
     finally:
         stopServer(proc)
+
+
+def testShowKeyspacesAndTables(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW KEYSPACES;"))
+        assert r["keyspaces"] == []
+
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS ksA;"))
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS ksB;"))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW KEYSPACES;"))
+        assert r["keyspaces"] == ["ksA", "ksB"]
+
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS ksA.t1 (id int64, name varchar, PRIMARY KEY (id));",
+            )
+        )
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS ksA.t2 (id int64, name varchar, PRIMARY KEY (id));",
+            )
+        )
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW TABLES IN ksA;"))
+        assert r["tables"] == ["t1", "t2"]
+    finally:
+        stopServer(proc)
+
+
+def testDescribeShowCreateTruncateDrop(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        ensureSchema("127.0.0.1", port)
+        insertAlice("127.0.0.1", port)
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "DESCRIBE TABLE myapp.users;"))
+        assert r["keyspace"] == "myapp"
+        assert r["table"] == "users"
+        assert r["primaryKey"] == "id"
+        assert isinstance(r["columns"], list)
+        assert [c["name"] for c in r["columns"]][:3] == ["id", "name", "active"]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW CREATE TABLE myapp.users;"))
+        assert "CREATE TABLE myapp.users" in r["create"]
+        assert "PRIMARY KEY (id)" in r["create"]
+
+        mustOk(tcpQuery("127.0.0.1", port, "TRUNCATE TABLE myapp.users;"))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM myapp.users WHERE id=1;"))
+        assert r["found"] is False
+
+        # Schema stays
+        r = mustOk(tcpQuery("127.0.0.1", port, "DESCRIBE TABLE myapp.users;"))
+        assert r["primaryKey"] == "id"
+
+        # Can insert again
+        insertAlice("127.0.0.1", port)
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM myapp.users WHERE id=1;"))
+        assert r["found"] is True
+
+        mustOk(tcpQuery("127.0.0.1", port, "DROP TABLE myapp.users;"))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW TABLES IN myapp;"))
+        assert r["tables"] == []
+
+        r = tcpQuery("127.0.0.1", port, "SELECT * FROM myapp.users WHERE id=1;")
+        assert r["ok"] is False
+
+        # IF EXISTS is ok when missing
+        mustOk(tcpQuery("127.0.0.1", port, "DROP TABLE IF EXISTS myapp.users;"))
+
+        mustOk(tcpQuery("127.0.0.1", port, "DROP KEYSPACE myapp;"))
+        r = mustOk(tcpQuery("127.0.0.1", port, "SHOW KEYSPACES;"))
+        assert "myapp" not in r["keyspaces"]
+        mustOk(tcpQuery("127.0.0.1", port, "DROP KEYSPACE IF EXISTS myapp;"))
+    finally:
+        stopServer(proc)

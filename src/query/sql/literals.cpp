@@ -18,6 +18,18 @@ bool ifNotExists(stringView s, usize& i, bool& out) {
     return true;
 }
 
+bool ifExists(stringView s, usize& i, bool& out) {
+    out = false;
+    usize j = i;
+    if (!matchKeyword(s, j, "if"))
+        return true;
+    if (!matchKeyword(s, j, "exists"))
+        return false;
+    i = j;
+    out = true;
+    return true;
+}
+
 bool hexLiteral(stringView s, usize& i, std::string& out) {
     skipWhitespace(s, i);
     if (i + 2 > s.size())
