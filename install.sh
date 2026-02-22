@@ -10,18 +10,90 @@ onError() {
 }
 trap onError ERR
 
+checkTimeSync() {
+	echo "Checking system time synchronization..."
+	ntp_active=0
+	if command -v timedatectl >/dev/null 2>&1; then
+		sync_status=$(timedatectl show --property=NTPSynchronized --value)
+		if [ "$sync_status" = "yes" ]; then
+			ntp_active=1
+		fi
+	fi
+	if [ $ntp_active -eq 0 ]; then
+		echo "Warning: System time synchronization (NTP/systemd-timesyncd) is not enabled."
+		printf "Enable time synchronization now? [Y/n] "
+		read -r reply
+		case "$reply" in
+			n|N|no|NO)
+				echo "Proceeding without time sync. This may cause issues in multi-node setups."
+				;;
+			*)
+				if command -v timedatectl >/dev/null 2>&1; then
+					echo "Enabling systemd-timesyncd..."
+					timedatectl set-ntp true || echo "Failed to enable NTP. Please enable manually."
+				else
+					echo "Please install and enable NTP or systemd-timesyncd for reliable operation."
+				fi
+				;;
+		esac
+	else
+		echo "System time synchronization is enabled."
+	fi
+}
+
 die() {
 	echo "Error: $*" >&2
 	exit 1
 }
 
+installDep() {
+	dep="$1"
+	pkgname="$dep"
+	if command -v apt-get >/dev/null 2>&1; then
+		pkgmgr="apt-get"
+		case "$dep" in
+			ninja)
+				pkgname="ninja-build" ;;
+		esac
+		installcmd="apt-get install -y $pkgname"
+	elif command -v dnf >/dev/null 2>&1; then
+		pkgmgr="dnf"
+		installcmd="dnf install -y $dep"
+	elif command -v yum >/dev/null 2>&1; then
+		pkgmgr="yum"
+		installcmd="yum install -y $dep"
+	elif command -v pacman >/dev/null 2>&1; then
+		pkgmgr="pacman"
+		installcmd="pacman -Sy --noconfirm $dep"
+	else
+		die "Missing dependency: $dep (no supported package manager found)"
+	fi
+	echo "$dep is required but not installed."
+	printf "Install $dep using $pkgmgr? [Y/n] "
+	read -r reply
+	case "$reply" in
+		n|N|no|NO)
+			die "Missing dependency: $dep"
+			;;
+		*)
+			echo "Installing $pkgname..."
+			$installcmd || die "Failed to install $pkgname"
+			;;
+	esac
+}
+
 needCmd() {
-	command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1"
+	if ! command -v "$1" >/dev/null 2>&1; then
+		installDep "$1"
+		command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1 (install failed)"
+	fi
 }
 
 if [ -z "${BASH_VERSION:-}" ]; then
 	die "Unsupported shell; please run with bash"
 fi
+
+checkTimeSync
 
 if [ "${EUID:-$(id -u)}" -ne 0 ]; then
 	die "This installer must run as root. Try: sudo ./install.sh"
@@ -59,6 +131,26 @@ FULL_BUILD=0
 FORCE=0
 ASSUME_YES=0
 NO_START=0
+
+DB_USER=""
+DB_PASS=""
+promptDbAuth() {
+	printf "Do you want to set a database username and password? [y/N] "
+	read -r reply
+	case "$reply" in
+		y|Y|yes|YES)
+			printf "Enter database username: "
+			read -r DB_USER
+			printf "Enter database password: "
+			read -r -s DB_PASS
+			echo
+			;;
+		*)
+			DB_USER=""
+			DB_PASS=""
+			;;
+	esac
+}
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -171,6 +263,8 @@ if [ "$ASSUME_YES" -ne 1 ]; then
 	fi
 fi
 
+promptDbAuth
+
 echo "Building Xeondb server..."
 BUILD_DIR="$SCRIPT_DIR/build"
 
@@ -202,20 +296,52 @@ mkdir -p "$DATA_DIR"
 echo "Writing config: $CONFIG_PATH"
 mkdir -p "$(dirname "$CONFIG_PATH")"
 if [ -e "$CONFIG_PATH" ] && [ "$FORCE" -ne 1 ]; then
-	echo "Config exists; leaving as-is (use --force to overwrite): $CONFIG_PATH"
+		echo "Config exists; leaving as-is (use --force to overwrite): $CONFIG_PATH"
 else
-	cat >"$CONFIG_PATH" <<EOF
-host: $HOST
-port: $PORT
-dataDir: $DATA_DIR
-maxLineBytes: 1048576
-maxConnections: 1024
-walFsync: periodic
-walFsyncIntervalMs: 50
-walFsyncBytes: 1048576
-memtableMaxBytes: 33554432
-sstableIndexStride: 16
+		cat >"$CONFIG_PATH" <<EOF
+# XeonDB server configuration
+
+# Network configuration
+network:
+	host: $HOST
+	port: $PORT
+
+# Storage configuration
+storage:
+	dataDir: $DATA_DIR
+
+# Limits / safety valves
+limits:
+	maxLineBytes: 1048576
+	maxConnections: 1024
+
+# Write-ahead log (WAL)
+wal:
+	walFsync: periodic
+	walFsyncIntervalMs: 50
+	walFsyncBytes: 1048576
+
+# In-memory write buffer
+memtable:
+	memtableMaxBytes: 33554432
+
+# SSTable configuration
+sstable:
+	sstableIndexStride: 16
+
+# Optional authentication.
+# If both username and password are set, clients must authenticate first.
+# If either is missing/empty, auth is disabled.
+# Client must send: AUTH "<username>" "<password>";
+auth:
 EOF
+		if [ -n "$DB_USER" ] && [ -n "$DB_PASS" ]; then
+				echo "  username: $DB_USER" >> "$CONFIG_PATH"
+				echo "  password: $DB_PASS" >> "$CONFIG_PATH"
+		else
+				echo "  # username: admin" >> "$CONFIG_PATH"
+				echo "  # password: change-me" >> "$CONFIG_PATH"
+		fi
 fi
 
 UNIT_PATH="/etc/systemd/system/xeondb.service"

@@ -99,7 +99,6 @@ Settings loadSettings(const string& filePath) {
         string key = trim(line.substr(0, pos));
         string value = trim(line.substr(pos + 1));
 
-        // Section headers like "network:" / "auth:".
         if (value.empty()) {
             currentSection = toLower(key);
             continue;
