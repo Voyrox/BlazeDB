@@ -108,7 +108,7 @@ Docs can be found [here](https://voyrox.github.io/Xeondb/). The documentation in
 If you want to report a bug, suggest a feature, or contribute to the development of Xeondb, please feel free to open an issue or submit a pull request on our GitHub repository. We welcome contributions from the community and are always looking for ways to improve Xeondb.
 
 ## References
-- O’Neil, P., Cheng, E., Gawlick, D., & O’Neil, E. (1996). The Log-Structured Merge-Tree (LSM-Tree). ACM SIGMOD. https://dl.acm.org/doi/10.1145/230784.230785
+- Patrick O’Neil, Edward Cheng, Dieter Gawlick, and Elizabeth O’Neil. 1996. The log-structured merge-tree (LSM-tree). Acta Inf. 33, 4 (Jun 1996), 351–385. https://doi.org/10.1007/s002360050048
 - Chang, F. et al. (2006). Bigtable: A Distributed Storage System for Structured Data. OSDI. https://research.google/pubs/pub27898/
 - Mohan, C., Haderle, D., Lindsay, B., Pirahesh, H., & Schwarz, P. (1992). ARIES: A Transaction Recovery Method Supporting Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead Logging. ACM TODS. https://dl.acm.org/doi/10.1145/128765.128770
 - Gray, J., & Reuter, A. (1992). Transaction Processing: Concepts and Techniques. Morgan Kaufmann. (classic WAL/recovery book reference)
