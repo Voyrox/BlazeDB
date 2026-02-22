@@ -38,3 +38,4 @@ rust/target
 venv/
 var/
 .pytest_cache
+docs/site/

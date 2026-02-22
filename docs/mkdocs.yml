@@ -6,6 +6,9 @@ theme:
   name: mkdocs
   locale: en
   custom_dir: overrides
+  color_mode: dark
+  nav_style: dark
+  user_color_mode_toggle: false
 nav:
   - Home: index.md
   - Quick Start: quickstart.md

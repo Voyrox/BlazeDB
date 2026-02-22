@@ -1030,15 +1030,15 @@
 
             <div class="proof-body">
               <pre class="terminal" aria-label="Example request response"><span class="dim"># Request/response example</span>
-                <span class="key">&gt;</span> CREATE KEYSPACE IF NOT EXISTS testKeyspace;
-                <span class="ok">&lt;</span> {"ok":true}
+<span class="key">&gt;</span> CREATE KEYSPACE IF NOT EXISTS testKeyspace;
+<span class="ok">&lt;</span> {"ok":true}
 
-                <span class="key">&gt;</span> USE testKeyspace;
-                <span class="ok">&lt;</span> {"ok":true}
+<span class="key">&gt;</span> USE testKeyspace;
+<span class="ok">&lt;</span> {"ok":true}
 
-                <span class="key">&gt;</span> INSERT INTO testTable (id, value) VALUES (1, "hello");
-                <span class="ok">&lt;</span> {"ok":true,"rowsAffected":1}
-              </pre>
+<span class="key">&gt;</span> INSERT INTO testTable (id, value) VALUES (1, "hello");
+<span class="ok">&lt;</span> {"ok":true,"rowsAffected":1}
+</pre>
             </div>
 
             <div class="proof-foot" aria-label="Quick facts">
@@ -1202,28 +1202,28 @@
         <div>
           <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Run the server</h3>
           <pre class="code" aria-label="Run command"><span class="comment"># Build + run (Ninja/CMake)</span>
-            <span class="prompt">$</span> cmake -S . -B build -G Ninja
-            <span class="prompt">$</span> ninja -C build
-            <span class="prompt">$</span> ninja -C build run
+<span class="prompt">$</span> cmake -S . -B build -G Ninja
+<span class="prompt">$</span> ninja -C build
+<span class="prompt">$</span> ninja -C build run
 
-            <span class="comment"># System install (Linux, systemd)</span>
-            <span class="prompt">$</span> sudo ./install.sh</pre>
+<span class="comment"># System install (Linux, systemd)</span>
+<span class="prompt">$</span> sudo ./install.sh</pre>
         </div>
         <div>
           <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Connect</h3>
           <pre class="code" aria-label="Connect example"><span class="comment"># Node.js driver</span>
-            <span class="prompt">$</span> npm i xeondb-driver
-            <span class="prompt">$</span> node packages/test_nodeJS.js
+<span class="prompt">$</span> npm i xeondb-driver
+<span class="prompt">$</span> node packages/test_nodeJS.js
 
-            <span class="comment"># Go driver</span>
-            <span class="prompt">$</span> go get github.com/Voyrox/Xeondb/packages/golang@latest
-            <span class="prompt">$</span> go run packages/test_golang.go</pre>
+<span class="comment"># Go driver</span>
+<span class="prompt">$</span> go get github.com/Voyrox/Xeondb/packages/golang@latest
+<span class="prompt">$</span> go run packages/test_golang.go</pre>
         </div>
         <div>
           <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Docker</h3>
           <pre class="code" aria-label="Docker example"><span class="comment"># Quick eval (container)</span>
-            <span class="prompt">$</span> docker build -t xeondb .
-            <span class="prompt">$</span> docker run --rm -p 9876:9876 xeondb</pre>
+<span class="prompt">$</span> docker build -t xeondb .
+<span class="prompt">$</span> docker run --rm -p 9876:9876 xeondb</pre>
         </div>
       </div>
     </section>

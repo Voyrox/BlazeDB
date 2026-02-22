@@ -25,43 +25,12 @@ If you want a custom config, run the binary directly:
 
 ## Example queries
 
-Create a keyspace + table:
+To keep this page short, the full set of examples lives in [Query Examples](query-examples.md).
+
+Quick smoke check:
 
 ```sql
-CREATE KEYSPACE IF NOT EXISTS myapp;
-USE myapp;
-CREATE TABLE IF NOT EXISTS users (id int64, name varchar, active boolean, PRIMARY KEY (id));
-```
-
-Insert and read a row:
-
-```sql
-INSERT INTO users (id,name,active) VALUES (1,"alice",true);
-SELECT * FROM users WHERE id=1;
-```
-
-Scan a table (ordered by primary key):
-
-```sql
-SELECT * FROM users ORDER BY id ASC;
-SELECT * FROM users ORDER BY id DESC;
-```
-
-Update (UPSERT) and read it back:
-
-```sql
-UPDATE users SET name="alice2" WHERE id=1;
-SELECT * FROM users WHERE id=1;
-
-UPDATE users SET name="bob", active=false WHERE id=2;
-SELECT * FROM users WHERE id=2;
-```
-
-Delete:
-
-```sql
-DELETE FROM users WHERE id=1;
-SELECT * FROM users WHERE id=1;
+PING;
 ```
 
 ## Run tests
