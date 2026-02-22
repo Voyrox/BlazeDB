@@ -1,0 +1,781 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>XeonDB - Sign in</title>
+  <meta name="description" content="Sign in to XeonDB." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="icon" href="logo.png" />
+
+  <style>
+    :root {
+      --bg: #04050d;
+      --surface1: #0b1020;
+      --surface2: #0f1733;
+      --surface3: #070a14;
+
+      --text: #e9e6da;
+      --muted: rgba(233, 230, 218, 0.74);
+      --stroke: rgba(233, 230, 218, 0.14);
+      --stroke2: rgba(233, 230, 218, 0.08);
+
+      --accent: #39c6ff;
+      --accent2: #7fe2ff;
+      --ok: #2ed3a1;
+      --warn: #f6c177;
+
+      --shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
+      --radius: 16px;
+      --radius2: 12px;
+
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
+      --ease-out: cubic-bezier(0.2, 0.9, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      opacity: 0.96;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 0 1px rgba(233, 230, 218, 0.03),
+        inset 0 0 160px rgba(0, 0, 0, 0.60);
+    }
+
+    :focus-visible {
+      outline: 2px solid rgba(57, 198, 255, 0.65);
+      outline-offset: 3px;
+      border-radius: 10px;
+    }
+
+    .route {
+      position: fixed;
+      inset: 0 auto auto 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .auth-page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+    }
+
+    .auth-shell {
+      width: min(980px, 100%);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 180px;
+    }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: var(--surface1);
+    }
+
+    .brand span {
+      font-weight: 850;
+      letter-spacing: 0.2px;
+      font-size: 22px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke2);
+      background: var(--surface1);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.15px;
+      line-height: 1;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke);
+      background: var(--surface2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.primary {
+      border-color: rgba(57, 198, 255, 0.48);
+      background: rgba(57, 198, 255, 0.10);
+    }
+
+    .btn.primary:hover {
+      border-color: rgba(57, 198, 255, 0.72);
+      background: rgba(57, 198, 255, 0.14);
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .hero-panel {
+      border: 1px solid var(--stroke2);
+      border-radius: calc(var(--radius) + 6px);
+      background:
+        radial-gradient(1200px 520px at 24% 10%, rgba(57, 198, 255, 0.16), transparent 55%),
+        radial-gradient(900px 440px at 84% 70%, rgba(127, 226, 255, 0.10), transparent 58%),
+        linear-gradient(180deg, rgba(15, 23, 51, 0.70), rgba(11, 16, 32, 0.70));
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.30);
+      overflow: hidden;
+      position: relative;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-top: 1px solid rgba(233, 230, 218, 0.05);
+      opacity: 0.8;
+    }
+
+    .kicker {
+      margin: 2px 0 0;
+      color: rgba(233, 230, 218, 0.75);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    .hero-panel h1 {
+      margin: 0;
+      font-size: clamp(24px, 2.6vw, 34px);
+      line-height: 1.1;
+      letter-spacing: 0.06px;
+    }
+
+    .hero-panel p {
+      margin: 0;
+      color: rgba(233, 230, 218, 0.74);
+      line-height: 1.65;
+      font-size: 14px;
+      max-width: 58ch;
+    }
+
+    .hero-copy {
+      margin: 0;
+      color: rgba(233, 230, 218, 0.74);
+      line-height: 1.65;
+      font-size: 14px;
+      max-width: 60ch;
+    }
+
+    .hero-points {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero-point {
+      border-radius: 14px;
+      border: 1px solid var(--stroke2);
+      background: rgba(7, 10, 20, 0.55);
+      padding: 12px 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-point strong {
+      font-size: 13px;
+      letter-spacing: 0.08px;
+      color: rgba(233, 230, 218, 0.94);
+    }
+
+    .hero-point span {
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(233, 230, 218, 0.72);
+    }
+
+    .MuiPaper-root.MuiCard-root.loginbox-fe-root-1l6jey6 {
+      border: 1px solid var(--stroke2);
+      border-radius: calc(var(--radius) + 6px);
+      background: rgba(11, 16, 32, 0.82);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .MuiPaper-root.MuiCard-root.loginbox-fe-root-1l6jey6::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background:
+        radial-gradient(800px 360px at 24% -10%, rgba(57, 198, 255, 0.18), transparent 55%),
+        radial-gradient(820px 420px at 90% 120%, rgba(127, 226, 255, 0.12), transparent 60%);
+      pointer-events: none;
+      opacity: 0.95;
+    }
+
+    .MuiPaper-root.MuiCard-root.loginbox-fe-root-1l6jey6::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 1px solid rgba(233, 230, 218, 0.05);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .auth-card-inner {
+      position: relative;
+      z-index: 1;
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .loginbox-fe-root-1kwa1lw {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .MuiCompanyLogo-img {
+      width: 160px;
+      height: auto;
+      display: block;
+      filter: saturate(0.96) contrast(1.05);
+    }
+
+    .fe-title {
+      font-weight: 850;
+      letter-spacing: 0.08px;
+      font-size: 22px;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .subline {
+      margin: -6px 0 0;
+      color: rgba(233, 230, 218, 0.76);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subline a {
+      color: rgba(57, 198, 255, 0.94);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(233, 230, 218, 0.78);
+    }
+
+    label a {
+      font-family: var(--sans);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: none;
+      color: rgba(57, 198, 255, 0.92);
+      opacity: 0.92;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(233, 230, 218, 0.14);
+      background: rgba(7, 10, 20, 0.72);
+      color: rgba(233, 230, 218, 0.96);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.2;
+      transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .input::placeholder {
+      color: rgba(233, 230, 218, 0.46);
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: rgba(57, 198, 255, 0.45);
+      background: rgba(15, 23, 51, 0.60);
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(57, 198, 255, 0.48);
+      background: rgba(57, 198, 255, 0.12);
+      color: rgba(233, 230, 218, 0.96);
+      font-weight: 850;
+      letter-spacing: 0.10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(57, 198, 255, 0.16);
+      border-color: rgba(57, 198, 255, 0.72);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+    }
+
+    .social-divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      margin-top: 6px;
+      color: rgba(233, 230, 218, 0.62);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+
+    .social-divider::before,
+    .social-divider::after {
+      content: "";
+      height: 1px;
+      background: rgba(233, 230, 218, 0.10);
+    }
+
+    .social-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .social-btn {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(233, 230, 218, 0.14);
+      background: rgba(7, 10, 20, 0.55);
+      color: rgba(233, 230, 218, 0.92);
+      font-weight: 800;
+      letter-spacing: 0.08px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .social-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(233, 230, 218, 0.22);
+      background: rgba(15, 23, 51, 0.55);
+    }
+
+    .social-btn svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    .social-btn:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .social-btn:disabled:hover {
+      transform: none;
+      background: rgba(7, 10, 20, 0.55);
+      border-color: rgba(233, 230, 218, 0.14);
+    }
+
+    .disclaimer {
+      margin-top: 8px;
+      color: rgba(233, 230, 218, 0.66);
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .disclaimer a {
+      color: rgba(57, 198, 255, 0.94);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view-signin {
+      display: block;
+    }
+
+    #signup:target~.auth-page .view-signin {
+      display: none;
+    }
+
+    #signup:target~.auth-page .view-signup {
+      display: block;
+    }
+
+    #signin:target~.auth-page .view-signin {
+      display: block;
+    }
+
+    #signin:target~.auth-page .view-signup {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .auth-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .social-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .social-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn,
+      .primary-btn,
+      .social-btn {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a id="signin" class="route" aria-hidden="true"></a>
+  <a id="signup" class="route" aria-hidden="true"></a>
+
+  <main class="auth-page">
+    <div class="auth-shell">
+      <div class="topbar">
+        <a class="brand" href="index.html" aria-label="Back to XeonDB home">
+          <img src="logo.png" alt="XeonDB logo" />
+          <span>XeonDB</span>
+        </a>
+        <a class="btn" href="index.html">Back to site</a>
+      </div>
+
+      <div class="auth-grid" aria-label="Authentication">
+        <section class="hero-panel" aria-label="Welcome">
+          <div class="kicker">Cloud access</div>
+          <h1>Sign in to manage your XeonDB deployment</h1>
+          <p class="hero-copy">Log in to access the XeonDB Cloud Dashboard and manage your databases in one place: create
+            clusters, control access, and monitor performance.</p>
+          <div class="hero-points" aria-label="Notes">
+            <div class="hero-point">
+              <strong>Cloud dashboard</strong>
+              <span>Provision clusters, manage keyspaces and tables, and rotate credentials.</span>
+            </div>
+            <div class="hero-point">
+              <strong>Metrics and health</strong>
+              <span>Track latency, throughput, storage, and background work like compaction.</span>
+            </div>
+            <div class="hero-point">
+              <strong>Safer operations</strong>
+              <span>Review configuration and activity before applying changes to production.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root loginbox-fe-root-1l6jey6"
+          aria-label="Login box">
+          <div class="auth-card-inner">
+            <div class="MuiBox-root loginbox-fe-root-1kwa1lw">
+              <img class="MuiCompanyLogo-img" src="logo.png" alt="company-logo" data-test-id="company-logo" />
+            </div>
+
+            <div class="view view-signin" data-test-id="login-page">
+              <div class="subline" data-test-it="signup-message">Don't have an account?
+                <a href="#signup" data-test-id="redirect-to-signup" aria-label="Sign up">Sign up</a>
+              </div>
+
+              <form action="#" autocomplete="on" aria-label="Sign in form">
+                <div class="field" data-test-id="input-box-identifier">
+                  <label for="signin-email"><span>Email</span></label>
+                  <input id="signin-email" class="input" autocomplete="email" name="identifier"
+                    placeholder="name@example.com" type="email" autocapitalize="none" data-test-id="input-identifier" />
+                </div>
+
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-password">
+                  <label for="signin-password">
+                    <span>Password</span>
+                    <a href="#" aria-label="Forgot password?" data-test-id="forgot-password-btn">Forgot password?</a>
+                  </label>
+                  <input id="signin-password" class="input" autocomplete="current-password" name="password"
+                    placeholder="Enter your password" type="password" data-test-id="input-password" />
+                </div>
+
+                <button class="primary-btn" type="button" aria-label="Continue" data-test-id="submit-btn"
+                  style="margin-top: 14px;">Continue</button>
+              </form>
+
+              <div class="social-divider" aria-hidden="true">or sign in with</div>
+              <div class="social-row" data-test-id="social-position-bottom">
+                <button class="social-btn" type="button" disabled aria-label="continue with google" provider="google"
+                  data-test-id="google-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                    <path fill="#FFC107"
+                      d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00"
+                      d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50"
+                      d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2"
+                      d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                  </svg>
+                  Google
+                </button>
+
+                <button class="social-btn" type="button" disabled aria-label="continue with github" provider="github"
+                  data-test-id="github-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 17 16" fill="none" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M8.50001 -0.0010302C6.55044 -0.00301169 4.66389 0.689346 3.17843 1.95197C1.69296 3.2146 0.705689 4.96496 0.39354 6.88938C0.0813902 8.81379 0.464767 10.7865 1.47496 12.4539C2.48515 14.1213 4.05613 15.3745 5.90637 15.9889C6.3143 16.0644 6.46539 15.8076 6.46539 15.591C6.46539 15.3745 6.46539 14.8809 6.46539 14.196C4.18399 14.6996 3.70051 13.0981 3.70051 13.0981C3.54849 12.6018 3.22554 12.1753 2.78896 11.8945C2.04864 11.3908 2.84939 11.3908 2.84939 11.3908C3.10891 11.4275 3.35668 11.5227 3.57394 11.6693C3.7912 11.8159 3.97227 12.01 4.10341 12.2369C4.21484 12.439 4.36507 12.617 4.54548 12.7609C4.7259 12.9047 4.93294 13.0115 5.15474 13.0752C5.37653 13.1388 5.6087 13.158 5.83794 13.1317C6.06717 13.1054 6.28896 13.0341 6.49056 12.9219C6.52217 12.5076 6.70078 12.1182 6.99418 11.824C5.17108 11.6175 3.25732 10.9124 3.25732 7.76982C3.24481 6.95546 3.54594 6.16747 4.09837 5.569C3.85183 4.861 3.8806 4.08618 4.17895 3.3984C4.17895 3.3984 4.86891 3.17681 6.43516 4.23945C7.78012 3.87017 9.19974 3.87017 10.5447 4.23945C12.111 3.17681 12.7959 3.3984 12.7959 3.3984C13.0974 4.0852 13.1279 4.8606 12.8815 5.569C13.4339 6.16747 13.7351 6.95546 13.7225 7.76982C13.7225 10.9225 11.8038 11.6124 9.97561 11.7988C10.1716 11.9958 10.323 12.2327 10.4195 12.4934C10.5159 12.7541 10.5552 13.0324 10.5346 13.3096C10.5346 14.4075 10.5346 15.2939 10.5346 15.5608C10.5346 15.8277 10.6807 16.0342 11.0987 15.9587C12.9431 15.3385 14.5072 14.0833 15.5121 12.417C16.517 10.7507 16.8973 8.78157 16.5852 6.86089C16.273 4.94021 15.2887 3.19286 13.8079 1.93051C12.327 0.668166 10.4459 -0.027091 8.50001 -0.03125V-0.0010302Z"
+                      fill="#231E1B" />
+                  </svg>
+                  GitHub
+                </button>
+
+                <button class="social-btn" type="button" disabled aria-label="continue with linkedin" provider="linkedin"
+                  data-test-id="linkedin-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    aria-hidden="true">
+                    <path
+                      d="M12.9516 10.1768C13.2703 9.78303 13.5047 9.41272 13.8141 9.09866C14.3953 8.50334 15.0703 8.08147 15.8578 7.81428C16.7297 7.51897 17.6297 7.47678 18.5203 7.56584C19.9641 7.70178 21.225 8.26428 22.2047 9.36584C22.6641 9.88147 23.0063 10.4721 23.2547 11.1143C23.4469 11.6158 23.5969 12.1221 23.6859 12.6518C23.7609 13.1065 23.8547 13.5612 23.8547 14.0252C23.8594 17.2362 23.8594 20.4471 23.8641 23.658C23.8641 23.8174 23.8266 23.869 23.6625 23.869C22.1953 23.8643 20.7234 23.8596 19.2562 23.869C19.0453 23.869 19.0172 23.794 19.0172 23.6112C19.0219 20.808 19.0219 18.0002 19.0219 15.1971C19.0219 14.6815 18.9891 14.1612 18.8391 13.6737C18.5859 12.8487 18.075 12.2487 17.2359 11.944C16.5328 11.6908 15.8203 11.644 15.1031 11.8268C14.3109 12.0283 13.7531 12.5487 13.3594 13.2518C13.1391 13.6455 13.05 14.058 13.0031 14.508C12.9703 14.8502 12.9609 15.1877 12.9609 15.5299C12.9563 18.2158 12.9563 20.9065 12.9656 23.5924C12.9656 23.8221 12.9047 23.8737 12.6844 23.869C11.2641 23.8596 9.83906 23.8549 8.41875 23.869C8.16563 23.8737 8.13281 23.7893 8.13281 23.569C8.14219 18.6143 8.14219 13.6643 8.14219 8.70959C8.14219 8.12366 8.1375 8.12366 8.72344 8.12366C10.0594 8.12366 11.3953 8.12834 12.7313 8.11897C12.9188 8.11897 12.9656 8.17522 12.9609 8.35803C12.9469 8.93928 12.9516 9.52053 12.9516 10.1768Z"
+                      fill="#0177B5" />
+                    <path
+                      d="M0.248828 16.0547C0.248828 13.5375 0.253516 11.025 0.244141 8.50781C0.244141 8.29688 0.295703 8.22656 0.516016 8.22656C1.95977 8.23594 3.4082 8.23594 4.85195 8.22656C5.06758 8.22656 5.11914 8.29688 5.11914 8.50781C5.11445 13.5281 5.11445 18.5531 5.11914 23.5734C5.11914 23.7937 5.07227 23.8641 4.83789 23.8594C3.39414 23.85 1.9457 23.85 0.501953 23.8594C0.295703 23.8594 0.244141 23.8031 0.244141 23.5969C0.253516 21.0844 0.248828 18.5719 0.248828 16.0547Z"
+                      fill="#0378B5" />
+                    <path
+                      d="M2.62038 0.220415C4.18131 0.168853 5.10007 1.32198 5.10475 2.68604C5.10475 4.0876 4.11569 5.12823 2.59225 5.13292C1.11569 5.1376 0.126628 4.11573 0.117253 2.66729C0.107878 1.29385 1.111 0.17354 2.62038 0.220415Z"
+                      fill="#0378B5" />
+                  </svg>
+                  Linkedin
+                </button>
+              </div>
+
+              <div class="disclaimer">
+                By Signing up I confirm I have read and accept XeonDB's
+                <a href="https://www.scylladb.com/scylla-cloud-terms-of-service/" target="_blank"
+                  rel="noreferrer">Terms of Service</a>
+                and that my information will be handled as detailed in XeonDB's
+                <a href="https://www.scylladb.com/privacy/" target="_blank" rel="noreferrer">Privacy Policy</a>.
+              </div>
+            </div>
+
+            <div class="view view-signup" data-test-id="signup-page">
+              <div class="subline" data-test-id="login-message">Already have an account?
+                <a href="#signin" data-test-id="redirect-to-login" aria-label="Sign in">Sign in</a>
+              </div>
+              
+              <form action="#" autocomplete="on" aria-label="Sign up form" style="display: flex; flex-direction: column;">
+                <div class="field" data-test-id="input-box-email">
+                  <label for="signup-email"><span>Company Email Only</span></label>
+                  <input id="signup-email" class="input" name="email" placeholder="Enter your email" type="email"
+                    maxlength="200" aria-label="Company Email Only" />
+                </div>
+
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-firstName">
+                  <label for="signup-first"><span>First Name</span></label>
+                  <input id="signup-first" class="input" name="firstName" placeholder="Enter your first name" type="text"
+                    maxlength="200" aria-label="First Name" />
+                </div>
+
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-lastName">
+                  <label for="signup-last"><span>Last Name</span></label>
+                  <input id="signup-last" class="input" name="lastName" placeholder="Enter your last name" type="text"
+                    maxlength="200" aria-label="Last Name" />
+                </div>
+
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-companyName">
+                  <label for="signup-company"><span>Company Name</span></label>
+                  <input id="signup-company" class="input" name="companyName" placeholder="Set company name" type="text"
+                    maxlength="200" aria-label="Company Name" />
+                </div>
+
+                <div style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-start;">
+                  <input id="signup-consent" type="checkbox" style="margin-top: 3px;" />
+                  <div style="color: rgba(233,230,218,0.76); font-size: 13px; line-height: 1.55;">
+                    Yes, I wish to receive future informational and marketing communications.
+                    I understand and agree to the
+                    <a href="https://www.scylladb.com/scylla-cloud-terms-of-service/" target="_blank" rel="noreferrer"
+                      style="color: rgba(57,198,255,0.94); text-decoration: underline; text-underline-offset: 3px;">terms</a>
+                    and
+                    <a href="https://www.scylladb.com/privacy/" target="_blank" rel="noreferrer"
+                      style="color: rgba(57,198,255,0.94); text-decoration: underline; text-underline-offset: 3px;">privacy policy</a>.
+                  </div>
+                </div>
+
+                <button class="primary-btn" type="button" aria-label="Sign up" data-test-id="signupSubmit-btn"
+                  style="margin-top: 14px;">Sign up</button>
+              </form>
+
+              <div class="social-divider" aria-hidden="true">or sign up with</div>
+              <div class="social-row" data-test-id="social-logins-bottom-layout">
+                <button class="social-btn" type="button" disabled aria-label="continue with google" provider="google"
+                  data-test-id="google-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                    <path fill="#FFC107"
+                      d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00"
+                      d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50"
+                      d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2"
+                      d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                  </svg>
+                  Google
+                </button>
+
+                <button class="social-btn" type="button" disabled aria-label="continue with github" provider="github"
+                  data-test-id="github-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 17 16" fill="none" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M8.50001 -0.0010302C6.55044 -0.00301169 4.66389 0.689346 3.17843 1.95197C1.69296 3.2146 0.705689 4.96496 0.39354 6.88938C0.0813902 8.81379 0.464767 10.7865 1.47496 12.4539C2.48515 14.1213 4.05613 15.3745 5.90637 15.9889C6.3143 16.0644 6.46539 15.8076 6.46539 15.591C6.46539 15.3745 6.46539 14.8809 6.46539 14.196C4.18399 14.6996 3.70051 13.0981 3.70051 13.0981C3.54849 12.6018 3.22554 12.1753 2.78896 11.8945C2.04864 11.3908 2.84939 11.3908 2.84939 11.3908C3.10891 11.4275 3.35668 11.5227 3.57394 11.6693C3.7912 11.8159 3.97227 12.01 4.10341 12.2369C4.21484 12.439 4.36507 12.617 4.54548 12.7609C4.7259 12.9047 4.93294 13.0115 5.15474 13.0752C5.37653 13.1388 5.6087 13.158 5.83794 13.1317C6.06717 13.1054 6.28896 13.0341 6.49056 12.9219C6.52217 12.5076 6.70078 12.1182 6.99418 11.824C5.17108 11.6175 3.25732 10.9124 3.25732 7.76982C3.24481 6.95546 3.54594 6.16747 4.09837 5.569C3.85183 4.861 3.8806 4.08618 4.17895 3.3984C4.17895 3.3984 4.86891 3.17681 6.43516 4.23945C7.78012 3.87017 9.19974 3.87017 10.5447 4.23945C12.111 3.17681 12.7959 3.3984 12.7959 3.3984C13.0974 4.0852 13.1279 4.8606 12.8815 5.569C13.4339 6.16747 13.7351 6.95546 13.7225 7.76982C13.7225 10.9225 11.8038 11.6124 9.97561 11.7988C10.1716 11.9958 10.323 12.2327 10.4195 12.4934C10.5159 12.7541 10.5552 13.0324 10.5346 13.3096C10.5346 14.4075 10.5346 15.2939 10.5346 15.5608C10.5346 15.8277 10.6807 16.0342 11.0987 15.9587C12.9431 15.3385 14.5072 14.0833 15.5121 12.417C16.517 10.7507 16.8973 8.78157 16.5852 6.86089C16.273 4.94021 15.2887 3.19286 13.8079 1.93051C12.327 0.668166 10.4459 -0.027091 8.50001 -0.03125V-0.0010302Z"
+                      fill="#231E1B" />
+                  </svg>
+                  GitHub
+                </button>
+
+                <button class="social-btn" type="button" disabled aria-label="continue with linkedin" provider="linkedin"
+                  data-test-id="linkedin-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    aria-hidden="true">
+                    <path
+                      d="M12.9516 10.1768C13.2703 9.78303 13.5047 9.41272 13.8141 9.09866C14.3953 8.50334 15.0703 8.08147 15.8578 7.81428C16.7297 7.51897 17.6297 7.47678 18.5203 7.56584C19.9641 7.70178 21.225 8.26428 22.2047 9.36584C22.6641 9.88147 23.0063 10.4721 23.2547 11.1143C23.4469 11.6158 23.5969 12.1221 23.6859 12.6518C23.7609 13.1065 23.8547 13.5612 23.8547 14.0252C23.8594 17.2362 23.8594 20.4471 23.8641 23.658C23.8641 23.8174 23.8266 23.869 23.6625 23.869C22.1953 23.8643 20.7234 23.8596 19.2562 23.869C19.0453 23.869 19.0172 23.794 19.0172 23.6112C19.0219 20.808 19.0219 18.0002 19.0219 15.1971C19.0219 14.6815 18.9891 14.1612 18.8391 13.6737C18.5859 12.8487 18.075 12.2487 17.2359 11.944C16.5328 11.6908 15.8203 11.644 15.1031 11.8268C14.3109 12.0283 13.7531 12.5487 13.3594 13.2518C13.1391 13.6455 13.05 14.058 13.0031 14.508C12.9703 14.8502 12.9609 15.1877 12.9609 15.5299C12.9563 18.2158 12.9563 20.9065 12.9656 23.5924C12.9656 23.8221 12.9047 23.8737 12.6844 23.869C11.2641 23.8596 9.83906 23.8549 8.41875 23.869C8.16563 23.8737 8.13281 23.7893 8.13281 23.569C8.14219 18.6143 8.14219 13.6643 8.14219 8.70959C8.14219 8.12366 8.1375 8.12366 8.72344 8.12366C10.0594 8.12366 11.3953 8.12834 12.7313 8.11897C12.9188 8.11897 12.9656 8.17522 12.9609 8.35803C12.9469 8.93928 12.9516 9.52053 12.9516 10.1768Z"
+                      fill="#0177B5" />
+                    <path
+                      d="M0.248828 16.0547C0.248828 13.5375 0.253516 11.025 0.244141 8.50781C0.244141 8.29688 0.295703 8.22656 0.516016 8.22656C1.95977 8.23594 3.4082 8.23594 4.85195 8.22656C5.06758 8.22656 5.11914 8.29688 5.11914 8.50781C5.11445 13.5281 5.11445 18.5531 5.11914 23.5734C5.11914 23.7937 5.07227 23.8641 4.83789 23.8594C3.39414 23.85 1.9457 23.85 0.501953 23.8594C0.295703 23.8594 0.244141 23.8031 0.244141 23.5969C0.253516 21.0844 0.248828 18.5719 0.248828 16.0547Z"
+                      fill="#0378B5" />
+                    <path
+                      d="M2.62038 0.220415C4.18131 0.168853 5.10007 1.32198 5.10475 2.68604C5.10475 4.0876 4.11569 5.12823 2.59225 5.13292C1.11569 5.1376 0.126628 4.11573 0.117253 2.66729C0.107878 1.29385 1.111 0.17354 2.62038 0.220415Z"
+                      fill="#0378B5" />
+                  </svg>
+                  Linkedin
+                </button>
+              </div>
+
+              <div class="disclaimer">
+                By Signing up I confirm I have read and accept XeonDB's
+                <a href="https://www.scylladb.com/scylla-cloud-terms-of-service/" target="_blank"
+                  rel="noreferrer">Terms of Service</a>
+                and that my information will be handled as detailed in XeonDB's
+                <a href="https://www.scylladb.com/privacy/" target="_blank" rel="noreferrer">Privacy Policy</a>.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
