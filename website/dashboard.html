@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>XeonDB - Dashboard</title>
+  <meta name="description" content="Manage your XeonDB databases." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="icon" href="logo.png" />
+
+  <style>
+    :root {
+      --bg: #04050d;
+      --surface1: #0b1020;
+      --surface2: #0f1733;
+      --surface3: #070a14;
+
+      --text: #e9e6da;
+      --muted: rgba(233, 230, 218, 0.74);
+      --stroke: rgba(233, 230, 218, 0.14);
+      --stroke2: rgba(233, 230, 218, 0.08);
+
+      --accent: #39c6ff;
+      --accent2: #7fe2ff;
+      --ok: #2ed3a1;
+      --warn: #f6c177;
+
+      --shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
+      --radius: 16px;
+      --radius2: 12px;
+
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
+      --ease-out: cubic-bezier(0.2, 0.9, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      opacity: 0.96;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 0 1px rgba(233, 230, 218, 0.03),
+        inset 0 0 160px rgba(0, 0, 0, 0.60);
+    }
+
+    :focus-visible {
+      outline: 2px solid rgba(57, 198, 255, 0.65);
+      outline-offset: 3px;
+      border-radius: 10px;
+    }
+
+    .dash-page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 28px 18px;
+    }
+
+    .dash-shell {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 180px;
+    }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: var(--surface1);
+    }
+
+    .brand span {
+      font-weight: 850;
+      letter-spacing: 0.2px;
+      font-size: 22px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke2);
+      background: var(--surface1);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.15px;
+      line-height: 1;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+      user-select: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke);
+      background: var(--surface2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.primary {
+      border-color: rgba(57, 198, 255, 0.48);
+      background: rgba(57, 198, 255, 0.10);
+    }
+
+    .btn.primary:hover {
+      border-color: rgba(57, 198, 255, 0.72);
+      background: rgba(57, 198, 255, 0.14);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke);
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: clamp(20px, 2.5vw, 28px);
+      font-weight: 850;
+      letter-spacing: 0.06px;
+    }
+
+    .page-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dbs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .db-card {
+      border: 1px solid var(--stroke2);
+      border-radius: calc(var(--radius) + 6px);
+      background: rgba(11, 16, 32, 0.70);
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out);
+    }
+
+    .db-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--stroke);
+    }
+
+    .db-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .db-name {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.08px;
+    }
+
+    .db-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12px;
+      text-transform: uppercase;
+    }
+
+    .db-status.online {
+      background: rgba(46, 211, 161, 0.12);
+      color: var(--ok);
+    }
+
+    .db-status.offline {
+      background: rgba(246, 193, 119, 0.12);
+      color: var(--warn);
+    }
+
+    .db-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .db-info {
+      display: grid;
+      gap: 8px;
+    }
+
+    .db-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .db-info-label {
+      color: var(--muted);
+    }
+
+    .db-info-value {
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .db-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .db-action-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke2);
+      background: var(--surface1);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .db-action-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--stroke);
+      background: var(--surface2);
+    }
+
+    .create-card {
+      border: 1px dashed rgba(57, 198, 255, 0.30);
+      border-radius: calc(var(--radius) + 6px);
+      background: rgba(57, 198, 255, 0.04);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 180px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .create-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(57, 198, 255, 0.50);
+      background: rgba(57, 198, 255, 0.08);
+    }
+
+    .create-card-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .create-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px dashed rgba(57, 198, 255, 0.40);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(57, 198, 255, 0.70);
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    .create-text {
+      font-weight: 700;
+      font-size: 14px;
+      color: rgba(57, 198, 255, 0.90);
+    }
+
+    .create-hint {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .modal-toggle {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(4, 5, 13, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms var(--ease-out);
+    }
+
+    .modal-toggle:checked ~ .modal-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      border: 1px solid var(--stroke2);
+      border-radius: calc(var(--radius) + 6px);
+      background: rgba(11, 16, 32, 0.95);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      transform: scale(0.96) translateY(8px);
+      transition: transform 200ms var(--ease-out);
+    }
+
+    .modal-toggle:checked ~ .modal-backdrop .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background:
+        radial-gradient(600px 280px at 50% -20%, rgba(57, 198, 255, 0.14), transparent 55%),
+        radial-gradient(500px 240px at 90% 100%, rgba(127, 226, 255, 0.08), transparent 60%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .modal-header {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--stroke2);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 850;
+      letter-spacing: 0.08px;
+    }
+
+    .modal-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .modal-body {
+      padding: 20px 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .plan-option {
+      border: 1px solid var(--stroke2);
+      border-radius: var(--radius2);
+      background: var(--surface1);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .plan-option:hover:not(.disabled) {
+      border-color: var(--stroke);
+      background: var(--surface2);
+    }
+
+    .plan-option.disabled {
+      opacity: 0.50;
+      cursor: not-allowed;
+    }
+
+    .plan-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .plan-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .plan-price {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .plan-price span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .plan-features {
+      display: grid;
+      gap: 6px;
+    }
+
+    .plan-feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .plan-feature svg {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 auto;
+      color: var(--ok);
+    }
+
+    .plan-badge {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.10px;
+      text-transform: uppercase;
+    }
+
+    .plan-badge.free {
+      background: rgba(46, 211, 161, 0.14);
+      color: var(--ok);
+    }
+
+    .plan-badge.coming {
+      background: rgba(246, 193, 119, 0.14);
+      color: var(--warn);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke2);
+      background: var(--surface1);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+    }
+
+    .modal-close:hover {
+      border-color: var(--stroke);
+      background: var(--surface2);
+    }
+
+    .modal-footer {
+      padding: 16px 22px 20px;
+      border-top: 1px solid var(--stroke2);
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(57, 198, 255, 0.48);
+      background: rgba(57, 198, 255, 0.12);
+      color: rgba(233, 230, 218, 0.96);
+      font-weight: 850;
+      letter-spacing: 0.10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out);
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(57, 198, 255, 0.16);
+      border-color: rgba(57, 198, 255, 0.72);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke2);
+      background: var(--surface1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    @media (max-width: 720px) {
+      .dbs-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn,
+      .db-card,
+      .create-card,
+      .db-action-btn,
+      .modal-btn,
+      .modal-close,
+      .modal-backdrop,
+      .modal {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <input type="checkbox" id="modal-toggle" class="modal-toggle" />
+
+  <div class="modal-backdrop">
+    <div class="modal">
+      <label for="modal-toggle" class="modal-close" aria-label="Close modal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </label>
+
+      <div class="modal-header">
+        <h2 class="modal-title">Create a Database</h2>
+        <p class="modal-subtitle">Choose a plan to get started</p>
+      </div>
+
+      <div class="modal-body">
+        <label class="plan-option">
+          <div class="plan-header">
+            <span class="plan-name">Free</span>
+            <span class="plan-price">$0<span>/month</span></span>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Sharded node architecture
+            </div>
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              500 MB storage
+            </div>
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Community support
+            </div>
+          </div>
+          <span class="plan-badge free">Available</span>
+        </label>
+
+        <div class="plan-option disabled">
+          <div class="plan-header">
+            <span class="plan-name">Pro</span>
+            <span class="plan-price">$15<span>/month</span></span>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Dedicated node
+            </div>
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              100 GB storage
+            </div>
+            <div class="plan-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Priority support
+            </div>
+          </div>
+          <span class="plan-badge coming">Coming Soon</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn" type="button">Create Free Database</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="dash-page">
+    <div class="dash-shell">
+      <div class="topbar">
+        <a class="brand" href="index.html" aria-label="Back to XeonDB home">
+          <img src="logo.png" alt="XeonDB logo" />
+          <span>XeonDB</span>
+        </a>
+        <div class="topbar-right">
+          <a class="btn" href="index.html">Back to site</a>
+          <div class="user-avatar">TEST</div>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Your Databases</h1>
+          <p class="page-subtitle">Manage and monitor your database clusters</p>
+        </div>
+      </div>
+
+      <div class="dbs-grid">
+        <div class="db-card">
+          <div class="db-card-header">
+            <div class="db-name">production-main</div>
+            <span class="db-status online">
+              <span class="db-status-dot"></span>
+              Online
+            </span>
+          </div>
+          <div class="db-info">
+            <div class="db-info-row">
+              <span class="db-info-label">Cluster</span>
+              <span class="db-info-value">sharded-3-node</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Storage Used</span>
+              <span class="db-info-value">247.3 MB</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Created</span>
+              <span class="db-info-value">Jan 15, 2026</span>
+            </div>
+          </div>
+          <div class="db-actions">
+            <button class="db-action-btn">Connect</button>
+            <button class="db-action-btn">Manage</button>
+          </div>
+        </div>
+
+        <div class="db-card">
+          <div class="db-card-header">
+            <div class="db-name">staging-analytics</div>
+            <span class="db-status online">
+              <span class="db-status-dot"></span>
+              Online
+            </span>
+          </div>
+          <div class="db-info">
+            <div class="db-info-row">
+              <span class="db-info-label">Cluster</span>
+              <span class="db-info-value">sharded-2-node</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Storage Used</span>
+              <span class="db-info-value">89.1 MB</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Created</span>
+              <span class="db-info-value">Feb 3, 2026</span>
+            </div>
+          </div>
+          <div class="db-actions">
+            <button class="db-action-btn">Console</button>
+            <button class="db-action-btn">Settings</button>
+          </div>
+        </div>
+
+        <div class="db-card">
+          <div class="db-card-header">
+            <div class="db-name">dev-local</div>
+            <span class="db-status offline">
+              <span class="db-status-dot"></span>
+              Offline
+            </span>
+          </div>
+          <div class="db-info">
+            <div class="db-info-row">
+              <span class="db-info-label">Cluster</span>
+              <span class="db-info-value">single-node</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Storage Used</span>
+              <span class="db-info-value">0 B</span>
+            </div>
+            <div class="db-info-row">
+              <span class="db-info-label">Created</span>
+              <span class="db-info-value">Feb 10, 2026</span>
+            </div>
+          </div>
+          <div class="db-actions">
+            <button class="db-action-btn">Console</button>
+            <button class="db-action-btn">Settings</button>
+          </div>
+        </div>
+
+        <label for="modal-toggle" class="create-card">
+          <div class="create-card-label">
+            <div class="create-icon">+</div>
+            <span class="create-text">Create Database</span>
+            <span class="create-hint">Free plan available</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
