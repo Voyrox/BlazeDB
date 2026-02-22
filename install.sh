@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 # Copyright 2026 Xeondb. All rights reserved.
 
+INSTALL_PREFIX="/usr/local/xeondb"
+CONFIG_PATH="/etc/xeondb/settings.yml"
+DATA_DIR="/var/lib/xeondb/data"
+HOST="0.0.0.0"
+PORT="9876"
+FULL_BUILD=0
+FORCE=0
+ASSUME_YES=0
+NO_START=0
+DB_USER=""
+DB_PASS=""
+
 set -euo pipefail
 
 onError() {
@@ -28,7 +40,9 @@ checkTimeSync() {
 				echo "Proceeding without time sync. This may cause issues in multi-node setups."
 				;;
 			*)
-				if command -v timedatectl >/dev/null 2>&1; then
+				if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+					echo "Cannot enable time sync: not running as root. Please run with sudo or enable NTP manually."
+				elif command -v timedatectl >/dev/null 2>&1; then
 					echo "Enabling systemd-timesyncd..."
 					timedatectl set-ntp true || echo "Failed to enable NTP. Please enable manually."
 				else
@@ -90,13 +104,58 @@ needCmd() {
 }
 
 if [ -z "${BASH_VERSION:-}" ]; then
-	die "Unsupported shell; please run with bash"
+    die "Unsupported shell; please run with bash"
+fi
+
+
+if [ -e "$CONFIG_PATH" ] && [ "$FORCE" -ne 1 ]; then
+    echo "Config exists: $CONFIG_PATH"
+    printf "Xeondb appears to be already installed. Do you want to uninstall it? [y/N] "
+    read -r reply
+    case "$reply" in
+        y|Y|yes|YES)
+            echo "Uninstalling Xeondb..."
+            if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+                echo "Error: Uninstall requires root. Please run with sudo."
+                exit 1
+            fi
+            if [ -e "$INSTALL_PREFIX/bin/xeondb" ]; then
+                rm -f "$INSTALL_PREFIX/bin/xeondb"
+                echo "Removed $INSTALL_PREFIX/bin/xeondb"
+            fi
+            rm -f "$CONFIG_PATH"
+            echo "Removed $CONFIG_PATH"
+            if [ -d "$DATA_DIR" ]; then
+                printf "Remove data directory $DATA_DIR? [y/N] "
+                read -r datadel
+                case "$datadel" in
+                    y|Y|yes|YES)
+                        rm -rf "$DATA_DIR"
+                        echo "Removed $DATA_DIR";;
+                    *)
+                        echo "Data directory left intact: $DATA_DIR";;
+                esac
+            fi
+            if [ -e "/etc/systemd/system/xeondb.service" ]; then
+                systemctl disable --now xeondb 2>/dev/null || true
+                rm -f "/etc/systemd/system/xeondb.service"
+                systemctl daemon-reload
+                echo "Removed systemd unit xeondb.service"
+            fi
+            echo "Xeondb uninstalled. Exiting."
+            exit 0
+            ;;
+        *)
+            echo "Leaving existing install as-is. (Use --force to overwrite)"
+            exit 0
+            ;;
+    esac
 fi
 
 checkTimeSync
 
 if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-	die "This installer must run as root. Try: sudo ./install.sh"
+    echo "Warning: Not running as root. Some operations (install, uninstall, time sync) may fail. Try: sudo ./install.sh"
 fi
 
 printUsage() {
@@ -122,18 +181,6 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-INSTALL_PREFIX="/usr/local/xeondb"
-CONFIG_PATH="/etc/xeondb/settings.yml"
-DATA_DIR="/var/lib/xeondb/data"
-HOST="0.0.0.0"
-PORT="9876"
-FULL_BUILD=0
-FORCE=0
-ASSUME_YES=0
-NO_START=0
-
-DB_USER=""
-DB_PASS=""
 promptDbAuth() {
 	printf "Do you want to set a database username and password? [y/N] "
 	read -r reply
@@ -210,6 +257,8 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+
+
 needCmd cmake
 needCmd ninja
 needCmd g++
@@ -255,6 +304,11 @@ confirmInstall() {
 	esac
 }
 
+
+
+# Prompt for auth only once, after uninstall check and before install summary
+promptDbAuth
+
 if [ "$ASSUME_YES" -ne 1 ]; then
 	if [ -t 0 ]; then
 		confirmInstall || die "Aborted by user"
@@ -262,8 +316,6 @@ if [ "$ASSUME_YES" -ne 1 ]; then
 		die "Non-interactive install requires --yes"
 	fi
 fi
-
-promptDbAuth
 
 echo "Building Xeondb server..."
 BUILD_DIR="$SCRIPT_DIR/build"
@@ -296,7 +348,47 @@ mkdir -p "$DATA_DIR"
 echo "Writing config: $CONFIG_PATH"
 mkdir -p "$(dirname "$CONFIG_PATH")"
 if [ -e "$CONFIG_PATH" ] && [ "$FORCE" -ne 1 ]; then
-		echo "Config exists; leaving as-is (use --force to overwrite): $CONFIG_PATH"
+	echo "Config exists: $CONFIG_PATH"
+	printf "Xeondb appears to be already installed. Do you want to uninstall it? [y/N] "
+	read -r reply
+	case "$reply" in
+		y|Y|yes|YES)
+			echo "Uninstalling Xeondb..."
+			if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+				echo "Error: Uninstall requires root. Please run with sudo."
+				exit 1
+			fi
+			if [ -e "$INSTALL_PREFIX/bin/xeondb" ]; then
+				rm -f "$INSTALL_PREFIX/bin/xeondb"
+				echo "Removed $INSTALL_PREFIX/bin/xeondb"
+			fi
+			rm -f "$CONFIG_PATH"
+			echo "Removed $CONFIG_PATH"
+			if [ -d "$DATA_DIR" ]; then
+				printf "Remove data directory $DATA_DIR? [y/N] "
+				read -r datadel
+				case "$datadel" in
+					y|Y|yes|YES)
+						rm -rf "$DATA_DIR"
+						echo "Removed $DATA_DIR";;
+					*)
+						echo "Data directory left intact: $DATA_DIR";;
+				esac
+			fi
+			if [ -e "/etc/systemd/system/xeondb.service" ]; then
+				systemctl disable --now xeondb 2>/dev/null || true
+				rm -f "/etc/systemd/system/xeondb.service"
+				systemctl daemon-reload
+				echo "Removed systemd unit xeondb.service"
+			fi
+			echo "Xeondb uninstalled. Exiting."
+			exit 0
+			;;
+		*)
+			echo "Leaving existing install as-is. (Use --force to overwrite)"
+			exit 0
+			;;
+	esac
 else
 		cat >"$CONFIG_PATH" <<EOF
 # XeonDB server configuration
