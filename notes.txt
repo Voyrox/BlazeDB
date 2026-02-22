@@ -1,0 +1,13 @@
+Cloud interface options:
+
+- Do a proxy that manges the request
+    - Cross refernces user with the database if they created that keyspace
+    - If they did, then it forwards the request to the database
+    - If they did not, then it returns an error message
+
+- On the database side
+    - Have a level 0 database that stores the keyspace and the user that created it
+    - When a request comes in, it checks the level 0 database to see if the user is authorized to access the keyspace
+    - If they are, it forwards the request to the appropriate keyspace
+    - If they are not, it returns an error message
+    - Level 0, Level 1, Level 0 can r/w to core database, but level 1 can only r/w to the keyspace it created
