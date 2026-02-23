@@ -47,6 +47,12 @@ int main(int argc, char** argv) {
     xeondb::log(xeondb::LogLevel::INFO, std::string("Loading configPath=") + configPath);
 
     auto db = std::make_shared<xeondb::Db>(settings);
+    try {
+        db->bootstrapAuthSystem();
+    } catch (const std::exception& e) {
+        xeondb::log(xeondb::LogLevel::ERROR, e.what());
+        return 1;
+    }
 
     xeondb::log(xeondb::LogLevel::CONFIG,
             std::string("Host=") + settings.host + " port=" + std::to_string(settings.port) + " dataDir=" + db->dataDir().string() +

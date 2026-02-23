@@ -573,3 +573,134 @@ def testDescribeShowCreateTruncateDrop(tmp_path):
         mustOk(tcpQuery("127.0.0.1", port, "DROP KEYSPACE IF EXISTS myapp;"))
     finally:
         stopServer(proc)
+
+
+def testAuthRootShowKeyspacesIncludesSystem(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir), username="admin", password="secret")
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        res = tcpSession(
+            "127.0.0.1",
+            port,
+            [
+                'AUTH "admin" "secret"; ',
+                "SHOW KEYSPACES;",
+            ],
+        )
+        mustOk(res[0])
+        r = mustOk(res[1])
+        assert r["keyspaces"] == ["SYSTEM"]
+    finally:
+        stopServer(proc)
+
+
+def testAuthOwnershipAndGrants(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir), username="admin", password="secret")
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        # Root creates users + keyspaces, assigns ownership and grants.
+        res = tcpSession(
+            "127.0.0.1",
+            port,
+            [
+                'AUTH "admin" "secret"; ',
+                "CREATE KEYSPACE IF NOT EXISTS ksA;",
+                "CREATE KEYSPACE IF NOT EXISTS ksB;",
+                "CREATE KEYSPACE IF NOT EXISTS ksC;",
+                'INSERT INTO SYSTEM.USERS (username,password,level,enabled,created_at) VALUES ("alice","pw",1,true,0);',
+                'INSERT INTO SYSTEM.KEYSPACE_OWNERS (keyspace,owner_username,created_at) VALUES ("ksA","alice",0);',
+                'INSERT INTO SYSTEM.KEYSPACE_GRANTS (keyspace_username,created_at) VALUES ("ksB#alice",0);',
+            ],
+        )
+        for r in res:
+            mustOk(r)
+
+        # Alice sees only owned+granted.
+        res2 = tcpSession(
+            "127.0.0.1",
+            port,
+            [
+                'AUTH "alice" "pw"; ',
+                "SHOW KEYSPACES;",
+                "USE ksA;",
+                "CREATE TABLE IF NOT EXISTS t (id int64, name varchar, PRIMARY KEY (id));",
+                'INSERT INTO t (id,name) VALUES (1,"x");',
+                "SELECT * FROM t WHERE id=1;",
+                "USE ksC;",
+                "SHOW TABLES IN SYSTEM;",
+                "CREATE KEYSPACE IF NOT EXISTS nope;",
+            ],
+        )
+        mustOk(res2[0])
+        r = mustOk(res2[1])
+        assert r["keyspaces"] == ["ksA", "ksB"]
+        mustOk(res2[2])
+        mustOk(res2[3])
+        mustOk(res2[4])
+        r = mustOk(res2[5])
+        assert r["found"] is True
+        assert r["row"]["id"] == 1
+        assert r["row"]["name"] == "x"
+
+        assert res2[6]["ok"] is False
+        assert res2[6]["error"] == "forbidden"
+
+        assert res2[7]["ok"] is False
+        assert res2[7]["error"] == "forbidden"
+
+        assert res2[8]["ok"] is False
+        assert res2[8]["error"] == "forbidden"
+    finally:
+        stopServer(proc)
+
+
+def testAuthRootPasswordConfigWinsOnRestart(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir), username="admin", password="secret1")
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        res = tcpSession("127.0.0.1", port, ['AUTH "admin" "secret1"; ', "PING;"])
+        mustOk(res[0])
+        assert mustOk(res[1])["result"] == "PONG"
+    finally:
+        stopServer(proc)
+
+    port2 = pickFreePort()
+    cfg2 = tmp_path / "settings2.yml"
+    writeConfig(str(cfg2), port2, str(dataDir), username="admin", password="secret2")
+
+    proc2 = startServer(repoRoot, str(cfg2))
+    try:
+        res = tcpSession(
+            "127.0.0.1",
+            port2,
+            [
+                'AUTH "admin" "secret1"; ',
+                'AUTH "admin" "secret2"; ',
+                "PING;",
+            ],
+        )
+        assert res[0]["ok"] is False
+        assert res[0]["error"] == "bad_auth"
+        mustOk(res[1])
+        assert mustOk(res[2])["result"] == "PONG"
+    finally:
+        stopServer(proc2)
