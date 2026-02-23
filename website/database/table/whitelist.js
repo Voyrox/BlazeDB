@@ -114,11 +114,23 @@ async function removeWhitelistEntry(db, data) {
   return true;
 }
 
+async function deleteWhitelistEntryById(db, id) {
+  const wlId = String(id || '').trim();
+  if (!wlId) throw new Error('id is required');
+  const q = `DELETE FROM instance_whitelist WHERE id=${sqlQuoted(wlId)};`;
+  const res = await db.query(q);
+  if (!res || res.ok !== true) {
+    throw new Error((res && res.error) || 'Failed to delete whitelist entry');
+  }
+  return true;
+}
+
 module.exports = {
   ensureWhitelistTable,
   listWhitelistByInstance,
   addWhitelistEntry,
   removeWhitelistEntry,
+  deleteWhitelistEntryById,
   normalizeCidr,
   normalizeIp
 };

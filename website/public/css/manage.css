@@ -128,6 +128,28 @@
       color: var(--muted);
   }
 
+  button.nav-item {
+      appearance: none;
+      -webkit-appearance: none;
+      background: none;
+      border: 1px solid transparent;
+      text-align: left;
+      font: inherit;
+      width: 100%;
+  }
+
+  .nav-item.nav-danger {
+      border-color: rgba(246, 109, 109, 0.26);
+      background: rgba(246, 109, 109, 0.08);
+      color: rgba(246, 109, 109, 0.92);
+      font-weight: 900;
+  }
+
+  .nav-item.nav-danger:hover {
+      background: rgba(246, 109, 109, 0.12);
+      color: rgba(246, 109, 109, 1);
+  }
+
   .nav-item:hover {
       background: var(--surface2);
       color: var(--text);
@@ -906,6 +928,155 @@
       border-radius: 10px;
       background: var(--surface1);
       margin-bottom: 16px;
+  }
+
+  .danger-zone {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--stroke2);
+  }
+
+  .danger-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(246, 109, 109, 0.32);
+      background: rgba(246, 109, 109, 0.10);
+      color: var(--danger);
+      font-weight: 900;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), background 160ms var(--ease-out);
+  }
+
+  .danger-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(246, 109, 109, 0.16);
+  }
+
+  .delete-backdrop {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 99999;
+  }
+
+  .delete-backdrop[hidden] {
+      display: none !important;
+  }
+
+  .delete-modal {
+      width: min(720px, 100%);
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid var(--stroke2);
+      background: rgba(11, 16, 32, 0.95);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+  }
+
+  .delete-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--stroke2);
+  }
+
+  .delete-modal-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+  }
+
+  .delete-close {
+      border: 1px solid var(--stroke2);
+      background: var(--surface2);
+      color: var(--muted);
+      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+  }
+
+  .delete-modal-body {
+      padding: 16px 18px;
+      display: grid;
+      gap: 12px;
+  }
+
+  .delete-warning {
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(246, 109, 109, 0.10);
+      border: 1px solid rgba(246, 109, 109, 0.20);
+      color: rgba(246, 109, 109, 0.95);
+      font-size: 12px;
+      line-height: 1.5;
+  }
+
+  .delete-confirm-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.10px;
+      text-transform: uppercase;
+  }
+
+  .confirm-token {
+      margin-top: 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px dashed rgba(233, 230, 218, 0.18);
+      background: rgba(7, 10, 20, 0.70);
+      font-family: var(--mono);
+      font-size: 13px;
+      user-select: none;
+      -webkit-user-select: none;
+  }
+
+  .delete-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: var(--surface3);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+  }
+
+  .delete-ack {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+  }
+
+  .delete-modal-footer {
+      padding: 14px 18px;
+      border-top: 1px solid var(--stroke2);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+  }
+
+  .delete-modal-footer .btn {
+      border-radius: 10px;
+  }
+
+  .danger-btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
   }
 
   .current-plan {

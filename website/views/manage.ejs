@@ -88,6 +88,17 @@
             </svg>
             Billing
           </label>
+
+          <button class="nav-item nav-danger open-delete-modal" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+            </svg>
+            Delete Database
+          </button>
         </nav>
       </aside>
 
@@ -355,8 +366,45 @@
                   <span class="plan-badge coming">Coming Soon</span>
                 </div>
               </div>
+
+              <div class="danger-zone">
+                <h3 class="usage-title">Danger Zone</h3>
+                <button class="danger-btn open-delete-modal" type="button">Delete Database</button>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delete-backdrop" id="delete-backdrop" hidden>
+      <div class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+        <div class="delete-modal-header">
+          <h2 class="delete-modal-title" id="delete-title">Delete Database</h2>
+          <button class="delete-close" id="delete-cancel-x" type="button" aria-label="Close">×</button>
+        </div>
+
+        <div class="delete-modal-body">
+          <div class="delete-warning">
+            This will delete this database forever. Please make sure you have a backup if you think you might need the data later.
+          </div>
+
+          <div class="delete-confirm-row">
+            <div class="delete-confirm-label">Type this to confirm</div>
+            <div class="confirm-token" id="delete-confirm-token" tabindex="-1" aria-hidden="true"><%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'Database' %></div>
+          </div>
+
+          <input class="delete-input" id="delete-input" type="text" autocomplete="off" placeholder="Enter database name" />
+
+          <label class="delete-ack">
+            <input id="delete-ack" type="checkbox" />
+            <span>I understand this can't be undone</span>
+          </label>
+        </div>
+
+        <div class="delete-modal-footer">
+          <button class="btn" id="delete-cancel" type="button">Cancel</button>
+          <button class="danger-btn" id="delete-confirm" type="button" disabled>Delete</button>
         </div>
       </div>
     </div>
@@ -498,6 +546,7 @@
 
       (function () {
         const instanceId = "<%= instance && instance.id ? String(instance.id) : '' %>";
+        const instanceConfirmText = "<%= (instance && (instance.name || instance.id)) ? String(instance.name || instance.id) : 'Database' %>";
         if (!instanceId) return;
 
         let cachedCreds = null;
@@ -913,6 +962,77 @@
 
         refreshWhitelist();
         refreshBackups();
+
+        const deleteBackdrop = document.getElementById('delete-backdrop');
+        const openDeleteBtns = document.querySelectorAll('.open-delete-modal');
+        const deleteCancelBtn = document.getElementById('delete-cancel');
+        const deleteCancelX = document.getElementById('delete-cancel-x');
+        const deleteInput = document.getElementById('delete-input');
+        const deleteAck = document.getElementById('delete-ack');
+        const deleteConfirm = document.getElementById('delete-confirm');
+        const deleteToken = document.getElementById('delete-confirm-token');
+
+        function openDeleteModal() {
+          if (!deleteBackdrop) return;
+          deleteBackdrop.hidden = false;
+          if (deleteInput) deleteInput.value = '';
+          if (deleteAck) deleteAck.checked = false;
+          if (deleteConfirm) deleteConfirm.disabled = true;
+          setTimeout(() => {
+            if (deleteInput) deleteInput.focus();
+          }, 0);
+        }
+
+        function closeDeleteModal() {
+          if (!deleteBackdrop) return;
+          deleteBackdrop.hidden = true;
+        }
+
+        function updateDeleteEnabled() {
+          if (!deleteConfirm || !deleteInput || !deleteAck) return;
+          const typed = String(deleteInput.value || '').trim();
+          const okText = typed === String(instanceConfirmText).trim();
+          deleteConfirm.disabled = !(okText && deleteAck.checked);
+        }
+
+        if (deleteToken) {
+          deleteToken.addEventListener('copy', (e) => e.preventDefault());
+          deleteToken.addEventListener('cut', (e) => e.preventDefault());
+          deleteToken.addEventListener('contextmenu', (e) => e.preventDefault());
+          deleteToken.addEventListener('mousedown', (e) => {
+            // prevent drag-select
+            e.preventDefault();
+          });
+        }
+
+        openDeleteBtns.forEach((b) => b.addEventListener('click', openDeleteModal));
+        if (deleteCancelBtn) deleteCancelBtn.addEventListener('click', closeDeleteModal);
+        if (deleteCancelX) deleteCancelX.addEventListener('click', closeDeleteModal);
+        if (deleteBackdrop) {
+          deleteBackdrop.addEventListener('click', (e) => {
+            if (e.target === deleteBackdrop) closeDeleteModal();
+          });
+        }
+        if (deleteInput) deleteInput.addEventListener('input', updateDeleteEnabled);
+        if (deleteAck) deleteAck.addEventListener('change', updateDeleteEnabled);
+
+        if (deleteConfirm) {
+          deleteConfirm.addEventListener('click', async () => {
+            deleteConfirm.disabled = true;
+            try {
+              const res = await fetch(`/api/instances/${instanceId}`, { method: 'DELETE', credentials: 'same-origin' });
+              const data = await res.json().catch(() => null);
+              if (!res.ok || !data || data.ok !== true) {
+                throw new Error((data && (data.error || data.message)) || ('Delete failed (' + res.status + ')'));
+              }
+              toast('success', 'Database deleted');
+              window.location.href = '/dashboard';
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Delete failed');
+              updateDeleteEnabled();
+            }
+          });
+        }
       })();
     </script>
 </body>

@@ -5,6 +5,7 @@ const {
   addWhitelistEntry,
   listWhitelistByInstance,
   removeWhitelistEntry,
+  deleteWhitelistEntryById,
   normalizeIp,
   normalizeCidr
 } = require('../database/table/whitelist');
@@ -13,6 +14,20 @@ const {
   createBackupRow,
   deleteBackupRow
 } = require('../database/table/backups');
+
+function sqlQuoted(v) {
+  const s = String(v);
+  return (
+    '"' +
+    s
+      .replace(/\\/g, '\\\\')
+      .replace(/\"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t') +
+    '"'
+  );
+}
 
 function normalizeEmail(s) {
   return String(s || '').trim().toLowerCase();
@@ -93,6 +108,44 @@ router.post('/', async (req, res) => {
     return res.status(200).json({ ok: true, instance });
   } catch (err) {
     return res.status(400).json({ ok: false, error: err && err.message ? err.message : 'Failed to create instance' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
+
+  const id = String(req.params.id || '');
+  try {
+    await loadOwnedInstance(req, id);
+
+    const data = await listWhitelistByInstance(db, id);
+    for (const wl of data) {
+      try {
+        await deleteWhitelistEntryById(db, wl.id);
+      } catch {
+        // ignore
+      }
+    }
+
+    const backups = await listBackupsByInstance(db, id);
+    for (const b of backups) {
+      try {
+        await deleteBackupRow(db, { instanceId: id, id: b.id });
+      } catch {
+        // ignore
+      }
+    }
+
+    const q = `DELETE FROM instances WHERE id=${sqlQuoted(id)};`;
+    const del = await db.query(q);
+    if (!del || del.ok !== true) {
+      throw new Error((del && del.error) || 'Failed to delete instance');
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(err && err.status ? err.status : 400).json({ ok: false, error: err && err.message ? err.message : 'Failed' });
   }
 });
 
