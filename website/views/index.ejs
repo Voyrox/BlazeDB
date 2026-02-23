@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>XeonDB - Low latency database for real-time apps</title>
+  <meta name="description"
+    content="XeonDB is a real-time database built for predictable latency, durable writes, and straightforward operations." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="icon" href="logo.png" />
+  <meta property="og:title" content="XeonDB" />
+  <meta property="og:description" content="Low latency database for real-time apps." />
+  <meta property="og:image" content="banner.png" />
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <a class="brand" href="#top" aria-label="XeonDB Home">
+        <img src="logo.png" alt="XeonDB logo" />
+        <span>XeonDB</span>
+      </a>
+
+      <nav class="navlinks" aria-label="Primary">
+        <a class="text" href="#capabilities">Capabilities</a>
+        <a class="text" href="#get-started">Get started</a>
+        <a class="btn primary" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">
+          Docs
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M21 3l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M10 5H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+          </svg>
+        </a>
+        <a class="btn" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">
+          GitHub
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M9 19c-4 1.5-4-2.5-6-3m12 6v-3.8c0-1 .1-1.4-.5-2.1 2.3-.3 4.7-1.1 4.7-5A3.9 3.9 0 0 0 18 8.3 3.6 3.6 0 0 0 18 5s-1-.3-3 .9a10.2 10.2 0 0 0-6 0C7 4.7 6 5 6 5a3.6 3.6 0 0 0 0 3.3A3.9 3.9 0 0 0 5 11c0 3.9 2.4 4.7 4.7 5-.4.3-.6.8-.6 1.6V22"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+        <a class="text" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank"
+          rel="noreferrer">Issues</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="wrap">
+    <section class="hero" aria-label="XeonDB hero">
+      <div class="hero-inner">
+        <img class="octo-cameo" src="logo.png" alt="" aria-hidden="true">
+        <div>
+          <div class="kicker">Real-time database</div>
+          <h1>Scale Confidently with XeonDB</h1>
+          <p class="lead">XeonDB focuses on stable response times and operational clarity: fast primary key reads, WAL
+            backed durability, and a config surface area you can understand at a glance.</p>
+
+          <div class="hero-cta" aria-label="Primary actions">
+            <a class="btn primary" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Read docs</a>
+            <a class="btn" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">View GitHub</a>
+            <a class="btn" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank"
+              rel="noreferrer">Open an issue</a>
+          </div>
+
+          <div class="facts" aria-label="Default facts">
+            <div class="fact">
+              <div class="label">License</div>
+              <div class="value">MIT</div>
+            </div>
+            <div class="fact">
+              <div class="label">Config</div>
+              <div class="value">YAML</div>
+            </div>
+            <div class="fact">
+              <div class="label">Durability</div>
+              <div class="value">WAL + fsync policy</div>
+            </div>
+            <div class="fact">
+              <div class="label">Drivers</div>
+              <div class="value">Node.js + Go</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-mark" aria-label="XeonDB proof">
+          <div class="proof">
+            <div class="proof-top">
+              <span class="dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </span>
+              <span class="proof-title"><img src="logo.png" alt="" aria-hidden="true" /> xeondb</span>
+            </div>
+
+            <div class="proof-body">
+              <pre class="terminal" aria-label="Example request response"><span class="dim"># Request/response example</span>
+<span class="key">&gt;</span> CREATE KEYSPACE IF NOT EXISTS testKeyspace;
+<span class="ok">&lt;</span> {"ok":true}
+
+<span class="key">&gt;</span> USE testKeyspace;
+<span class="ok">&lt;</span> {"ok":true}
+
+<span class="key">&gt;</span> INSERT INTO testTable (id, value) VALUES (1, "hello");
+<span class="ok">&lt;</span> {"ok":true,"rowsAffected":1}
+</pre>
+            </div>
+
+            <div class="proof-foot" aria-label="Quick facts">
+              <span class="chip"><b>Fast:</b> Responds quickly</span>
+              <span class="chip"><b>Reliable:</b> Keeps writes safe</span>
+              <span class="chip"><b>Simple:</b> Easy to run</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="capabilities" class="section" aria-label="Capabilities">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Capabilities</h2>
+      <p class="sub">Built for predictable response times and clear operations. The goal is a database you can run in
+        production without a maze of moving parts.</p>
+
+      <div class="grid">
+        <div class="card reveal">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 14l4-4 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">Predictable performance</h3>
+              </div>
+            </div>
+            <p>Fast primary key reads on the common path, with efficient scans when you need to walk ranges.</p>
+          </div>
+        </div>
+
+        <div class="card reveal d2">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="M8 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="M6 14a6 6 0 1 0 12 0c0-3-2-6-6-6s-6 3-6 6Z" stroke="currentColor" stroke-width="2"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">Latency you can reason about</h3>
+              </div>
+            </div>
+            <p>Designed for stable tail behavior: fewer surprises, fewer knobs, and clearer operational limits.</p>
+          </div>
+        </div>
+
+        <div class="card reveal d3">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="2"
+                    stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">WAL backed durability</h3>
+              </div>
+            </div>
+            <p>Write ahead logging with configurable fsync behavior so you can choose throughput vs. risk.</p>
+          </div>
+        </div>
+
+        <div class="card reveal d4">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 4h16v16H4V4Z" stroke="currentColor" stroke-width="2"></path>
+                  <path d="M8 8h8M8 12h8M8 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">Operational clarity</h3>
+              </div>
+            </div>
+            <p>YAML configuration, safety limits, and deployment options that behave predictably.</p>
+          </div>
+        </div>
+
+        <div class="card reveal">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  </path>
+                  <path d="M6 11h12v10H6V11Z" stroke="currentColor" stroke-width="2"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">Optional authentication</h3>
+              </div>
+            </div>
+            <p>Enable auth when you need it. Keep the client workflow straightforward when you don’t.</p>
+          </div>
+        </div>
+
+        <div class="card reveal d2">
+          <div class="card-inner">
+            <div class="card-head">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                  <path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="2"></path>
+                </svg>
+              </span>
+              <div>
+                <h3 style="margin:0;">Simple integration</h3>
+              </div>
+            </div>
+            <p>Request/response over the wire with structured replies, plus official Node.js and Go drivers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="how" aria-label="How it works">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />How it works</h2>
+      <p class="sub">A simple write path you can explain on a whiteboard: append to WAL, stage in memory, flush to
+        sorted tables, and compact in the background.</p>
+
+      <div class="steps" aria-label="Write path steps">
+        <div class="step">
+          <div class="n"><span class="badge">1</span> Write path</div>
+          <strong>Append to WAL</strong>
+          <p>Durability starts with write ahead logging. Fsync policy is configurable for your risk/throughput needs.
+          </p>
+        </div>
+        <div class="step">
+          <div class="n"><span class="badge">2</span> In memory</div>
+          <strong>Update memtable</strong>
+          <p>In memory staging keeps the common path fast and predictable while batching work efficiently.</p>
+        </div>
+        <div class="step">
+          <div class="n"><span class="badge">3</span> On disk</div>
+          <strong>Flush to SSTables</strong>
+          <p>Sorted immutable tables make reads and scans efficient and keep file formats straightforward.</p>
+        </div>
+        <div class="step">
+          <div class="n"><span class="badge">4</span> Background</div>
+          <strong>Compact</strong>
+          <p>Compaction keeps space under control and maintains read performance without requiring constant tuning.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="get-started" class="get" aria-label="Get started">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Get started</h2>
+      <p class="sub">Run it locally in minutes. Use the docs for full deployment and configuration details.</p>
+
+      <div class="split" aria-label="Get started examples">
+        <div>
+          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Run the server</h3>
+          <pre class="code" aria-label="Run command"><span class="comment"># Build + run (Ninja/CMake)</span>
+<span class="prompt">$</span> cmake -S . -B build -G Ninja
+<span class="prompt">$</span> ninja -C build
+<span class="prompt">$</span> ninja -C build run
+
+<span class="comment"># System install (Linux, systemd)</span>
+<span class="prompt">$</span> sudo ./install.sh</pre>
+        </div>
+        <div>
+          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Connect</h3>
+          <pre class="code" aria-label="Connect example"><span class="comment"># Node.js driver</span>
+<span class="prompt">$</span> npm i xeondb-driver
+<span class="prompt">$</span> node packages/test_nodeJS.js
+
+<span class="comment"># Go driver</span>
+<span class="prompt">$</span> go get github.com/Voyrox/Xeondb/packages/golang@latest
+<span class="prompt">$</span> go run packages/test_golang.go</pre>
+        </div>
+        <div>
+          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Docker</h3>
+          <pre class="code" aria-label="Docker example"><span class="comment"># Quick eval (container)</span>
+<span class="prompt">$</span> docker build -t xeondb .
+<span class="prompt">$</span> docker run --rm -p 9876:9876 xeondb</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-label="Resources">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Resources</h2>
+      <p class="sub">Documentation, drivers, and support channels to evaluate and integrate XeonDB.</p>
+
+      <div class="links">
+        <a class="linkcard" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">
+          <strong>Documentation</strong>
+          <p>Quick start, deployment, and query examples.</p>
+          <span class="go">Open docs</span>
+        </a>
+
+        <a class="linkcard" href="https://docs.xeondb.com/drivers" target="_blank" rel="noreferrer">
+          <strong>Drivers</strong>
+          <p>Official Node.js and Go drivers.</p>
+          <span class="go">See drivers</span>
+        </a>
+
+        <a class="linkcard" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">
+          <strong>GitHub</strong>
+          <p>Source code, issues, and releases.</p>
+          <span class="go">Open repo</span>
+        </a>
+
+        <a class="linkcard" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank" rel="noreferrer">
+          <strong>Support</strong>
+          <p>Questions, bugs, and feature requests via GitHub issues.</p>
+          <span class="go">Open an issue</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="cta" aria-label="Call to action">
+      <div>
+        <h2>Ready to evaluate XeonDB?</h2>
+        <p>Start with the docs for architecture and usage. If you hit anything, open an issue and we will track it.</p>
+      </div>
+      <div class="rhs">
+        <a class="btn primary" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Read docs</a>
+        <a class="btn" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">View GitHub</a>
+        <a class="btn" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank" rel="noreferrer">Open
+          an issue</a>
+      </div>
+    </section>
+
+    <footer aria-label="Footer">
+      <div class="footlock">
+        <img class="footlogo" src="logo.png" alt="" aria-hidden="true" />
+        <div>
+          <strong style="color: rgba(233,230,218,0.92);">XeonDB</strong>
+          <span style="opacity: .9;">- Low latency database for real time apps.</span>
+        </div>
+      </div>
+      <div>
+        <a href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">docs.xeondb.com</a>
+        &nbsp;|&nbsp;
+        <a href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">github.com/Voyrox/Xeondb</a>
+        &nbsp;|&nbsp;
+        <a href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank" rel="noreferrer">Issues</a>
+      </div>
+    </footer>
+  </main>
+
+</body>
+
+</html>
