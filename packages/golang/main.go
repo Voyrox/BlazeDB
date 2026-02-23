@@ -94,8 +94,8 @@ func (c *XeondbClient) Connect() bool {
 }
 
 func (c *XeondbClient) Auth(username, password string) (map[string]any, error) {
-	u := sqlQuoted(username)
-	p := sqlQuoted(password)
+	u := cleanSQL(username)
+	p := cleanSQL(password)
 	return c.Query("AUTH " + u + " " + p + ";")
 }
 
@@ -393,7 +393,7 @@ func (c *XeondbClient) rejectAllPending(err error) {
 	}
 }
 
-func sqlQuoted(v string) string {
+func cleanSQL(v string) string {
 	s := fmt.Sprint(v)
 	s = strings.ReplaceAll(s, "\\", "\\\\")
 	s = strings.ReplaceAll(s, "\"", "\\\"")

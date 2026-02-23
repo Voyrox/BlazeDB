@@ -1,18 +1,6 @@
 const crypto = require('crypto');
 
-function sqlQuoted(v) {
-  const s = String(v);
-  return (
-    '"' +
-    s
-      .replace(/\\/g, '\\\\')
-      .replace(/\"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
-}
+const { cleanSQL } = require('../../lib/shared');
 
 function newId() {
   return crypto.randomBytes(12).toString('hex');
@@ -46,9 +34,9 @@ async function createBackupRow(db, data) {
   const createdAt = Date.now();
   const dir = String(data.dir || '').trim() || `backups/${instanceId}/${createdAt}`;
 
-  const q = `INSERT INTO instance_backups (id, instance_id, dir, created_at) VALUES (${sqlQuoted(
+  const q = `INSERT INTO instance_backups (id, instance_id, dir, created_at) VALUES (${cleanSQL(
     id
-  )}, ${sqlQuoted(instanceId)}, ${sqlQuoted(dir)}, ${createdAt});`;
+  )}, ${cleanSQL(instanceId)}, ${cleanSQL(dir)}, ${createdAt});`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to create backup');
@@ -66,7 +54,7 @@ async function deleteBackupRow(db, data) {
   const found = backups.find((b) => String(b.id || '').trim() === id);
   if (!found) throw new Error('Backup not found');
 
-  const q = `DELETE FROM instance_backups WHERE id=${sqlQuoted(id)};`;
+  const q = `DELETE FROM instance_backups WHERE id=${cleanSQL(id)};`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to delete backup');

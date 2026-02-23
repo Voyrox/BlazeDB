@@ -20,7 +20,7 @@ class XeondbClient {
 		this._pending = [];
 	}
 
-	static _sqlQuoted(v) {
+	static _cleanSQL(v) {
 		const s = String(v);
 		return (
 			'"' +
@@ -66,8 +66,8 @@ class XeondbClient {
 	}
 
 	async auth(username, password) {
-		const u = XeondbClient._sqlQuoted(username);
-		const p = XeondbClient._sqlQuoted(password);
+		const u = XeondbClient._cleanSQL(username);
+		const p = XeondbClient._cleanSQL(password);
 		return await this.query(`AUTH ${u} ${p};`);
 	}
 

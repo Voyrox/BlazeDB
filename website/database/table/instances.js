@@ -1,18 +1,6 @@
 const crypto = require('crypto');
 
-function sqlQuoted(v) {
-  const s = String(v);
-  return (
-    '"' +
-    s
-      .replace(/\\/g, '\\\\')
-      .replace(/\"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
-}
+const { cleanSQL } = require('../../lib/shared');
 
 function parseInstancePool(envValue) {
   if (!envValue) return [];
@@ -63,7 +51,7 @@ async function ensureInstancesTable(db) {
 }
 
 async function getInstanceById(db, id) {
-  const q = `SELECT * FROM instances WHERE id=${sqlQuoted(id)};`;
+  const q = `SELECT * FROM instances WHERE id=${cleanSQL(id)};`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to fetch instance');
@@ -105,11 +93,11 @@ async function createInstance(db, data) {
   const createdAt = Date.now();
   const status = 'online';
 
-  const q = `INSERT INTO instances (id, user_email, name, plan, host, port, db_username, db_password, status, created_at) VALUES (${sqlQuoted(
+  const q = `INSERT INTO instances (id, user_email, name, plan, host, port, db_username, db_password, status, created_at) VALUES (${cleanSQL(
     id
-  )}, ${sqlQuoted(userEmail)}, ${sqlQuoted(name)}, ${sqlQuoted(plan)}, ${sqlQuoted(target.host)}, ${Number(
+  )}, ${cleanSQL(userEmail)}, ${cleanSQL(name)}, ${cleanSQL(plan)}, ${cleanSQL(target.host)}, ${Number(
     target.port
-  )}, ${sqlQuoted(dbUsername)}, ${sqlQuoted(dbPassword)}, ${sqlQuoted(status)}, ${createdAt});`;
+  )}, ${cleanSQL(dbUsername)}, ${cleanSQL(dbPassword)}, ${cleanSQL(status)}, ${createdAt});`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to create instance');

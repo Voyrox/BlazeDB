@@ -4,12 +4,10 @@ const { ensureInstancesTable } = require("./table/instances.js");
 const { ensureWhitelistTable } = require('./table/whitelist.js');
 const { ensureBackupsTable } = require('./table/backups.js');
 
+const { isIdentifier } = require('../lib/shared');
+
 const client = new XeondbClient({ host: process.env.DB_HOST, port: process.env.DB_PORT });
 const keyspace = process.env.DB_KEYSPACE;
-
-function isIdentifier(s) {
-    return typeof s === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(s);
-}
 
 async function connectToDb() {
     try {

@@ -2,28 +2,10 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const { createUser, getUserByEmail, verifyUser } = require('../database/table/user.js');
 
-function isEmail(s) {
-    return typeof s === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-}
-
-function normalizeEmail(s) {
-    return String(s || '').trim().toLowerCase();
-}
-
-function issueAuthCookie(res, token) {
-    const secure = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
-    res.cookie('auth-token', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/'
-    });
-    res.set('auth-token', token);
-}
+const { isEmail, normalizeEmail, issueAuthCookie, getReqDb } = require('../lib/shared');
 
 router.post('/register', async (req, res) => {
-    const db = req.app && req.app.locals ? req.app.locals.db : null;
+    const db = getReqDb(req);
     if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
     const email = normalizeEmail(req.body.email);
@@ -54,7 +36,7 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    const db = req.app && req.app.locals ? req.app.locals.db : null;
+    const db = getReqDb(req);
     if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
     const email = normalizeEmail(req.body.email);

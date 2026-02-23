@@ -1,18 +1,6 @@
 const bcrypt = require('bcryptjs');
 
-function cleanInput(v) {
-  const s = String(v);
-  return (
-    '"' +
-    s
-      .replace(/\\/g, '\\\\')
-      .replace(/\"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
-}
+const { cleanSQL } = require('../../lib/shared');
 
 async function ensureUsersTable(db) {
   const cmd =
@@ -24,7 +12,7 @@ async function ensureUsersTable(db) {
 }
 
 async function getUserByEmail(db, email) {
-  const cmd = `SELECT * FROM users WHERE email=${cleanInput(email)};`;
+  const cmd = `SELECT * FROM users WHERE email=${cleanSQL(email)};`;
   const res = await db.query(cmd);
   if (!res || res.ok !== true) throw new Error((res && res.error) || 'Failed to fetch user');
 
@@ -45,9 +33,9 @@ async function createUser(db, data) {
   const passwordHash = bcrypt.hashSync(password, 10);
   const createdAt = Date.now();
 
-  const cmd = `INSERT INTO users (email, password_hash, first_name, last_name, company, marketing_opt_in, created_at) VALUES (${cleanInput(
+  const cmd = `INSERT INTO users (email, password_hash, first_name, last_name, company, marketing_opt_in, created_at) VALUES (${cleanSQL(
     email
-  )}, ${cleanInput(passwordHash)}, ${cleanInput(firstName)}, ${cleanInput(lastName)}, ${cleanInput(
+  )}, ${cleanSQL(passwordHash)}, ${cleanSQL(firstName)}, ${cleanSQL(lastName)}, ${cleanSQL(
     companyName
   )}, ${marketingOptIn ? 'true' : 'false'}, ${createdAt});`;
   const res = await db.query(cmd);

@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { XeondbClient } = require('xeondb-driver');
 const { createInstance, getInstancesByUser, getInstanceById } = require('../database/table/instances.js');
+const { cleanSQL, normalizeEmail, isIdentifier, getReqDb } = require('../lib/shared');
 const {
   addWhitelistEntry,
   listWhitelistByInstance,
@@ -15,30 +16,8 @@ const {
   deleteBackupRow
 } = require('../database/table/backups');
 
-function sqlQuoted(v) {
-  const s = String(v);
-  return (
-    '"' +
-    s
-      .replace(/\\/g, '\\\\')
-      .replace(/\"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
-}
-
-function normalizeEmail(s) {
-  return String(s || '').trim().toLowerCase();
-}
-
-function isIdentifier(s) {
-  return typeof s === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(s);
-}
-
 async function loadOwnedInstance(req, id) {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) throw new Error('Database not ready');
 
   const email = normalizeEmail(req.user && req.user.email);
@@ -63,7 +42,7 @@ async function loadOwnedInstance(req, id) {
 }
 
 router.get('/', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const email = normalizeEmail(req.user && req.user.email);
@@ -78,7 +57,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const email = normalizeEmail(req.user && req.user.email);
@@ -112,7 +91,7 @@ router.post('/', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -137,7 +116,7 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    const q = `DELETE FROM instances WHERE id=${sqlQuoted(id)};`;
+    const q = `DELETE FROM instances WHERE id=${cleanSQL(id)};`;
     const del = await db.query(q);
     if (!del || del.ok !== true) {
       throw new Error((del && del.error) || 'Failed to delete instance');
@@ -208,7 +187,7 @@ router.post('/:id/query', async (req, res) => {
 });
 
 router.get('/:id/whitelist', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -231,7 +210,7 @@ router.get('/:id/whitelist', async (req, res) => {
 });
 
 router.post('/:id/whitelist', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -248,7 +227,7 @@ router.post('/:id/whitelist', async (req, res) => {
 });
 
 router.delete('/:id/whitelist/:wlId', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -263,7 +242,7 @@ router.delete('/:id/whitelist/:wlId', async (req, res) => {
 });
 
 router.get('/:id/backups', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -277,7 +256,7 @@ router.get('/:id/backups', async (req, res) => {
 });
 
 router.post('/:id/backups', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');
@@ -292,7 +271,7 @@ router.post('/:id/backups', async (req, res) => {
 });
 
 router.delete('/:id/backups/:backupId', async (req, res) => {
-  const db = req.app && req.app.locals ? req.app.locals.db : null;
+  const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
   const id = String(req.params.id || '');

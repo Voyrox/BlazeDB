@@ -1,19 +1,7 @@
 const crypto = require('crypto');
 const net = require('net');
 
-function sqlQuoted(v) {
-  const s = String(v);
-  return (
-    '"' +
-    s
-      .replace(/\\/g, '\\\\')
-      .replace(/\"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
-}
+const { cleanSQL } = require('../../lib/shared');
 
 function newId() {
   return crypto.randomBytes(12).toString('hex');
@@ -84,9 +72,9 @@ async function addWhitelistEntry(db, data) {
   if (dupe) return dupe;
 
   const id = newId();
-  const q = `INSERT INTO instance_whitelist (id, instance_id, cidr, kind, created_at) VALUES (${sqlQuoted(
+  const q = `INSERT INTO instance_whitelist (id, instance_id, cidr, kind, created_at) VALUES (${cleanSQL(
     id
-  )}, ${sqlQuoted(instanceId)}, ${sqlQuoted(cidr)}, ${sqlQuoted(kind)}, ${createdAt});`;
+  )}, ${cleanSQL(instanceId)}, ${cleanSQL(cidr)}, ${cleanSQL(kind)}, ${createdAt});`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to add whitelist entry');
@@ -106,7 +94,7 @@ async function removeWhitelistEntry(db, data) {
   if (!entry) throw new Error('Whitelist entry not found');
   if (String(entry.kind || '').toLowerCase() === 'default') throw new Error('Cannot remove default entry');
 
-  const q = `DELETE FROM instance_whitelist WHERE id=${sqlQuoted(id)};`;
+  const q = `DELETE FROM instance_whitelist WHERE id=${cleanSQL(id)};`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to remove whitelist entry');
@@ -117,7 +105,7 @@ async function removeWhitelistEntry(db, data) {
 async function deleteWhitelistEntryById(db, id) {
   const wlId = String(id || '').trim();
   if (!wlId) throw new Error('id is required');
-  const q = `DELETE FROM instance_whitelist WHERE id=${sqlQuoted(wlId)};`;
+  const q = `DELETE FROM instance_whitelist WHERE id=${cleanSQL(wlId)};`;
   const res = await db.query(q);
   if (!res || res.ok !== true) {
     throw new Error((res && res.error) || 'Failed to delete whitelist entry');
