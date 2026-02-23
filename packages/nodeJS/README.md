@@ -27,10 +27,9 @@ Please refer to the [documentation](https://voyrox.github.io/Xeondb/) for a comp
     console.log(result);
     ```
 
-
 ## Example usage
 ```javascript
-const { XeondbClient } = require('./nodeJS');
+const { XeondbClient } = require("xeondb-driver");
 
 async function main() {
     const host = process.env.Xeondb_HOST || '127.0.0.1';
