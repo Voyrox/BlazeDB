@@ -1,13 +1,70 @@
-Cloud interface options:
+# Database Auth & System Keyspace Plan
 
-- Do a proxy that manges the request
-    - Cross refernces user with the database if they created that keyspace
-    - If they did, then it forwards the request to the database
-    - If they did not, then it returns an error message
+## Boot Time Initialization
 
-- On the database side
-    - Have a level 0 database that stores the keyspace and the user that created it
-    - When a request comes in, it checks the level 0 database to see if the user is authorized to access the keyspace
-    - If they are, it forwards the request to the appropriate keyspace
-    - If they are not, it returns an error message
-    - Level 0, Level 1, Level 0 can r/w to core database, but level 1 can only r/w to the keyspace it created
+- On every database startup:
+  - Ensure keyspace `SYSTEM` exists (create if not).
+  - Ensure required tables exist inside `SYSTEM`:
+    - `USERS`
+    - `KEYSPACES`
+  - If authentication is enabled:
+    - Check if any level 0 user exists.
+    - If none exists, create initial level 0 user (first-time bootstrap) with credentials from config or environment variables.
+
+## SYSTEM Keyspace Structure
+
+### SYSTEM.USERS
+
+- Primary Key: `username`
+- Fields:
+  - `username`
+  - `password`
+  - `level` (0 or 1)
+  - `enabled`
+  - `created_at`
+
+### SYSTEM.KEYSPACES
+
+- Partition Key: `owner_username`
+- Clustering Key: `logical_name`
+- Fields:
+  - `owner_username`
+  - `logical_name` (user-visible name)
+  - `physical_name` (internal unique keyspace name)
+  - `created_at`
+
+### SYSTEM.KEYSPACE_BY_PHYSICAL (optional)
+
+- Primary Key: `physical_name`
+- Fields:
+  - `physical_name`
+  - `owner_username`
+  - `logical_name`
+  - `created_at`
+
+---
+
+## Account Levels
+
+### Level 0 (Superuser)
+
+- Can:
+  - Create users
+  - Delete users
+  - Create keyspaces for any user
+  - Delete keyspaces for any user
+  - Access SYSTEM keyspace
+- Used for:
+  - Authentication management
+  - Permission enforcement
+
+### Level 1 (Normal User)
+
+- Can:
+  - Create their own keyspaces
+  - Delete their own keyspaces
+  - Create/read/write tables inside their own keyspaces
+- Cannot:
+  - Access SYSTEM keyspace
+  - Create or delete users
+  - Access other users’ keyspaces
