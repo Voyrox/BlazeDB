@@ -6,7 +6,14 @@ const { ensureBackupsTable } = require('./table/backups.js');
 
 const { isIdentifier } = require('../lib/shared');
 
-const client = new XeondbClient({ host: process.env.DB_HOST, port: process.env.DB_PORT });
+let client;
+
+if (process.env.DB_USERNAME && process.env.DB_PASSWORD) {
+    client = new XeondbClient({ host: process.env.DB_HOST, port: process.env.DB_PORT, username: process.env.DB_USERNAME, password: process.env.DB_PASSWORD });
+} else {
+    client = new XeondbClient({ host: process.env.DB_HOST, port: process.env.DB_PORT });
+}
+
 const keyspace = process.env.DB_KEYSPACE;
 
 async function connectToDb() {
