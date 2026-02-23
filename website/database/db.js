@@ -1,6 +1,8 @@
 const { XeondbClient } = require("xeondb-driver");
 const { ensureUsersTable } = require("./table/user.js");
 const { ensureInstancesTable } = require("./table/instances.js");
+const { ensureWhitelistTable } = require('./table/whitelist.js');
+const { ensureBackupsTable } = require('./table/backups.js');
 
 const client = new XeondbClient({ host: process.env.DB_HOST, port: process.env.DB_PORT });
 const keyspace = process.env.DB_KEYSPACE;
@@ -31,6 +33,8 @@ async function connectToDb() {
 
         await ensureUsersTable(client);
         await ensureInstancesTable(client);
+        await ensureWhitelistTable(client);
+        await ensureBackupsTable(client);
 
         return client;
     } catch (error) {

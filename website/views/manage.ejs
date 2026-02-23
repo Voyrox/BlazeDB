@@ -276,108 +276,19 @@
               <div class="whitelist-info">
                 <strong>Security Notice:</strong> Only whitelisted IPs can connect. 0.0.0.0/0 allows all.
               </div>
-              <div class="whitelist-list">
-                <div class="whitelist-item">
-                  <span class="whitelist-ip">0.0.0.0/0</span>
-                  <span class="whitelist-badge default">Allow All</span>
-                  <button class="whitelist-remove-btn disabled">Remove</button>
-                </div>
-                <div class="whitelist-item">
-                  <span class="whitelist-ip">192.168.1.100/32</span>
-                  <span class="whitelist-badge custom">Custom</span>
-                  <button class="whitelist-remove-btn">Remove</button>
-                </div>
-              </div>
+              <div id="whitelist-list" class="whitelist-list"></div>
               <div class="add-ip-form">
-                <input type="text" class="add-ip-input" placeholder="e.g. 203.0.113.50/32" />
-                <button class="add-ip-btn">Add IP</button>
+                <input id="add-ip-input" type="text" class="add-ip-input" placeholder="e.g. 203.0.113.50/32" />
+                <button id="add-ip-btn" class="add-ip-btn" type="button">Add IP</button>
               </div>
             </div>
 
             <div class="panel panel-backups">
               <div class="panel-header">
                 <h2 class="panel-title">Database Backups</h2>
-                <button class="query-btn">Create Backup</button>
+                <button class="query-btn" id="create-backup" type="button">Create Backup</button>
               </div>
-              <div class="backup-list">
-                <div class="backup-item">
-                  <div class="backup-info">
-                    <div class="backup-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                      </svg>
-                    </div>
-                    <div>
-                      <div class="backup-name">Manual Backup</div>
-                      <div class="backup-date">Feb 23, 2026 at 2:30 PM</div>
-                    </div>
-                  </div>
-                  <div class="backup-actions">
-                    <button class="db-action-btn">Restore</button>
-                    <button class="whitelist-remove-btn">Delete</button>
-                  </div>
-                </div>
-                <div class="backup-item">
-                  <div class="backup-info">
-                    <div class="backup-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                    </div>
-                    <div>
-                      <div class="backup-name">Daily Backup</div>
-                      <div class="backup-date">Feb 22, 2026 at 12:00 AM</div>
-                    </div>
-                  </div>
-                  <div class="backup-actions">
-                    <button class="db-action-btn">Restore</button>
-                    <button class="whitelist-remove-btn">Delete</button>
-                  </div>
-                </div>
-                <div class="backup-item">
-                  <div class="backup-info">
-                    <div class="backup-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                    </div>
-                    <div>
-                      <div class="backup-name">Weekly Backup</div>
-                      <div class="backup-date">Feb 20, 2026 at 12:00 AM</div>
-                    </div>
-                  </div>
-                  <div class="backup-actions">
-                    <button class="db-action-btn">Restore</button>
-                    <button class="whitelist-remove-btn">Delete</button>
-                  </div>
-                </div>
-                <div class="backup-item">
-                  <div class="backup-info">
-                    <div class="backup-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                    </div>
-                    <div>
-                      <div class="backup-name">Monthly Backup</div>
-                      <div class="backup-date">Feb 1, 2026 at 12:00 AM</div>
-                    </div>
-                  </div>
-                  <div class="backup-actions">
-                    <button class="db-action-btn">Restore</button>
-                    <button class="whitelist-remove-btn">Delete</button>
-                  </div>
-                </div>
-              </div>
+              <div id="backup-list" class="backup-list"></div>
             </div>
 
             <div class="panel panel-billing">
@@ -799,6 +710,209 @@
             }
           });
         }
+
+        async function getJson(url) {
+          const res = await fetch(url, { credentials: 'same-origin' });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data) {
+            throw new Error((data && (data.error || data.message)) || ('Request failed (' + res.status + ')'));
+          }
+          return data;
+        }
+
+        async function deleteJson(url) {
+          const res = await fetch(url, { method: 'DELETE', credentials: 'same-origin' });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data) {
+            throw new Error((data && (data.error || data.message)) || ('Request failed (' + res.status + ')'));
+          }
+          return data;
+        }
+
+        const wlListEl = document.getElementById('whitelist-list');
+        const addIpInput = document.getElementById('add-ip-input');
+        const addIpBtn = document.getElementById('add-ip-btn');
+
+        function renderWhitelist(items, clientCidr) {
+          if (!wlListEl) return;
+          wlListEl.innerHTML = '';
+          const list = Array.isArray(items) ? items.slice() : [];
+          list.sort((a, b) => {
+            const ac = String((a && a.cidr) || '');
+            const bc = String((b && b.cidr) || '');
+            if (ac === '0.0.0.0/0') return -1;
+            if (bc === '0.0.0.0/0') return 1;
+            return ac.localeCompare(bc);
+          });
+
+          for (const entry of list) {
+            const cidr = String(entry && entry.cidr ? entry.cidr : '');
+            const kind = String(entry && entry.kind ? entry.kind : 'custom').toLowerCase();
+            const isDefault = kind === 'default' || cidr === '0.0.0.0/0';
+            const isYourIp = !!clientCidr && cidr === clientCidr && !isDefault;
+
+            const row = document.createElement('div');
+            row.className = 'whitelist-item';
+
+            const ipSpan = document.createElement('span');
+            ipSpan.className = 'whitelist-ip';
+            ipSpan.textContent = cidr;
+
+            const badge = document.createElement('span');
+            if (isDefault) {
+              badge.className = 'whitelist-badge default';
+              badge.textContent = 'Allow All';
+            } else if (isYourIp) {
+              badge.className = 'whitelist-badge auto';
+              badge.textContent = 'Your IP';
+            } else if (kind === 'auto') {
+              badge.className = 'whitelist-badge auto';
+              badge.textContent = 'Auto';
+            } else {
+              badge.className = 'whitelist-badge custom';
+              badge.textContent = 'Custom';
+            }
+
+            const btn = document.createElement('button');
+            btn.className = 'whitelist-remove-btn' + (isDefault ? ' disabled' : '');
+            btn.type = 'button';
+            btn.textContent = 'Remove';
+            if (!isDefault) {
+              btn.addEventListener('click', async () => {
+                try {
+                  await deleteJson(`/api/instances/${instanceId}/whitelist/${entry.id}`);
+                  toast('success', 'Removed');
+                  await refreshWhitelist();
+                } catch (e) {
+                  toast('error', e && e.message ? e.message : 'Remove failed');
+                }
+              });
+            }
+
+            row.appendChild(ipSpan);
+            row.appendChild(badge);
+            row.appendChild(btn);
+            wlListEl.appendChild(row);
+          }
+        }
+
+        async function refreshWhitelist() {
+          try {
+            const data = await getJson(`/api/instances/${instanceId}/whitelist`);
+            renderWhitelist(data.whitelist, data.clientCidr);
+          } catch (e) {
+            toast('error', e && e.message ? e.message : 'Failed to load whitelist');
+          }
+        }
+
+        if (addIpBtn && addIpInput) {
+          addIpBtn.addEventListener('click', async () => {
+            const cidr = String(addIpInput.value || '').trim();
+            if (!cidr) {
+              toast('warning', 'Enter an IP/CIDR');
+              return;
+            }
+            addIpBtn.disabled = true;
+            try {
+              await postJson(`/api/instances/${instanceId}/whitelist`, { cidr });
+              addIpInput.value = '';
+              toast('success', 'Added');
+              await refreshWhitelist();
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Add failed');
+            } finally {
+              addIpBtn.disabled = false;
+            }
+          });
+        }
+
+        const backupListEl = document.getElementById('backup-list');
+        const createBackupBtn = document.getElementById('create-backup');
+
+        function renderBackups(items) {
+          if (!backupListEl) return;
+          backupListEl.innerHTML = '';
+          const list = Array.isArray(items) ? items : [];
+          if (list.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'backup-item';
+            empty.innerHTML = '<div class="backup-info"><div class="backup-icon">-</div><div><div class="backup-name">No backups yet</div><div class="backup-date">Create one when you need it</div></div></div>';
+            backupListEl.appendChild(empty);
+            return;
+          }
+
+          for (const b of list) {
+            const dir = String(b && b.dir ? b.dir : 'backup');
+            const createdAt = b && b.created_at ? Number(b.created_at) : NaN;
+            const dateStr = Number.isFinite(createdAt) ? new Date(createdAt).toLocaleString() : '';
+
+            const row = document.createElement('div');
+            row.className = 'backup-item';
+
+            const info = document.createElement('div');
+            info.className = 'backup-info';
+            info.innerHTML =
+              '<div class="backup-icon">' +
+              '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>' +
+              '<polyline points="17 8 12 3 7 8"></polyline>' +
+              '<line x1="12" y1="3" x2="12" y2="15"></line>' +
+              '</svg>' +
+              '</div>' +
+              '<div><div class="backup-name"></div><div class="backup-date"></div></div>';
+            info.querySelector('.backup-name').textContent = dir;
+            info.querySelector('.backup-date').textContent = dateStr;
+
+            const actions = document.createElement('div');
+            actions.className = 'backup-actions';
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'whitelist-remove-btn';
+            del.textContent = 'Delete';
+            del.addEventListener('click', async () => {
+              try {
+                await deleteJson(`/api/instances/${instanceId}/backups/${b.id}`);
+                toast('success', 'Backup deleted');
+                await refreshBackups();
+              } catch (e) {
+                toast('error', e && e.message ? e.message : 'Delete failed');
+              }
+            });
+
+            actions.appendChild(del);
+            row.appendChild(info);
+            row.appendChild(actions);
+            backupListEl.appendChild(row);
+          }
+        }
+
+        async function refreshBackups() {
+          try {
+            const data = await getJson(`/api/instances/${instanceId}/backups`);
+            renderBackups(data.backups);
+          } catch (e) {
+            toast('error', e && e.message ? e.message : 'Failed to load backups');
+          }
+        }
+
+        if (createBackupBtn) {
+          createBackupBtn.addEventListener('click', async () => {
+            createBackupBtn.disabled = true;
+            try {
+              await postJson(`/api/instances/${instanceId}/backups`, {});
+              toast('success', 'Backup created');
+              await refreshBackups();
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Create failed');
+            } finally {
+              createBackupBtn.disabled = false;
+            }
+          });
+        }
+
+        refreshWhitelist();
+        refreshBackups();
       })();
     </script>
 </body>

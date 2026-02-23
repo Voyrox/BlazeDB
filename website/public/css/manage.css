@@ -767,6 +767,11 @@
       color: var(--ok);
   }
 
+  .whitelist-badge.auto {
+      background: rgba(57, 198, 255, 0.14);
+      color: var(--accent2);
+  }
+
   .whitelist-remove-btn {
       padding: 6px 10px;
       border-radius: 8px;
