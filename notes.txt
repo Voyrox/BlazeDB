@@ -1,70 +1,37 @@
-# Database Auth & System Keyspace Plan
+# Auth + Keyspace Ownership Plan
 
-## Boot Time Initialization
+Auth: optional (enabled when configured)
 
-- On every database startup:
-  - Ensure keyspace `SYSTEM` exists (create if not).
-  - Ensure required tables exist inside `SYSTEM`:
-    - `USERS`
-    - `KEYSPACES`
-  - If authentication is enabled:
-    - Check if any level 0 user exists.
-    - If none exists, create initial level 0 user (first-time bootstrap) with credentials from config or environment variables.
+Accounts
+    - Level 0 (root): can access SYSTEM; can create/delete keyspaces; can assign keyspace owners; can manage users
+    - Level 1 (user): cannot access SYSTEM; cannot create/delete keyspaces; can only operate inside keyspaces they own (or are granted)
 
-## SYSTEM Keyspace Structure
+Keyspaces (global namespace)
+    - Only root can CREATE/DROP KEYSPACE
+    - Each keyspace has an owner user
+    - Non-root users can only USE/SHOW TABLES/CREATE TABLE/READ/WRITE inside keyspaces they own (or are granted)
+    - SHOW KEYSPACES:
+        - root sees all keyspaces
+        - users see only keyspaces they own (or are granted)
 
-### SYSTEM.USERS
+SYSTEM tables (minimal)
+    - SYSTEM.USERS
+        - username (PK)
+        - password
+        - level (0/1)
+        - enabled
+        - created_at
+    - SYSTEM.KEYSPACE_OWNERS
+        - keyspace (PK)
+        - owner_username
+        - created_at
+    - Optional (for sharing later): SYSTEM.KEYSPACE_GRANTS
+        - keyspace#username (PK)
+        - created_at
 
-- Primary Key: `username`
-- Fields:
-  - `username`
-  - `password`
-  - `level` (0 or 1)
-  - `enabled`
-  - `created_at`
-
-### SYSTEM.KEYSPACES
-
-- Partition Key: `owner_username`
-- Clustering Key: `logical_name`
-- Fields:
-  - `owner_username`
-  - `logical_name` (user-visible name)
-  - `physical_name` (internal unique keyspace name)
-  - `created_at`
-
-### SYSTEM.KEYSPACE_BY_PHYSICAL (optional)
-
-- Primary Key: `physical_name`
-- Fields:
-  - `physical_name`
-  - `owner_username`
-  - `logical_name`
-  - `created_at`
-
----
-
-## Account Levels
-
-### Level 0 (Superuser)
-
-- Can:
-  - Create users
-  - Delete users
-  - Create keyspaces for any user
-  - Delete keyspaces for any user
-  - Access SYSTEM keyspace
-- Used for:
-  - Authentication management
-  - Permission enforcement
-
-### Level 1 (Normal User)
-
-- Can:
-  - Create their own keyspaces
-  - Delete their own keyspaces
-  - Create/read/write tables inside their own keyspaces
-- Cannot:
-  - Access SYSTEM keyspace
-  - Create or delete users
-  - Access other users’ keyspaces
+Startup
+    - Ensure SYSTEM keyspace + required SYSTEM tables exist
+    - Load SYSTEM tables once and build in-memory caches:
+        - username -> user record
+        - keyspace -> owner
+    - Heavy boot is OK; per-request authz should be cache lookups (no disk reads)
