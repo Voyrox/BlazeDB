@@ -70,44 +70,50 @@
 
   .sidebar {
       position: sticky;
-      top: 30%;
+      top: 24px;
       left: 0;
       transform: none;
       height: fit-content;
       flex-shrink: 0;
+      width: clamp(292px, 22vw, 332px);
       border: 1px solid var(--stroke2);
-      border-radius: calc(var(--radius) + 6px);
-      background: rgba(11, 16, 32, 0.85);
+      border-radius: calc(var(--radius) + 8px);
+      background: rgba(8, 12, 24, 0.92);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
       overflow: hidden;
       z-index: 10;
   }
 
   .sidebar-header {
-      padding: 16px 18px;
+      padding: 18px 20px;
       border-bottom: 1px solid var(--stroke2);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(11, 16, 32, 0.9), rgba(7, 10, 20, 0.9));
   }
 
   .sidebar-header img {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
       border: 1px solid var(--stroke);
       background: var(--surface1);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
   }
 
   .sidebar-header span {
-      font-weight: 850;
-      font-size: 16px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      color: var(--text);
   }
 
   .sidebar-nav {
       display: flex;
       flex-direction: column;
-      padding: 8px;
-      gap: 4px;
+      padding: 10px;
+      gap: 6px;
   }
 
   .nav-toggle {
@@ -117,14 +123,14 @@
   .nav-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
       border: 1px solid transparent;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+      transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out);
       color: var(--muted);
   }
 
@@ -139,20 +145,21 @@
   }
 
   .nav-item.nav-danger {
-      border-color: rgba(246, 109, 109, 0.26);
+      border-color: rgba(246, 109, 109, 0.3);
       background: rgba(246, 109, 109, 0.08);
-      color: rgba(246, 109, 109, 0.92);
-      font-weight: 900;
+      color: rgba(246, 109, 109, 0.95);
+      font-weight: 800;
   }
 
   .nav-item.nav-danger:hover {
-      background: rgba(246, 109, 109, 0.12);
+      background: rgba(246, 109, 109, 0.14);
       color: rgba(246, 109, 109, 1);
   }
 
   .nav-item:hover {
-      background: var(--surface2);
+      background: rgba(15, 23, 51, 0.9);
       color: var(--text);
+      transform: translateX(2px);
   }
 
   .nav-item svg {
@@ -161,22 +168,39 @@
       flex: 0 0 auto;
   }
 
+  .nav-item::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+      margin-left: auto;
+      transition: background 160ms var(--ease-out);
+  }
+
+  .nav-toggle:checked + .nav-item::after {
+      background: rgba(57, 198, 255, 0.75);
+  }
+
   .nav-toggle:checked+.nav-item {
-      border-color: rgba(57, 198, 255, 0.30);
-      background: rgba(57, 198, 255, 0.10);
+      border-color: rgba(57, 198, 255, 0.45);
+      background: linear-gradient(135deg, rgba(57, 198, 255, 0.18), rgba(46, 211, 161, 0.08));
       color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(57, 198, 255, 0.12);
   }
 
   .page-container {
       display: flex;
       min-height: 100vh;
-      padding: 28px;
-      gap: 28px;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 22px;
   }
 
   .sidebar {
       position: sticky;
-      top: 30%;
+      top: 24px;
       left: 0;
       transform: none;
       height: fit-content;
@@ -387,8 +411,11 @@
       min-width: 0;
   }
 
-  .qc-field {
+  .qc-col > .qc-field {
       flex: 1;
+  }
+
+  .qc-field {
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -1238,6 +1265,7 @@
 
       .sidebar-nav {
           flex-direction: row;
+          flex-wrap: wrap;
       }
 
       .content-wrapper {

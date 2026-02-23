@@ -4,9 +4,6 @@ const { XeondbClient } = require('xeondb-driver');
 
 const { cleanSQL, isIdentifier } = require('../../lib/shared');
 
-const INSTANCES_TABLE_V1 = 'instances';
-const INSTANCES_TABLE_V2 = 'instances_v2';
-
 function parseInstancePool(envValue) {
   if (!envValue) return [];
   try {
@@ -78,53 +75,28 @@ async function queryList(db, q) {
 }
 
 async function ensureInstancesTable(db) {
-  const ddlV1 =
-    'CREATE TABLE IF NOT EXISTS instances (id varchar, user_email varchar, name varchar, plan varchar, host varchar, port int64, db_username varchar, db_password varchar, status varchar, created_at int64, PRIMARY KEY (id));';
-  const res1 = await db.query(ddlV1);
-  if (!res1 || res1.ok !== true) throw new Error((res1 && res1.error) || 'Failed to ensure instances table');
-
   const ddlV2 =
-    'CREATE TABLE IF NOT EXISTS instances_v2 (id varchar, user_email varchar, name varchar, plan varchar, host varchar, port int64, keyspace varchar, db_username varchar, db_password varchar, status varchar, created_at int64, PRIMARY KEY (id));';
+    'CREATE TABLE IF NOT EXISTS instances (id varchar, user_email varchar, name varchar, plan varchar, host varchar, port int64, keyspace varchar, db_username varchar, db_password varchar, status varchar, created_at int64, PRIMARY KEY (id));';
   const res2 = await db.query(ddlV2);
-  if (!res2 || res2.ok !== true) throw new Error((res2 && res2.error) || 'Failed to ensure instances_v2 table');
+  if (!res2 || res2.ok !== true) throw new Error((res2 && res2.error) || 'Failed to ensure instances table');
 }
 
 async function getInstanceById(db, id) {
-  const q2 = `SELECT * FROM ${INSTANCES_TABLE_V2} WHERE id=${cleanSQL(id)};`;
-  const row2 = await querySingleRow(db, q2, null);
-  if (row2) return row2;
-
-  const q1 = `SELECT * FROM ${INSTANCES_TABLE_V1} WHERE id=${cleanSQL(id)};`;
-  return querySingleRow(db, q1, null);
+  const q2 = `SELECT * FROM instances WHERE id=${cleanSQL(id)};`;
+  return querySingleRow(db, q2, null);
 }
 
 async function getInstancesByUser(db, email) {
   const needle = String(email || '').trim().toLowerCase();
 
-  let rows2 = [];
-  let rows1 = [];
+  let rows = [];
   try {
-    rows2 = await queryList(db, `SELECT * FROM ${INSTANCES_TABLE_V2} ORDER BY id DESC;`);
+    rows = await queryList(db, `SELECT * FROM instances ORDER BY id DESC;`);
   } catch {
-    rows2 = [];
-  }
-  try {
-    rows1 = await queryList(db, `SELECT * FROM ${INSTANCES_TABLE_V1} ORDER BY id DESC;`);
-  } catch {
-    rows1 = [];
+    rows = [];
   }
 
-  const map = new Map();
-  for (const r of rows1) {
-    if (!r || !r.id) continue;
-    map.set(String(r.id), r);
-  }
-  for (const r of rows2) {
-    if (!r || !r.id) continue;
-    map.set(String(r.id), r);
-  }
-
-  const out = Array.from(map.values());
+  const out = Array.isArray(rows) ? rows : [];
   out.sort((a, b) => String(b.id || '').localeCompare(String(a.id || '')));
   return out.filter((r) => String(r.user_email || '').trim().toLowerCase() === needle);
 }
@@ -196,7 +168,7 @@ async function createInstance(db, data) {
 
   await provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword);
 
-  const q = `INSERT INTO ${INSTANCES_TABLE_V2} (id, user_email, name, plan, host, port, keyspace, db_username, db_password, status, created_at) VALUES (${cleanSQL(
+  const q = `INSERT INTO instances (id, user_email, name, plan, host, port, keyspace, db_username, db_password, status, created_at) VALUES (${cleanSQL(
     id
   )}, ${cleanSQL(userEmail)}, ${cleanSQL(name)}, ${cleanSQL(plan)}, ${cleanSQL(target.host)}, ${Number(target.port)}, ${cleanSQL(
     keyspace

@@ -117,17 +117,6 @@ router.delete('/:id', async (req, res) => {
     }
 
     {
-      const q = `DELETE FROM instances_v2 WHERE id=${cleanSQL(id)};`;
-      try {
-        const del = await db.query(q);
-        if (del && del.ok !== true) {
-          throw new Error((del && del.error) || 'Failed to delete instance');
-        }
-      } catch {
-        // ignore
-      }
-    }
-    {
       const q = `DELETE FROM instances WHERE id=${cleanSQL(id)};`;
       const del = await db.query(q);
       if (!del || del.ok !== true) {

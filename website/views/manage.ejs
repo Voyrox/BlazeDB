@@ -32,7 +32,8 @@
       <aside class="sidebar">
         <div class="sidebar-header">
           <img src="/logo.png" alt="XeonDB logo" />
-          <span>Cloud DB: <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'DB Cloud Portal' %></span>
+          <span>Cloud DB: <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id)
+              : 'DB Cloud Portal' %></span>
         </div>
         <nav class="sidebar-nav">
           <label for="tab-overview" class="nav-item">
@@ -90,7 +91,8 @@
           </label>
 
           <button class="nav-item nav-danger open-delete-modal" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
               <path d="M10 11v6"></path>
@@ -118,12 +120,14 @@
           </div>
 
           <div class="db-header">
-            <h1 class="db-title">Instance: <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'Database' %></h1>
-            <% const st = (instance && instance.status ? String(instance.status) : 'online').toLowerCase(); %>
-            <span class="db-status <%= st === 'online' ? 'online' : 'offline' %>">
-              <span class="db-status-dot"></span>
-              <%= st === 'online' ? 'Online' : 'Offline' %>
-            </span>
+            <h1 class="db-title">Instance: <%= (instance && (instance.name || instance.id)) ? (instance.name ||
+                instance.id) : 'Database' %>
+            </h1>
+            <% const st=(instance && instance.status ? String(instance.status) : 'online' ).toLowerCase(); %>
+              <span class="db-status <%= st === 'online' ? 'online' : 'offline' %>">
+                <span class="db-status-dot"></span>
+                <%= st==='online' ? 'Online' : 'Offline' %>
+              </span>
           </div>
 
           <div class="overview-section">
@@ -156,7 +160,8 @@
                   <div class="qc-field">
                     <span class="qc-label">Host</span>
                     <div class="qc-input-group">
-                      <input id="qc-host" type="text" class="qc-input" value="<%= instance && instance.host ? instance.host : '' %>" readonly />
+                      <input id="qc-host" type="text" class="qc-input"
+                        value="<%= instance && instance.host ? instance.host : '' %>" readonly />
                       <button class="qc-copy-btn" type="button" data-copy="qc-host" aria-label="Copy host">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -170,7 +175,8 @@
                   <div class="qc-field">
                     <span class="qc-label">Port</span>
                     <div class="qc-input-group">
-                      <input id="qc-port" type="text" class="qc-input" value="<%= instance && instance.port ? instance.port : '' %>" readonly />
+                      <input id="qc-port" type="text" class="qc-input"
+                        value="<%= instance && instance.port ? instance.port : '' %>" readonly />
                       <button class="qc-copy-btn" type="button" data-copy="qc-port" aria-label="Copy port">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -185,7 +191,8 @@
                     <div class="qc-field">
                       <span class="qc-label">Keyspace</span>
                       <div class="qc-input-group">
-                        <input id="qc-keyspace" type="text" class="qc-input" value="<%= instance.keyspace %>" readonly />
+                        <input id="qc-keyspace" type="text" class="qc-input" value="<%= instance.keyspace %>"
+                          readonly />
                         <button class="qc-copy-btn" type="button" data-copy="qc-keyspace" aria-label="Copy keyspace">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -195,14 +202,15 @@
                         </button>
                       </div>
                     </div>
-                  <% } %>
+                    <% } %>
                 </div>
 
                 <div class="qc-col">
                   <div class="qc-field">
                     <span class="qc-label">Username</span>
                     <div class="qc-input-group">
-                      <input id="qc-username" type="text" class="qc-input" value="<%= instance && instance.db_username ? instance.db_username : '' %>" readonly />
+                      <input id="qc-username" type="text" class="qc-input"
+                        value="<%= instance && instance.db_username ? instance.db_username : '' %>" readonly />
                       <button class="qc-copy-btn" type="button" data-copy="qc-username" aria-label="Copy username">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -217,7 +225,8 @@
                     <span class="qc-label">Password</span>
                     <div class="qc-input-group">
                       <input id="qc-password" type="password" class="qc-input" value="**************" readonly />
-                      <button class="qc-copy-btn" id="qc-reveal" type="button" aria-label="Reveal password" title="Reveal password" style="border-radius: 0; border-left: 1px solid var(--stroke);">
+                      <button class="qc-copy-btn" id="qc-reveal" type="button" aria-label="Reveal password"
+                        title="Reveal password" style="border-radius: 0; border-left: 1px solid var(--stroke);">
                         Reveal
                       </button>
                       <button class="qc-copy-btn" type="button" data-copy-secret="password" aria-label="Copy password">
@@ -229,6 +238,13 @@
                       </button>
                     </div>
                   </div>
+
+                  <div class="qc-field">
+                    <span class="qc-label"></span>
+                    <div class="qc-input-group">
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -241,12 +257,14 @@
               </div>
               <div class="query-editor">
                 <% if (!(instance && instance.keyspace)) { %>
-                  <input id="keyspace" class="add-user-input" placeholder="Keyspace (e.g. myapp)" style="margin-bottom: 10px;" />
-                <% } %>
-                <textarea id="query" class="query-textarea" placeholder="SELECT * FROM users WHERE id = 1;"></textarea>
-                <div class="query-actions">
-                  <button class="query-btn" id="run-query" type="button">Run Query</button>
-                </div>
+                  <input id="keyspace" class="add-user-input" placeholder="Keyspace (e.g. myapp)"
+                    style="margin-bottom: 10px;" />
+                  <% } %>
+                    <textarea id="query" class="query-textarea"
+                      placeholder="SELECT * FROM users WHERE id = 1;"></textarea>
+                    <div class="query-actions">
+                      <button class="query-btn" id="run-query" type="button">Run Query</button>
+                    </div>
               </div>
               <div class="results-table-wrap">
                 <table class="results-table">
@@ -327,9 +345,13 @@
               <div class="billing-current">
                 <div class="current-plan">
                   <div class="plan-info">
-                    <% const plan = (instance && instance.plan ? String(instance.plan) : 'free').toLowerCase(); %>
-                    <span class="plan-name"><%= plan === 'pro' ? 'Pro Plan' : 'Free Plan' %></span>
-                    <span class="plan-price"><%= plan === 'pro' ? '$15/month' : '$0/month' %></span>
+                    <% const plan=(instance && instance.plan ? String(instance.plan) : 'free' ).toLowerCase(); %>
+                      <span class="plan-name">
+                        <%= plan==='pro' ? 'Pro Plan' : 'Free Plan' %>
+                      </span>
+                      <span class="plan-price">
+                        <%= plan==='pro' ? '$15/month' : '$0/month' %>
+                      </span>
                   </div>
                   <span class="plan-badge <%= plan === 'pro' ? 'pro' : 'free' %>">Active</span>
                 </div>
@@ -404,15 +426,19 @@
 
         <div class="delete-modal-body">
           <div class="delete-warning">
-            This will delete this database forever. Please make sure you have a backup if you think you might need the data later.
+            This will delete this database forever. Please make sure you have a backup if you think you might need the
+            data later.
           </div>
 
           <div class="delete-confirm-row">
             <div class="delete-confirm-label">Type this to confirm</div>
-            <div class="confirm-token" id="delete-confirm-token" tabindex="-1" aria-hidden="true"><%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'Database' %></div>
+            <div class="confirm-token" id="delete-confirm-token" tabindex="-1" aria-hidden="true">
+              <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'Database' %>
+            </div>
           </div>
 
-          <input class="delete-input" id="delete-input" type="text" autocomplete="off" placeholder="Enter database name" />
+          <input class="delete-input" id="delete-input" type="text" autocomplete="off"
+            placeholder="Enter database name" />
 
           <label class="delete-ack">
             <input id="delete-ack" type="checkbox" />
