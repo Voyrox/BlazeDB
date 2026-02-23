@@ -14,549 +14,793 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
 
-  <link rel="icon" href="logo.png" />
+  <link rel="icon" href="/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="/css/manage.css" />
 </head>
 
 <body>
-  <input type="radio" name="nav" id="tab-overview" class="nav-toggle" checked />
-  <input type="radio" name="nav" id="tab-data" class="nav-toggle" />
-  <input type="radio" name="nav" id="tab-users" class="nav-toggle" />
-  <input type="radio" name="nav" id="tab-whitelist" class="nav-toggle" />
-  <input type="radio" name="nav" id="tab-backups" class="nav-toggle" />
-  <input type="radio" name="nav" id="tab-billing" class="nav-toggle" />
+  <%- include('alert.ejs') %>
+    <input type="radio" name="nav" id="tab-overview" class="nav-toggle" checked />
+    <input type="radio" name="nav" id="tab-data" class="nav-toggle" />
+    <input type="radio" name="nav" id="tab-users" class="nav-toggle" />
+    <input type="radio" name="nav" id="tab-whitelist" class="nav-toggle" />
+    <input type="radio" name="nav" id="tab-backups" class="nav-toggle" />
+    <input type="radio" name="nav" id="tab-billing" class="nav-toggle" />
 
-  <div class="page-container">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <img src="logo.png" alt="XeonDB logo" />
-        <span>production-main</span>
-      </div>
-      <nav class="sidebar-nav">
-        <label for="tab-overview" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          Overview
-        </label>
-        <label for="tab-data" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-          Manage Data
-        </label>
-        <label for="tab-users" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Users
-        </label>
-        <label for="tab-whitelist" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          Whitelist
-        </label>
-        <label for="tab-backups" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          Backups
-        </label>
-        <label for="tab-billing" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-            <line x1="1" y1="10" x2="23" y2="10"></line>
-          </svg>
-          Billing
-        </label>
-      </nav>
-    </aside>
-
-    <div class="content-wrapper">
-    <div class="manage-shell">
-      <div class="topbar">
-        <a class="brand" href="index.html" aria-label="Back to XeonDB home">
-          <img src="logo.png" alt="XeonDB logo" />
-          <span>XeonDB</span>
-        </a>
-        <div class="topbar-right">
-          <a class="btn" href="dashboard.html">Dashboard</a>
-          <div class="user-avatar">TEST</div>
+    <div class="page-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <img src="/logo.png" alt="XeonDB logo" />
+          <span>Cloud DB: <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'DB Cloud Portal' %></span>
         </div>
-      </div>
+        <nav class="sidebar-nav">
+          <label for="tab-overview" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Overview
+          </label>
+          <label for="tab-data" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            Manage Data
+          </label>
+          <label for="tab-users" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Users
+          </label>
+          <label for="tab-whitelist" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Whitelist
+          </label>
+          <label for="tab-backups" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Backups
+          </label>
+          <label for="tab-billing" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            Billing
+          </label>
+        </nav>
+      </aside>
 
-      <div class="db-header">
-        <h1 class="db-title">production-main</h1>
-        <span class="db-status online">
-          <span class="db-status-dot"></span>
-          Online
-        </span>
-      </div>
-
-      <div class="overview-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">Connections</span>
-            </div>
-            <div class="stat-value">247 <span>active</span></div>
-            <div class="chart-container">
-              <canvas id="connectionsChart"></canvas>
+      <div class="content-wrapper">
+        <div class="manage-shell">
+          <div class="topbar">
+            <a class="brand" href="/" aria-label="Back to XeonDB home">
+              <img src="/logo.png" alt="XeonDB logo" />
+              <span>XeonDB</span>
+            </a>
+            <div class="topbar-right">
+              <a class="btn" href="/dashboard">Dashboard</a>
+              <div class="user-avatar">
+                <%= name %>
+              </div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">Queries</span>
+          <div class="db-header">
+            <h1 class="db-title">Instance: <%= (instance && (instance.name || instance.id)) ? (instance.name || instance.id) : 'Database' %></h1>
+            <% const st = (instance && instance.status ? String(instance.status) : 'online').toLowerCase(); %>
+            <span class="db-status <%= st === 'online' ? 'online' : 'offline' %>">
+              <span class="db-status-dot"></span>
+              <%= st === 'online' ? 'Online' : 'Offline' %>
+            </span>
+          </div>
+
+          <div class="overview-section">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span class="stat-title">Connections</span>
+                </div>
+                <div class="stat-value">247 <span>active</span></div>
+                <div class="chart-container">
+                  <canvas id="connectionsChart"></canvas>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span class="stat-title">Queries</span>
+                </div>
+                <div class="stat-value">1.4k <span>/sec</span></div>
+                <div class="chart-container">
+                  <canvas id="queriesChart"></canvas>
+                </div>
+              </div>
             </div>
-            <div class="stat-value">1.4k <span>/sec</span></div>
-            <div class="chart-container">
-              <canvas id="queriesChart"></canvas>
+
+            <div class="quick-connect">
+              <div class="qc-title">Quick Connect</div>
+              <div class="qc-row">
+                <div class="qc-col">
+                  <div class="qc-field">
+                    <span class="qc-label">Host</span>
+                    <div class="qc-input-group">
+                      <input id="qc-host" type="text" class="qc-input" value="<%= instance && instance.host ? instance.host : '' %>" readonly />
+                      <button class="qc-copy-btn" type="button" data-copy="qc-host" aria-label="Copy host">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="qc-field">
+                    <span class="qc-label">Port</span>
+                    <div class="qc-input-group">
+                      <input id="qc-port" type="text" class="qc-input" value="<%= instance && instance.port ? instance.port : '' %>" readonly />
+                      <button class="qc-copy-btn" type="button" data-copy="qc-port" aria-label="Copy port">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="qc-col">
+                  <div class="qc-field">
+                    <span class="qc-label">Username</span>
+                    <div class="qc-input-group">
+                      <input id="qc-username" type="text" class="qc-input" value="<%= instance && instance.db_username ? instance.db_username : '' %>" readonly />
+                      <button class="qc-copy-btn" type="button" data-copy="qc-username" aria-label="Copy username">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="qc-field">
+                    <span class="qc-label">Password</span>
+                    <div class="qc-input-group">
+                      <input id="qc-password" type="password" class="qc-input" value="**************" readonly />
+                      <button class="qc-copy-btn" id="qc-reveal" type="button" aria-label="Reveal password" title="Reveal password" style="border-radius: 0; border-left: 1px solid var(--stroke);">
+                        Reveal
+                      </button>
+                      <button class="qc-copy-btn" type="button" data-copy-secret="password" aria-label="Copy password">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-panel">
+            <div class="panel panel-data">
+              <div class="panel-header">
+                <h2 class="panel-title">Query Editor</h2>
+              </div>
+              <div class="query-editor">
+                <input id="keyspace" class="add-user-input" placeholder="Keyspace (e.g. myapp)" style="margin-bottom: 10px;" />
+                <textarea id="query" class="query-textarea" placeholder="SELECT * FROM users WHERE id = 1;"></textarea>
+                <div class="query-actions">
+                  <button class="query-btn" id="run-query" type="button">Run Query</button>
+                </div>
+              </div>
+              <div class="results-table-wrap">
+                <table class="results-table">
+                  <thead id="results-head"></thead>
+                  <tbody id="results-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel panel-users">
+              <div class="panel-header">
+                <h2 class="panel-title">Database Users</h2>
+              </div>
+              <div class="user-list">
+                <div class="user-item">
+                  <div class="user-info">
+                    <div class="user-avatar-sm">AD</div>
+                    <div>
+                      <div class="user-name">admin</div>
+                      <div class="user-role">Superuser</div>
+                    </div>
+                  </div>
+                  <button class="user-remove-btn">Remove</button>
+                </div>
+                <div class="user-item">
+                  <div class="user-info">
+                    <div class="user-avatar-sm">AU</div>
+                    <div>
+                      <div class="user-name">app_user</div>
+                      <div class="user-role">Read/Write</div>
+                    </div>
+                  </div>
+                  <button class="user-remove-btn">Remove</button>
+                </div>
+                <div class="user-item">
+                  <div class="user-info">
+                    <div class="user-avatar-sm">RO</div>
+                    <div>
+                      <div class="user-name">readonly</div>
+                      <div class="user-role">Read Only</div>
+                    </div>
+                  </div>
+                  <button class="user-remove-btn">Remove</button>
+                </div>
+              </div>
+              <div class="add-user-form">
+                <input type="text" class="add-user-input" placeholder="New username..." />
+                <button class="add-user-btn">Add User</button>
+              </div>
+            </div>
+
+            <div class="panel panel-whitelist">
+              <div class="panel-header">
+                <h2 class="panel-title">IP Whitelist</h2>
+              </div>
+              <div class="whitelist-info">
+                <strong>Security Notice:</strong> Only whitelisted IPs can connect. 0.0.0.0/0 allows all.
+              </div>
+              <div class="whitelist-list">
+                <div class="whitelist-item">
+                  <span class="whitelist-ip">0.0.0.0/0</span>
+                  <span class="whitelist-badge default">Allow All</span>
+                  <button class="whitelist-remove-btn disabled">Remove</button>
+                </div>
+                <div class="whitelist-item">
+                  <span class="whitelist-ip">192.168.1.100/32</span>
+                  <span class="whitelist-badge custom">Custom</span>
+                  <button class="whitelist-remove-btn">Remove</button>
+                </div>
+              </div>
+              <div class="add-ip-form">
+                <input type="text" class="add-ip-input" placeholder="e.g. 203.0.113.50/32" />
+                <button class="add-ip-btn">Add IP</button>
+              </div>
+            </div>
+
+            <div class="panel panel-backups">
+              <div class="panel-header">
+                <h2 class="panel-title">Database Backups</h2>
+                <button class="query-btn">Create Backup</button>
+              </div>
+              <div class="backup-list">
+                <div class="backup-item">
+                  <div class="backup-info">
+                    <div class="backup-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="backup-name">Manual Backup</div>
+                      <div class="backup-date">Feb 23, 2026 at 2:30 PM</div>
+                    </div>
+                  </div>
+                  <div class="backup-actions">
+                    <button class="db-action-btn">Restore</button>
+                    <button class="whitelist-remove-btn">Delete</button>
+                  </div>
+                </div>
+                <div class="backup-item">
+                  <div class="backup-info">
+                    <div class="backup-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="backup-name">Daily Backup</div>
+                      <div class="backup-date">Feb 22, 2026 at 12:00 AM</div>
+                    </div>
+                  </div>
+                  <div class="backup-actions">
+                    <button class="db-action-btn">Restore</button>
+                    <button class="whitelist-remove-btn">Delete</button>
+                  </div>
+                </div>
+                <div class="backup-item">
+                  <div class="backup-info">
+                    <div class="backup-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="backup-name">Weekly Backup</div>
+                      <div class="backup-date">Feb 20, 2026 at 12:00 AM</div>
+                    </div>
+                  </div>
+                  <div class="backup-actions">
+                    <button class="db-action-btn">Restore</button>
+                    <button class="whitelist-remove-btn">Delete</button>
+                  </div>
+                </div>
+                <div class="backup-item">
+                  <div class="backup-info">
+                    <div class="backup-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="backup-name">Monthly Backup</div>
+                      <div class="backup-date">Feb 1, 2026 at 12:00 AM</div>
+                    </div>
+                  </div>
+                  <div class="backup-actions">
+                    <button class="db-action-btn">Restore</button>
+                    <button class="whitelist-remove-btn">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel panel-billing">
+              <div class="panel-header">
+                <h2 class="panel-title">Billing & Plan</h2>
+              </div>
+              <div class="billing-current">
+                <div class="current-plan">
+                  <div class="plan-info">
+                    <% const plan = (instance && instance.plan ? String(instance.plan) : 'free').toLowerCase(); %>
+                    <span class="plan-name"><%= plan === 'pro' ? 'Pro Plan' : 'Free Plan' %></span>
+                    <span class="plan-price"><%= plan === 'pro' ? '$15/month' : '$0/month' %></span>
+                  </div>
+                  <span class="plan-badge <%= plan === 'pro' ? 'pro' : 'free' %>">Active</span>
+                </div>
+              </div>
+              <div class="usage-section">
+                <h3 class="usage-title">Current Usage</h3>
+                <div class="usage-bar">
+                  <div class="usage-fill" style="width: 49%;"></div>
+                </div>
+                <div class="usage-labels">
+                  <span>247.3 MB used</span>
+                  <span>500 MB total</span>
+                </div>
+              </div>
+              <div class="usage-section">
+                <h3 class="usage-title">Connections</h3>
+                <div class="usage-bar">
+                  <div class="usage-fill" style="width: 49%;"></div>
+                </div>
+                <div class="usage-labels">
+                  <span>247 active</span>
+                  <span>500 max</span>
+                </div>
+              </div>
+              <div class="upgrade-section">
+                <h3 class="usage-title">Upgrade to Pro</h3>
+                <div class="plan-option disabled">
+                  <div class="plan-header">
+                    <span class="plan-name">Pro</span>
+                    <span class="plan-price">$15<span>/month</span></span>
+                  </div>
+                  <div class="plan-features">
+                    <div class="plan-feature">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                      100 GB storage
+                    </div>
+                    <div class="plan-feature">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                      Unlimited connections
+                    </div>
+                    <div class="plan-feature">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                      Priority support
+                    </div>
+                  </div>
+                  <span class="plan-badge coming">Coming Soon</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="quick-connect">
-          <div class="qc-title">Quick Connect</div>
-          <div class="qc-row">
-            <div class="qc-field">
-              <span class="qc-label">Host</span>
-              <div class="qc-input-group">
-                <input type="text" class="qc-input" value="au-nn001.xeondb.com" readonly />
-                <button class="qc-copy-btn" aria-label="Copy host">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="qc-field">
-              <span class="qc-label">Password</span>
-              <div class="qc-input-group">
-                <input type="text" class="qc-input" value="xdb_sk_8f3a9c2d" readonly />
-                <button class="qc-copy-btn" aria-label="Copy password">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="main-panel">
-        <div class="panel panel-data">
-          <div class="panel-header">
-            <h2 class="panel-title">Query Editor</h2>
-          </div>
-          <div class="query-editor">
-            <textarea class="query-textarea" placeholder="SELECT * FROM users WHERE id = 1;"></textarea>
-            <div class="query-actions">
-              <button class="query-btn">Run Query</button>
-            </div>
-          </div>
-          <div class="results-table-wrap">
-            <table class="results-table">
-              <thead>
-                <tr>
-                  <th>id</th>
-                  <th>username</th>
-                  <th>email</th>
-                  <th>created_at</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>john_doe</td>
-                  <td>john@example.com</td>
-                  <td>2026-01-15</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>jane_smith</td>
-                  <td>jane@example.com</td>
-                  <td>2026-01-18</td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td>bob_wilson</td>
-                  <td>bob@example.com</td>
-                  <td>2026-02-01</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="panel panel-users">
-          <div class="panel-header">
-            <h2 class="panel-title">Database Users</h2>
-          </div>
-          <div class="user-list">
-            <div class="user-item">
-              <div class="user-info">
-                <div class="user-avatar-sm">AD</div>
-                <div>
-                  <div class="user-name">admin</div>
-                  <div class="user-role">Superuser</div>
-                </div>
-              </div>
-              <button class="user-remove-btn">Remove</button>
-            </div>
-            <div class="user-item">
-              <div class="user-info">
-                <div class="user-avatar-sm">AU</div>
-                <div>
-                  <div class="user-name">app_user</div>
-                  <div class="user-role">Read/Write</div>
-                </div>
-              </div>
-              <button class="user-remove-btn">Remove</button>
-            </div>
-            <div class="user-item">
-              <div class="user-info">
-                <div class="user-avatar-sm">RO</div>
-                <div>
-                  <div class="user-name">readonly</div>
-                  <div class="user-role">Read Only</div>
-                </div>
-              </div>
-              <button class="user-remove-btn">Remove</button>
-            </div>
-          </div>
-          <div class="add-user-form">
-            <input type="text" class="add-user-input" placeholder="New username..." />
-            <button class="add-user-btn">Add User</button>
-          </div>
-        </div>
-
-        <div class="panel panel-whitelist">
-          <div class="panel-header">
-            <h2 class="panel-title">IP Whitelist</h2>
-          </div>
-          <div class="whitelist-info">
-            <strong>Security Notice:</strong> Only whitelisted IPs can connect. 0.0.0.0/0 allows all.
-          </div>
-          <div class="whitelist-list">
-            <div class="whitelist-item">
-              <span class="whitelist-ip">0.0.0.0/0</span>
-              <span class="whitelist-badge default">Allow All</span>
-              <button class="whitelist-remove-btn disabled">Remove</button>
-            </div>
-            <div class="whitelist-item">
-              <span class="whitelist-ip">192.168.1.100/32</span>
-              <span class="whitelist-badge custom">Custom</span>
-              <button class="whitelist-remove-btn">Remove</button>
-            </div>
-          </div>
-          <div class="add-ip-form">
-            <input type="text" class="add-ip-input" placeholder="e.g. 203.0.113.50/32" />
-            <button class="add-ip-btn">Add IP</button>
-          </div>
-        </div>
-
-        <div class="panel panel-backups">
-          <div class="panel-header">
-            <h2 class="panel-title">Database Backups</h2>
-            <button class="query-btn">Create Backup</button>
-          </div>
-          <div class="backup-list">
-            <div class="backup-item">
-              <div class="backup-info">
-                <div class="backup-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                </div>
-                <div>
-                  <div class="backup-name">Manual Backup</div>
-                  <div class="backup-date">Feb 23, 2026 at 2:30 PM</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="db-action-btn">Restore</button>
-                <button class="whitelist-remove-btn">Delete</button>
-              </div>
-            </div>
-            <div class="backup-item">
-              <div class="backup-info">
-                <div class="backup-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div>
-                  <div class="backup-name">Daily Backup</div>
-                  <div class="backup-date">Feb 22, 2026 at 12:00 AM</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="db-action-btn">Restore</button>
-                <button class="whitelist-remove-btn">Delete</button>
-              </div>
-            </div>
-            <div class="backup-item">
-              <div class="backup-info">
-                <div class="backup-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div>
-                  <div class="backup-name">Weekly Backup</div>
-                  <div class="backup-date">Feb 20, 2026 at 12:00 AM</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="db-action-btn">Restore</button>
-                <button class="whitelist-remove-btn">Delete</button>
-              </div>
-            </div>
-            <div class="backup-item">
-              <div class="backup-info">
-                <div class="backup-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div>
-                  <div class="backup-name">Monthly Backup</div>
-                  <div class="backup-date">Feb 1, 2026 at 12:00 AM</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="db-action-btn">Restore</button>
-                <button class="whitelist-remove-btn">Delete</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel panel-billing">
-          <div class="panel-header">
-            <h2 class="panel-title">Billing & Plan</h2>
-          </div>
-          <div class="billing-current">
-            <div class="current-plan">
-              <div class="plan-info">
-                <span class="plan-name">Free Plan</span>
-                <span class="plan-price">$0/month</span>
-              </div>
-              <span class="plan-badge free">Active</span>
-            </div>
-          </div>
-          <div class="usage-section">
-            <h3 class="usage-title">Current Usage</h3>
-            <div class="usage-bar">
-              <div class="usage-fill" style="width: 49%;"></div>
-            </div>
-            <div class="usage-labels">
-              <span>247.3 MB used</span>
-              <span>500 MB total</span>
-            </div>
-          </div>
-          <div class="usage-section">
-            <h3 class="usage-title">Connections</h3>
-            <div class="usage-bar">
-              <div class="usage-fill" style="width: 49%;"></div>
-            </div>
-            <div class="usage-labels">
-              <span>247 active</span>
-              <span>500 max</span>
-            </div>
-          </div>
-          <div class="upgrade-section">
-            <h3 class="usage-title">Upgrade to Pro</h3>
-            <div class="plan-option disabled">
-              <div class="plan-header">
-                <span class="plan-name">Pro</span>
-                <span class="plan-price">$15<span>/month</span></span>
-              </div>
-              <div class="plan-features">
-                <div class="plan-feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                  100 GB storage
-                </div>
-                <div class="plan-feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                  Unlimited connections
-                </div>
-                <div class="plan-feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                  Priority support
-                </div>
-              </div>
-              <span class="plan-badge coming">Coming Soon</span>
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    Chart.defaults.color = 'rgba(233, 230, 218, 0.74)';
-    Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
-    Chart.defaults.font.family = '"Space Grotesk", sans-serif';
+    <script>
+      Chart.defaults.color = 'rgba(233, 230, 218, 0.74)';
+      Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
+      Chart.defaults.font.family = '"Space Grotesk", sans-serif';
 
-    const connectionsCtx = document.getElementById('connectionsChart').getContext('2d');
-    new Chart(connectionsCtx, {
-      type: 'line',
-      data: {
-        labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
-        datasets: [{
-          data: [105, 165, 120, 225, 150, 255],
-          borderColor: '#39c6ff',
-          backgroundColor: 'rgba(57, 198, 255, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#39c6ff',
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(11, 16, 32, 0.95)',
-            titleColor: '#e9e6da',
-            bodyColor: '#39c6ff',
-            bodyFont: { family: '"JetBrains Mono", monospace', weight: 600 },
-            borderColor: 'rgba(57, 198, 255, 0.3)',
-            borderWidth: 1,
-            padding: 10,
-            displayColors: false,
-            callbacks: {
-              label: function(context) {
-                return context.parsed.y + ' connections';
+      const connectionsCtx = document.getElementById('connectionsChart').getContext('2d');
+      new Chart(connectionsCtx, {
+        type: 'line',
+        data: {
+          labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
+          datasets: [{
+            data: [105, 165, 120, 225, 150, 255],
+            borderColor: '#39c6ff',
+            backgroundColor: 'rgba(57, 198, 255, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#39c6ff',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(11, 16, 32, 0.95)',
+              titleColor: '#e9e6da',
+              bodyColor: '#39c6ff',
+              bodyFont: { family: '"JetBrains Mono", monospace', weight: 600 },
+              borderColor: 'rgba(57, 198, 255, 0.3)',
+              borderWidth: 1,
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                label: function (context) {
+                  return context.parsed.y + ' connections';
+                }
               }
             }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 10 } }
           },
-          y: {
-            min: 0,
-            max: 300,
-            grid: { color: 'rgba(233, 230, 218, 0.05)' },
-            ticks: {
-              font: { size: 10 },
-              stepSize: 100,
-              callback: function(value) {
-                return value;
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 300,
+              grid: { color: 'rgba(233, 230, 218, 0.05)' },
+              ticks: {
+                font: { size: 10 },
+                stepSize: 100,
+                callback: function (value) {
+                  return value;
+                }
               }
             }
-          }
-        },
-        interaction: {
-          intersect: false,
-          mode: 'index'
-        }
-      }
-    });
-
-    const queriesCtx = document.getElementById('queriesChart').getContext('2d');
-    new Chart(queriesCtx, {
-      type: 'line',
-      data: {
-        labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
-        datasets: [{
-          data: [1000, 1400, 900, 1700, 1200, 1900],
-          borderColor: '#2ed3a1',
-          backgroundColor: 'rgba(46, 211, 161, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#2ed3a1',
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(11, 16, 32, 0.95)',
-            titleColor: '#e9e6da',
-            bodyColor: '#2ed3a1',
-            bodyFont: { family: '"JetBrains Mono", monospace', weight: 600 },
-            borderColor: 'rgba(46, 211, 161, 0.3)',
-            borderWidth: 1,
-            padding: 10,
-            displayColors: false,
-            callbacks: {
-              label: function(context) {
-                return context.parsed.y + ' /sec';
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 10 } }
           },
-          y: {
-            min: 0,
-            max: 2000,
-            grid: { color: 'rgba(233, 230, 218, 0.05)' },
-            ticks: {
-              font: { size: 10 },
-              stepSize: 500,
-              callback: function(value) {
-                return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+
+      const queriesCtx = document.getElementById('queriesChart').getContext('2d');
+      new Chart(queriesCtx, {
+        type: 'line',
+        data: {
+          labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
+          datasets: [{
+            data: [1000, 1400, 900, 1700, 1200, 1900],
+            borderColor: '#2ed3a1',
+            backgroundColor: 'rgba(46, 211, 161, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#2ed3a1',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(11, 16, 32, 0.95)',
+              titleColor: '#e9e6da',
+              bodyColor: '#2ed3a1',
+              bodyFont: { family: '"JetBrains Mono", monospace', weight: 600 },
+              borderColor: 'rgba(46, 211, 161, 0.3)',
+              borderWidth: 1,
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                label: function (context) {
+                  return context.parsed.y + ' /sec';
+                }
               }
             }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 2000,
+              grid: { color: 'rgba(233, 230, 218, 0.05)' },
+              ticks: {
+                font: { size: 10 },
+                stepSize: 500,
+                callback: function (value) {
+                  return value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value;
+                }
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
           }
-        },
-        interaction: {
-          intersect: false,
-          mode: 'index'
         }
-      }
-    });
-  </script>
+      });
+
+      (function () {
+        const instanceId = "<%= instance && instance.id ? String(instance.id) : '' %>";
+        if (!instanceId) return;
+
+        let cachedCreds = null;
+        let passwordVisible = false;
+
+        async function getCreds() {
+          if (cachedCreds) return cachedCreds;
+          const res = await fetch(`/api/instances/${instanceId}/credentials`, { credentials: 'same-origin' });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data || data.ok !== true) {
+            throw new Error((data && data.error) || 'Failed to load credentials');
+          }
+          cachedCreds = data.credentials;
+          return cachedCreds;
+        }
+
+        async function copyText(text) {
+          const s = String(text || '');
+          if (!s) throw new Error('Nothing to copy');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(s);
+            return;
+          }
+          const ta = document.createElement('textarea');
+          ta.value = s;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+
+        function toast(type, msg) {
+          if (typeof window.showToast === 'function') {
+            window.showToast(type, msg);
+            return;
+          }
+          if (typeof window.createAlert === 'function') {
+            window.createAlert(type, msg);
+            return;
+          }
+          if (typeof alert === 'function') alert(msg);
+        }
+
+        document.querySelectorAll('[data-copy]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-copy');
+            const el = id ? document.getElementById(id) : null;
+            try {
+              await copyText(el ? el.value : '');
+              toast('success', 'Copied');
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Copy failed');
+            }
+          });
+        });
+
+        document.querySelectorAll('[data-copy-secret="password"]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            try {
+              const creds = await getCreds();
+              await copyText(creds.password);
+              toast('success', 'Password copied');
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Copy failed');
+            }
+          });
+        });
+
+        const revealBtn = document.getElementById('qc-reveal');
+        const pwInput = document.getElementById('qc-password');
+        if (revealBtn && pwInput) {
+          revealBtn.addEventListener('click', async () => {
+            try {
+              if (!passwordVisible) {
+                const creds = await getCreds();
+                pwInput.value = creds.password;
+                pwInput.type = 'text';
+                revealBtn.textContent = 'Hide';
+                passwordVisible = true;
+              } else {
+                pwInput.value = '**************';
+                pwInput.type = 'password';
+                revealBtn.textContent = 'Reveal';
+                passwordVisible = false;
+              }
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Failed');
+            }
+          });
+        }
+
+        const keyspaceEl = document.getElementById('keyspace');
+        const queryEl = document.getElementById('query');
+        const runBtn = document.getElementById('run-query');
+        const headEl = document.getElementById('results-head');
+        const bodyEl = document.getElementById('results-body');
+
+        const keyspaceStorageKey = 'xeondb:keyspace:' + instanceId;
+        if (keyspaceEl) {
+          keyspaceEl.value = localStorage.getItem(keyspaceStorageKey) || '';
+          keyspaceEl.addEventListener('input', () => {
+            try {
+              localStorage.setItem(keyspaceStorageKey, keyspaceEl.value);
+            } catch {
+              // ignore
+            }
+          });
+        }
+
+        function clearResults() {
+          if (headEl) headEl.innerHTML = '';
+          if (bodyEl) bodyEl.innerHTML = '';
+        }
+
+        function renderTable(headers, rows) {
+          clearResults();
+          if (!headEl || !bodyEl) return;
+
+          const trh = document.createElement('tr');
+          headers.forEach((h) => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            trh.appendChild(th);
+          });
+          headEl.appendChild(trh);
+
+          rows.forEach((row) => {
+            const tr = document.createElement('tr');
+            headers.forEach((h) => {
+              const td = document.createElement('td');
+              const v = row && Object.prototype.hasOwnProperty.call(row, h) ? row[h] : '';
+              td.textContent = v === null || v === undefined ? '' : String(v);
+              tr.appendChild(td);
+            });
+            bodyEl.appendChild(tr);
+          });
+        }
+
+        function renderKeyValue(obj) {
+          const entries = obj && typeof obj === 'object' ? Object.entries(obj) : [['result', obj]];
+          const rows = entries.map(([k, v]) => ({ key: k, value: v === null || v === undefined ? '' : (typeof v === 'string' ? v : JSON.stringify(v)) }));
+          renderTable(['key', 'value'], rows);
+        }
+
+        function renderResult(result) {
+          if (!result || typeof result !== 'object') {
+            renderKeyValue(result);
+            return;
+          }
+          if (Array.isArray(result.rows)) {
+            if (result.rows.length === 0) {
+              clearResults();
+              toast('info', 'No rows');
+              return;
+            }
+            const headers = Object.keys(result.rows[0] || {});
+            renderTable(headers, result.rows);
+            return;
+          }
+          if (Object.prototype.hasOwnProperty.call(result, 'found')) {
+            if (!result.found) {
+              clearResults();
+              toast('info', 'No rows');
+              return;
+            }
+            const row = result.row || {};
+            const headers = Object.keys(row);
+            renderTable(headers, [row]);
+            return;
+          }
+          renderKeyValue(result);
+        }
+
+        async function postJson(url, body) {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data) {
+            throw new Error((data && (data.error || data.message)) || ('Request failed (' + res.status + ')'));
+          }
+          return data;
+        }
+
+        if (runBtn && queryEl) {
+          runBtn.addEventListener('click', async () => {
+            const keyspace = keyspaceEl ? String(keyspaceEl.value || '').trim() : '';
+            const query = String(queryEl.value || '').trim();
+            if (!query) {
+              toast('warning', 'Enter a query');
+              return;
+            }
+            runBtn.disabled = true;
+            runBtn.textContent = 'Running...';
+            try {
+              const data = await postJson(`/api/instances/${instanceId}/query`, { keyspace, query });
+              renderResult(data.result);
+              toast('success', 'Query executed');
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Query failed');
+            } finally {
+              runBtn.disabled = false;
+              runBtn.textContent = 'Run Query';
+            }
+          });
+        }
+      })();
+    </script>
 </body>
 
 </html>

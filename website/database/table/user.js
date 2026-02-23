@@ -1,54 +1,82 @@
 const bcrypt = require('bcryptjs');
 
-function createTables(db) {
-  const query = `
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-  db.query(query, (err) => {
-    if (err) {
-      console.error("Error creating users table:", err.message);
-    } else {
-      console.log("Users table created or already exists");
-    }
-  });
+function cleanInput(v) {
+  const s = String(v);
+  return (
+    '"' +
+    s
+      .replace(/\\/g, '\\\\')
+      .replace(/\"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t') +
+    '"'
+  );
 }
 
-function createUser(db, data) {
-    const { username, email, password } = data;
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const query = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-    db.query(query, [username, email, hashedPassword], (err) => {
-        if (err) {
-            console.error("Error creating user:", err.message);
-        } else {
-            console.log("User created successfully");
-        }
-    });
+async function ensureUsersTable(db) {
+  const cmd =
+    'CREATE TABLE IF NOT EXISTS users (email varchar, password_hash varchar, first_name varchar, last_name varchar, company varchar, marketing_opt_in boolean, created_at int64, PRIMARY KEY (email));';
+  const res = await db.query(cmd);
+  if (!res || res.ok !== true) {
+    throw new Error((res && res.error) || 'Failed to ensure users table');
+  }
 }
 
-function verifyUser(db, email, password, callback) {
-    const query = `SELECT * FROM users WHERE email = ${email}`;
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error("Error fetching user:", err.message);
-            return callback(err);
-        }
-        if (results.length === 0) {
-            return callback(new Error("User not found"));
-        }
-        const user = results[0];
-        const isPasswordValid = bcrypt.compareSync(password, user.password);
-        if (!isPasswordValid) {
-            return callback(new Error("Invalid password"));
-        }
-        callback(null, user);
-    });
+async function getUserByEmail(db, email) {
+  const cmd = `SELECT * FROM users WHERE email=${cleanInput(email)};`;
+  const res = await db.query(cmd);
+  if (!res || res.ok !== true) throw new Error((res && res.error) || 'Failed to fetch user');
+
+  if (Object.prototype.hasOwnProperty.call(res, 'found')) return res.found ? (res.row || null) : null;
+  if (Array.isArray(res.rows)) return res.rows[0] || null;
+  if (res.row) return res.row;
+  return null;
 }
 
-module.exports = { createTables, createUser, verifyUser };
+async function createUser(db, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  const password = String(data.password || '');
+  const firstName = String(data.firstName || '').trim();
+  const lastName = String(data.lastName || '').trim();
+  const companyName = String(data.companyName || '').trim();
+  const marketingOptIn = !!data.marketingOptIn;
+
+  const passwordHash = bcrypt.hashSync(password, 10);
+  const createdAt = Date.now();
+
+  const cmd = `INSERT INTO users (email, password_hash, first_name, last_name, company, marketing_opt_in, created_at) VALUES (${cleanInput(
+    email
+  )}, ${cleanInput(passwordHash)}, ${cleanInput(firstName)}, ${cleanInput(lastName)}, ${cleanInput(
+    companyName
+  )}, ${marketingOptIn ? 'true' : 'false'}, ${createdAt});`;
+  const res = await db.query(cmd);
+  if (!res || res.ok !== true) throw new Error((res && res.error) || 'Failed to create user');
+
+  return {
+    email,
+    firstName,
+    lastName,
+    companyName,
+    marketingOptIn,
+    createdAt
+  };
+}
+
+async function verifyUser(db, email, password) {
+  const user = await getUserByEmail(db, email);
+  if (!user) throw new Error('User not found');
+
+  const hash = user.password_hash || user.passwordHash || user.password;
+  const isPasswordValid = bcrypt.compareSync(String(password || ''), String(hash || ''));
+  if (!isPasswordValid) throw new Error('Invalid password');
+
+  return user;
+}
+
+module.exports = {
+  ensureUsersTable,
+  getUserByEmail,
+  createUser,
+  verifyUser
+};

@@ -20,17 +20,18 @@
 </head>
 
 <body>
+  <%- include('alert.ejs') %>
   <a id="signin" class="route" aria-hidden="true"></a>
   <a id="signup" class="route" aria-hidden="true"></a>
 
   <main class="auth-page">
     <div class="auth-shell">
       <div class="topbar">
-        <a class="brand" href="index.html" aria-label="Back to XeonDB home">
+        <a class="brand" href="/" aria-label="Back to XeonDB home">
           <img src="logo.png" alt="XeonDB logo" />
           <span>XeonDB</span>
         </a>
-        <a class="btn" href="index.html">Back to site</a>
+        <a class="btn" href="/">Back to site</a>
       </div>
 
       <div class="auth-grid" aria-label="Authentication">
@@ -67,7 +68,7 @@
                 <a href="#signup" data-test-id="redirect-to-signup" aria-label="Sign up">Sign up</a>
               </div>
 
-              <form action="#" autocomplete="on" aria-label="Sign in form">
+              <form id="signin-form" action="#" autocomplete="on" aria-label="Sign in form">
                 <div class="field" data-test-id="input-box-identifier">
                   <label for="signin-email"><span>Email</span></label>
                   <input id="signin-email" class="input" autocomplete="email" name="identifier"
@@ -83,8 +84,10 @@
                     placeholder="Enter your password" type="password" data-test-id="input-password" />
                 </div>
 
-                <button class="primary-btn" type="button" aria-label="Continue" data-test-id="submit-btn"
+                <button class="primary-btn" type="submit" aria-label="Continue" data-test-id="submit-btn"
                   style="margin-top: 14px;">Continue</button>
+
+                <div id="signin-error" class="disclaimer" style="display:none; margin-top: 10px; color: rgba(255, 120, 120, 0.95);" role="alert"></div>
               </form>
 
               <div class="social-divider" aria-hidden="true">or sign in with</div>
@@ -146,7 +149,7 @@
                 <a href="#signin" data-test-id="redirect-to-login" aria-label="Sign in">Sign in</a>
               </div>
               
-              <form action="#" autocomplete="on" aria-label="Sign up form" style="display: flex; flex-direction: column;">
+              <form id="signup-form" action="#" autocomplete="on" aria-label="Sign up form" style="display: flex; flex-direction: column;">
                 <div class="field" data-test-id="input-box-email">
                   <label for="signup-email"><span>Company Email Only</span></label>
                   <input id="signup-email" class="input" name="email" placeholder="Enter your email" type="email"
@@ -171,6 +174,18 @@
                     maxlength="200" aria-label="Company Name" />
                 </div>
 
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-password">
+                  <label for="signup-password"><span>Password</span></label>
+                  <input id="signup-password" class="input" name="password" placeholder="Create a password" type="password"
+                    minlength="8" maxlength="200" aria-label="Password" autocomplete="new-password" />
+                </div>
+
+                <div class="field" style="margin-top: 12px;" data-test-id="input-box-password-confirm">
+                  <label for="signup-password-confirm"><span>Confirm Password</span></label>
+                  <input id="signup-password-confirm" class="input" name="passwordConfirm" placeholder="Confirm your password" type="password"
+                    minlength="8" maxlength="200" aria-label="Confirm Password" autocomplete="new-password" />
+                </div>
+
                 <div style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-start;">
                   <input id="signup-consent" type="checkbox" style="margin-top: 3px;" />
                   <div style="color: rgba(233,230,218,0.76); font-size: 13px; line-height: 1.55;">
@@ -184,8 +199,10 @@
                   </div>
                 </div>
 
-                <button class="primary-btn" type="button" aria-label="Sign up" data-test-id="signupSubmit-btn"
+                <button class="primary-btn" type="submit" aria-label="Sign up" data-test-id="signupSubmit-btn"
                   style="margin-top: 14px;">Sign up</button>
+
+                <div id="signup-error" class="disclaimer" style="display:none; margin-top: 10px; color: rgba(255, 120, 120, 0.95);" role="alert"></div>
               </form>
 
               <div class="social-divider" aria-hidden="true">or sign up with</div>
@@ -246,6 +263,90 @@
       </div>
     </div>
   </main>
+
+  <script>
+    (function () {
+      function showError(type, msg) {
+        createAlert(type, msg || 'Something went wrong');
+      }
+
+      function clearError(el) {
+        if (!el) return;
+        el.textContent = '';
+        el.style.display = 'none';
+      }
+
+      async function postData(url, body) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(body)
+        });
+        let data = null;
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+        if (!res.ok) {
+          const err = data && (data.error || data.message) ? (data.error || data.message) : ('Request failed (' + res.status + ')');
+          throw new Error(err);
+        }
+        return data;
+      }
+
+      const signinForm = document.getElementById('signin-form');
+      const signinError = document.getElementById('signin-error');
+      if (signinForm) {
+        signinForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          clearError(signinError);
+          const email = (document.getElementById('signin-email') || {}).value || '';
+          const password = (document.getElementById('signin-password') || {}).value || '';
+          try {
+            await postData('/api/auth/login', { email: email, password: password });
+            window.location.href = '/dashboard';
+          } catch (err) {
+            showError('error', err && err.message ? err.message : String(err));
+          }
+        });
+      }
+
+      const signupForm = document.getElementById('signup-form');
+      const signupError = document.getElementById('signup-error');
+      if (signupForm) {
+        signupForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          clearError(signupError);
+          const email = (document.getElementById('signup-email') || {}).value || '';
+          const firstName = (document.getElementById('signup-first') || {}).value || '';
+          const lastName = (document.getElementById('signup-last') || {}).value || '';
+          const companyName = (document.getElementById('signup-company') || {}).value || '';
+          const password = (document.getElementById('signup-password') || {}).value || '';
+          const passwordConfirm = (document.getElementById('signup-password-confirm') || {}).value || '';
+          const marketingOptIn = !!((document.getElementById('signup-consent') || {}).checked);
+          if (password !== passwordConfirm) {
+            showError('error', 'Passwords do not match');
+            return;
+          }
+          try {
+            await postData('/api/auth/register', {
+              email: email,
+              password: password,
+              firstName: firstName,
+              lastName: lastName,
+              companyName: companyName,
+              marketingOptIn: marketingOptIn
+            });
+            window.location.href = '/dashboard';
+          } catch (err) {
+            showError('error', err && err.message ? err.message : String(err));
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 
 </html>

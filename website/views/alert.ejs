@@ -1,0 +1,154 @@
+<style>
+    .toast {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        background: #131313;
+        color: #ffffff;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        z-index: 999999;
+        transform: translateX(150%);
+        transition: transform 0.4s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 350px;
+        min-width: 280px;
+    }
+
+    .toast.show {
+        transform: translateX(0);
+    }
+
+    .toast .icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .toast.success {
+        border-left: 4px solid #22c55e;
+    }
+    .toast.success .icon {
+        color: #22c55e;
+    }
+
+    .toast.error {
+        border-left: 4px solid #ef4444;
+    }
+    .toast.error .icon {
+        color: #ef4444;
+    }
+
+    .toast.warning {
+        border-left: 4px solid #f59e0b;
+    }
+    .toast.warning .icon {
+        color: #f59e0b;
+    }
+
+    .toast.info {
+        border-left: 4px solid #3b82f6;
+    }
+    .toast.info .icon {
+        color: #3b82f6;
+    }
+
+    .toast .content {
+        flex: 1;
+    }
+
+    .toast .title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        text-transform: capitalize;
+    }
+
+    .toast .message {
+        font-size: 0.85rem;
+        color: #9ca3af;
+    }
+
+    .toast .close {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 4px;
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+
+    .toast .close:hover {
+        color: #ffffff;
+    }
+</style>
+
+<div class="toast" id="toast">
+    <svg class="icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <div class="content">
+        <div class="title" id="toast-title">Success</div>
+        <div class="message" id="toast-message">Operation completed</div>
+    </div>
+    <button class="close" onclick="closeToast()">&times;</button>
+</div>
+
+<script>
+    function closeToast() {
+        const toast = document.getElementById('toast');
+        if (toast) {
+            toast.classList.remove('show');
+        }
+    }
+
+    window.showToast = function(type, message) {
+        const toast = document.getElementById('toast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastMessage = document.getElementById('toast-message');
+        const toastIcon = document.getElementById('toast-icon');
+
+        if (!toast || !toastTitle || !toastMessage) {
+            if (typeof alert === 'function') {
+                alert(message);
+            }
+            return;
+        }
+
+        toast.className = 'toast ' + type;
+        toastTitle.textContent = type;
+        toastMessage.textContent = message;
+
+        let iconPath = '';
+        switch(type) {
+            case 'success':
+                iconPath = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+                break;
+            case 'error':
+                iconPath = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+                break;
+            case 'warning':
+                iconPath = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>';
+                break;
+            case 'info':
+                iconPath = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>';
+                break;
+            default:
+                iconPath = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+        }
+        toastIcon.innerHTML = iconPath;
+
+        toast.classList.add('show');
+
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 5000);
+    };
+
+    window.createAlert = window.showToast;
+</script>

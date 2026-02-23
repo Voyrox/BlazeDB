@@ -1,27 +1,75 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
-const { registerValidation, loginValidation } = require('./validations.js');
-const { createUser, verifyUser } = require('../database/table/user.js');
+const { createUser, getUserByEmail, verifyUser } = require('../database/table/user.js');
+
+function isEmail(s) {
+    return typeof s === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+}
+
+function normalizeEmail(s) {
+    return String(s || '').trim().toLowerCase();
+}
+
+function issueAuthCookie(res, token) {
+    const secure = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+    res.cookie('auth-token', token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
+    });
+    res.set('auth-token', token);
+}
 
 router.post('/register', async (req, res) => {
-    const { error } = registerValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-    
-    createUser(req.db, req.body);
-    res.status(200).send("User registered successfully");
+    const db = req.app && req.app.locals ? req.app.locals.db : null;
+    if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
+
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || '');
+    const firstName = String(req.body.firstName || '').trim();
+    const lastName = String(req.body.lastName || '').trim();
+    const companyName = String(req.body.companyName || '').trim();
+    const marketingOptIn = !!req.body.marketingOptIn;
+
+    if (!isEmail(email)) return res.status(400).json({ ok: false, error: 'Invalid email' });
+    if (password.length < 8) return res.status(400).json({ ok: false, error: 'Password must be at least 8 characters' });
+    if (!firstName) return res.status(400).json({ ok: false, error: 'First name is required' });
+    if (!lastName) return res.status(400).json({ ok: false, error: 'Last name is required' });
+    if (!companyName) return res.status(400).json({ ok: false, error: 'Company name is required' });
+
+    try {
+        const existing = await getUserByEmail(db, email);
+        if (existing) return res.status(409).json({ ok: false, error: 'User already exists' });
+
+        await createUser(db, { email, password, firstName, lastName, companyName, marketingOptIn });
+
+        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        issueAuthCookie(res, token);
+        return res.status(200).json({ ok: true, token });
+    } catch (err) {
+        return res.status(500).json({ ok: false, error: err && err.message ? err.message : 'Registration failed' });
+    }
 });
 
 router.post('/login', async (req, res) => {
-    const { error } = loginValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-    
-    verifyUser(req.db, req.body.email, req.body.password, (err, user) => {
-        if (err) {
-            return res.status(400).send(err.message);
-        }
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.header('auth-token', token).send(token);
-    });
+    const db = req.app && req.app.locals ? req.app.locals.db : null;
+    if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
+
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || '');
+    if (!isEmail(email)) return res.status(400).json({ ok: false, error: 'Invalid email' });
+    if (!password) return res.status(400).json({ ok: false, error: 'Password is required' });
+
+    try {
+        const user = await verifyUser(db, email, password);
+        const token = jwt.sign({ email: user.email || email, name: user.first_name || null, company: user.company || null }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        issueAuthCookie(res, token);
+        return res.status(200).json({ ok: true, token });
+    } catch (err) {
+        return res.status(400).json({ ok: false, error: err && err.message ? err.message : 'Login failed' });
+    }
 });
 
 module.exports = router;

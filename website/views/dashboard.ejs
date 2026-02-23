@@ -14,8 +14,8 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
 
-  <link rel="icon" href="logo.png" />
-  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="icon" href="/logo.png" />
+  <link rel="stylesheet" href="/css/dashbaord.css" />
 </head>
 
 <body>
@@ -35,8 +35,8 @@
         <p class="modal-subtitle">Choose a plan to get started</p>
       </div>
 
-      <div class="modal-body">
-        <label class="plan-option">
+        <div class="modal-body">
+        <label class="plan-option" data-plan="free">
           <div class="plan-header">
             <span class="plan-name">Free</span>
             <span class="plan-price">$0<span>/month</span></span>
@@ -64,7 +64,7 @@
           <span class="plan-badge free">Available</span>
         </label>
 
-        <div class="plan-option disabled">
+        <div class="plan-option disabled" data-plan="pro">
           <div class="plan-header">
             <span class="plan-name">Pro</span>
             <span class="plan-price">$15<span>/month</span></span>
@@ -94,7 +94,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="modal-btn" type="button">Create Free Database</button>
+        <button class="modal-btn" id="create-db" type="button">Create Database</button>
       </div>
     </div>
   </div>
@@ -102,13 +102,14 @@
   <main class="dash-page">
     <div class="dash-shell">
       <div class="topbar">
-        <a class="brand" href="index.html" aria-label="Back to XeonDB home">
-          <img src="logo.png" alt="XeonDB logo" />
+        <a class="brand" href="/" aria-label="Back to XeonDB home">
+          <img src="/logo.png" alt="XeonDB logo" />
           <span>XeonDB</span>
         </a>
         <div class="topbar-right">
-          <a class="btn" href="index.html">Back to site</a>
-          <div class="user-avatar">TEST</div>
+          <a class="btn" href="/">Back to site</a>
+          <a class="btn" href="/logout">Logout</a>
+          <div class="user-avatar"><%= name %></div>
         </div>
       </div>
 
@@ -120,89 +121,52 @@
       </div>
 
       <div class="dbs-grid">
-        <div class="db-card">
-          <div class="db-card-header">
-            <div class="db-name">production-main</div>
-            <span class="db-status online">
-              <span class="db-status-dot"></span>
-              Online
-            </span>
-          </div>
-          <div class="db-info">
-            <div class="db-info-row">
-              <span class="db-info-label">Cluster</span>
-              <span class="db-info-value">sharded-3-node</span>
+        <% if (instances && instances.length) { %>
+          <% instances.forEach(function(inst) { %>
+            <div class="db-card">
+              <div class="db-card-header">
+                <div class="db-name"><%= inst.name || inst.id %></div>
+                <% const st = (inst.status || 'online').toLowerCase(); %>
+                <span class="db-status <%= st === 'online' ? 'online' : 'offline' %>">
+                  <span class="db-status-dot"></span>
+                  <%= st === 'online' ? 'Online' : 'Offline' %>
+                </span>
+              </div>
+              <div class="db-info">
+                <div class="db-info-row">
+                  <span class="db-info-label">Plan</span>
+                  <span class="db-info-value"><%= (inst.plan || 'free').toUpperCase() %></span>
+                </div>
+                <div class="db-info-row">
+                  <span class="db-info-label">Host</span>
+                  <span class="db-info-value"><%= inst.host %></span>
+                </div>
+                <div class="db-info-row">
+                  <span class="db-info-label">Port</span>
+                  <span class="db-info-value"><%= inst.port %></span>
+                </div>
+                <div class="db-info-row">
+                  <span class="db-info-label">Username</span>
+                  <span class="db-info-value"><%= inst.db_username %></span>
+                </div>
+                <div class="db-info-row">
+                  <span class="db-info-label">Password</span>
+                  <span class="db-info-value">**************</span>
+                </div>
+              </div>
+              <div class="db-actions">
+                <button class="db-action-btn js-connect" type="button"
+                  data-host="<%= inst.host %>"
+                  data-port="<%= inst.port %>"
+                  data-username="<%= inst.db_username %>"
+                  data-password="<%= inst.db_password %>">
+                  Connect
+                </button>
+                <a class="db-action-btn" href="/dashboard/<%= inst.id %>" style="text-align:center; display:inline-block;">Manage</a>
+              </div>
             </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Storage Used</span>
-              <span class="db-info-value">247.3 MB</span>
-            </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Created</span>
-              <span class="db-info-value">Jan 15, 2026</span>
-            </div>
-          </div>
-          <div class="db-actions">
-            <button class="db-action-btn">Connect</button>
-            <button class="db-action-btn">Manage</button>
-          </div>
-        </div>
-
-        <div class="db-card">
-          <div class="db-card-header">
-            <div class="db-name">staging-analytics</div>
-            <span class="db-status online">
-              <span class="db-status-dot"></span>
-              Online
-            </span>
-          </div>
-          <div class="db-info">
-            <div class="db-info-row">
-              <span class="db-info-label">Cluster</span>
-              <span class="db-info-value">sharded-2-node</span>
-            </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Storage Used</span>
-              <span class="db-info-value">89.1 MB</span>
-            </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Created</span>
-              <span class="db-info-value">Feb 3, 2026</span>
-            </div>
-          </div>
-          <div class="db-actions">
-            <button class="db-action-btn">Console</button>
-            <button class="db-action-btn">Settings</button>
-          </div>
-        </div>
-
-        <div class="db-card">
-          <div class="db-card-header">
-            <div class="db-name">dev-local</div>
-            <span class="db-status offline">
-              <span class="db-status-dot"></span>
-              Offline
-            </span>
-          </div>
-          <div class="db-info">
-            <div class="db-info-row">
-              <span class="db-info-label">Cluster</span>
-              <span class="db-info-value">single-node</span>
-            </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Storage Used</span>
-              <span class="db-info-value">0 B</span>
-            </div>
-            <div class="db-info-row">
-              <span class="db-info-label">Created</span>
-              <span class="db-info-value">Feb 10, 2026</span>
-            </div>
-          </div>
-          <div class="db-actions">
-            <button class="db-action-btn">Console</button>
-            <button class="db-action-btn">Settings</button>
-          </div>
-        </div>
+          <% }); %>
+        <% } %>
 
         <label for="modal-toggle" class="create-card">
           <div class="create-card-label">
@@ -214,6 +178,84 @@
       </div>
     </div>
   </main>
+
+  <script>
+    (function () {
+      function fmtConnect(host, port, username, password) {
+        return [
+          'Host: ' + host,
+          'Port: ' + port,
+          'Username: ' + username,
+          'Password: ' + password
+        ].join('\n');
+      }
+
+      async function postJson(url, body) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(body)
+        });
+        let data = null;
+        try { data = await res.json(); } catch { data = null; }
+        if (!res.ok) {
+          const err = data && (data.error || data.message) ? (data.error || data.message) : ('Request failed (' + res.status + ')');
+          throw new Error(err);
+        }
+        return data;
+      }
+
+      document.querySelectorAll('.js-connect').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const host = btn.getAttribute('data-host') || '';
+          const port = btn.getAttribute('data-port') || '';
+          const username = btn.getAttribute('data-username') || '';
+          const password = btn.getAttribute('data-password') || '';
+          const text = fmtConnect(host, port, username, password);
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+              alert('Connection details copied to clipboard.\n\n' + text);
+              return;
+            }
+          } catch {
+            // fallthrough
+          }
+          alert(text);
+        });
+      });
+
+      var createBtn = document.getElementById('create-db');
+      var modalToggle = document.getElementById('modal-toggle');
+      var selectedPlan = 'free';
+
+      function setSelectedPlan(plan) {
+        selectedPlan = plan === 'pro' ? 'pro' : 'free';
+      }
+
+      document.querySelectorAll('.plan-option[data-plan]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          if (el.classList.contains('disabled')) return;
+          setSelectedPlan(el.getAttribute('data-plan'));
+        });
+      });
+
+      async function create(plan) {
+        const data = await postJson('/api/instances', { plan: plan });
+        if (modalToggle) modalToggle.checked = false;
+        window.location.reload();
+      }
+
+      if (createBtn) {
+        createBtn.addEventListener('click', function () {
+          create(selectedPlan).catch(function (err) {
+            alert(err && err.message ? err.message : String(err));
+          });
+        });
+      }
+    })();
+  </script>
 </body>
 
 </html>
