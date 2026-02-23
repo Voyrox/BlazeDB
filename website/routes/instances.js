@@ -116,10 +116,23 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    const q = `DELETE FROM instances WHERE id=${cleanSQL(id)};`;
-    const del = await db.query(q);
-    if (!del || del.ok !== true) {
-      throw new Error((del && del.error) || 'Failed to delete instance');
+    {
+      const q = `DELETE FROM instances_v2 WHERE id=${cleanSQL(id)};`;
+      try {
+        const del = await db.query(q);
+        if (del && del.ok !== true) {
+          throw new Error((del && del.error) || 'Failed to delete instance');
+        }
+      } catch {
+        // ignore
+      }
+    }
+    {
+      const q = `DELETE FROM instances WHERE id=${cleanSQL(id)};`;
+      const del = await db.query(q);
+      if (!del || del.ok !== true) {
+        throw new Error((del && del.error) || 'Failed to delete instance');
+      }
     }
 
     return res.json({ ok: true });
@@ -136,6 +149,7 @@ router.get('/:id/credentials', async (req, res) => {
       credentials: {
         host: instance.host,
         port: instance.port,
+        keyspace: instance.keyspace,
         username: instance.db_username,
         password: instance.db_password
       }
@@ -169,8 +183,11 @@ router.post('/:id/query', async (req, res) => {
     const connected = await client.connect();
     if (!connected) return res.status(502).json({ ok: false, error: 'Unable to connect to instance' });
 
-    if (keyspace) {
-      await client.selectKeyspace(keyspace);
+    const instanceKeyspace = instance && typeof instance.keyspace === 'string' ? String(instance.keyspace || '').trim() : '';
+    const effectiveKeyspace = instanceKeyspace || keyspace;
+    if (effectiveKeyspace) {
+      if (!isIdentifier(effectiveKeyspace)) return res.status(400).json({ ok: false, error: 'Invalid keyspace' });
+      await client.selectKeyspace(effectiveKeyspace);
     }
 
     const result = await client.query(query);

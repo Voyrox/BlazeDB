@@ -145,6 +145,12 @@
                   <span class="db-info-label">Port</span>
                   <span class="db-info-value"><%= inst.port %></span>
                 </div>
+                <% if (inst.keyspace) { %>
+                  <div class="db-info-row">
+                    <span class="db-info-label">Keyspace</span>
+                    <span class="db-info-value"><%= inst.keyspace %></span>
+                  </div>
+                <% } %>
                 <div class="db-info-row">
                   <span class="db-info-label">Username</span>
                   <span class="db-info-value"><%= inst.db_username %></span>
@@ -158,6 +164,7 @@
                 <button class="db-action-btn js-connect" type="button"
                   data-host="<%= inst.host %>"
                   data-port="<%= inst.port %>"
+                  data-keyspace="<%= inst.keyspace ? inst.keyspace : '' %>"
                   data-username="<%= inst.db_username %>"
                   data-password="<%= inst.db_password %>">
                   Connect
@@ -181,13 +188,12 @@
 
   <script>
     (function () {
-      function fmtConnect(host, port, username, password) {
-        return [
-          'Host: ' + host,
-          'Port: ' + port,
-          'Username: ' + username,
-          'Password: ' + password
-        ].join('\n');
+      function fmtConnect(host, port, keyspace, username, password) {
+        var out = ['Host: ' + host, 'Port: ' + port];
+        if (keyspace) out.push('Keyspace: ' + keyspace);
+        out.push('Username: ' + username);
+        out.push('Password: ' + password);
+        return out.join('\n');
       }
 
       async function postJson(url, body) {
@@ -210,9 +216,10 @@
         btn.addEventListener('click', async function () {
           const host = btn.getAttribute('data-host') || '';
           const port = btn.getAttribute('data-port') || '';
+          const keyspace = btn.getAttribute('data-keyspace') || '';
           const username = btn.getAttribute('data-username') || '';
           const password = btn.getAttribute('data-password') || '';
-          const text = fmtConnect(host, port, username, password);
+          const text = fmtConnect(host, port, keyspace, username, password);
           try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
               await navigator.clipboard.writeText(text);

@@ -180,6 +180,22 @@
                       </button>
                     </div>
                   </div>
+
+                  <% if (instance && instance.keyspace) { %>
+                    <div class="qc-field">
+                      <span class="qc-label">Keyspace</span>
+                      <div class="qc-input-group">
+                        <input id="qc-keyspace" type="text" class="qc-input" value="<%= instance.keyspace %>" readonly />
+                        <button class="qc-copy-btn" type="button" data-copy="qc-keyspace" aria-label="Copy keyspace">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  <% } %>
                 </div>
 
                 <div class="qc-col">
@@ -224,7 +240,9 @@
                 <h2 class="panel-title">Query Editor</h2>
               </div>
               <div class="query-editor">
-                <input id="keyspace" class="add-user-input" placeholder="Keyspace (e.g. myapp)" style="margin-bottom: 10px;" />
+                <% if (!(instance && instance.keyspace)) { %>
+                  <input id="keyspace" class="add-user-input" placeholder="Keyspace (e.g. myapp)" style="margin-bottom: 10px;" />
+                <% } %>
                 <textarea id="query" class="query-textarea" placeholder="SELECT * FROM users WHERE id = 1;"></textarea>
                 <div class="query-actions">
                   <button class="query-btn" id="run-query" type="button">Run Query</button>
@@ -547,6 +565,7 @@
       (function () {
         const instanceId = "<%= instance && instance.id ? String(instance.id) : '' %>";
         const instanceConfirmText = "<%= (instance && (instance.name || instance.id)) ? String(instance.name || instance.id) : 'Database' %>";
+        const instanceKeyspace = "<%= instance && instance.keyspace ? String(instance.keyspace) : '' %>";
         if (!instanceId) return;
 
         let cachedCreds = null;
@@ -648,7 +667,7 @@
         const bodyEl = document.getElementById('results-body');
 
         const keyspaceStorageKey = 'xeondb:keyspace:' + instanceId;
-        if (keyspaceEl) {
+        if (keyspaceEl && !instanceKeyspace) {
           keyspaceEl.value = localStorage.getItem(keyspaceStorageKey) || '';
           keyspaceEl.addEventListener('input', () => {
             try {
@@ -739,7 +758,7 @@
 
         if (runBtn && queryEl) {
           runBtn.addEventListener('click', async () => {
-            const keyspace = keyspaceEl ? String(keyspaceEl.value || '').trim() : '';
+            const keyspace = instanceKeyspace || (keyspaceEl ? String(keyspaceEl.value || '').trim() : '');
             const query = String(queryEl.value || '').trim();
             if (!query) {
               toast('warning', 'Enter a query');
@@ -748,7 +767,8 @@
             runBtn.disabled = true;
             runBtn.textContent = 'Running...';
             try {
-              const data = await postJson(`/api/instances/${instanceId}/query`, { keyspace, query });
+              const body = instanceKeyspace ? { query } : { keyspace, query };
+              const data = await postJson(`/api/instances/${instanceId}/query`, body);
               renderResult(data.result);
               toast('success', 'Query executed');
             } catch (e) {
