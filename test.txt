@@ -1,3 +1,0 @@
-python -m venv venv
-source venv/bin/activate.fish
-pip install -r tests/requirementsDev.txt

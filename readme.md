@@ -64,7 +64,7 @@ limits:
   maxLineBytes: 1048576
   maxConnections: 1024
   # Optional quota enforcement (auth-enabled deployments only)
-  # - quotaEnforcementEnabled: when true, enforce per-keyspace quota rows in SYSTEM.KEYSPACE_QUOTAS
+  # - quotaEnforcementEnabled: when true, enforce per keyspace quota rows in SYSTEM.KEYSPACE_QUOTAS and reject writes that exceed the quota with "quota_exceeded".
   # - quotaBytesUsedCacheTtlMs: Limit the size that a keyspace can be.
   quotaEnforcementEnabled: false
   quotaBytesUsedCacheTtlMs: 2000
