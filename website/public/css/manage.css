@@ -134,6 +134,19 @@
       color: var(--muted);
   }
 
+  .nav-item.is-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+      transform: none;
+  }
+
+  .nav-item.is-disabled:hover {
+      background: transparent;
+      color: var(--muted);
+      transform: none;
+  }
+
   button.nav-item {
       appearance: none;
       -webkit-appearance: none;

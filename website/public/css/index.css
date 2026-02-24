@@ -730,13 +730,17 @@
        box-shadow: 0 18px 54px rgba(0, 0, 0, 0.22);
    }
 
-   .split {
-       margin-top: 14px;
-       display: grid;
-       grid-template-columns: repeat(3, minmax(0, 1fr));
-       gap: 14px;
-       align-items: start;
-   }
+    .split {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        align-items: start;
+    }
+
+    .split > div {
+        min-width: 0;
+    }
 
    @media (max-width: 1200px) {
        .split {
@@ -744,17 +748,18 @@
        }
    }
 
-   .code {
-       border-radius: var(--radius);
-       border: 1px solid var(--stroke2);
-       background: var(--surface3);
-       padding: 14px;
-       overflow: auto;
-       font-family: var(--mono);
-       font-size: 12px;
-       line-height: 1.55;
-       color: rgba(233, 230, 218, 0.92);
-   }
+    .code {
+        border-radius: var(--radius);
+        border: 1px solid var(--stroke2);
+        background: var(--surface3);
+        padding: 14px;
+        max-width: 100%;
+        overflow: auto;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.55;
+        color: rgba(233, 230, 218, 0.92);
+    }
 
    .code .prompt {
        color: rgba(57, 198, 255, 0.90);

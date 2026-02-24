@@ -24,8 +24,8 @@
     <input type="radio" name="nav" id="tab-overview" class="nav-toggle" checked />
     <input type="radio" name="nav" id="tab-data" class="nav-toggle" />
     <input type="radio" name="nav" id="tab-users" class="nav-toggle" />
-    <input type="radio" name="nav" id="tab-whitelist" class="nav-toggle" />
-    <input type="radio" name="nav" id="tab-backups" class="nav-toggle" />
+    <input type="radio" name="nav" id="tab-whitelist" class="nav-toggle" disabled />
+    <input type="radio" name="nav" id="tab-backups" class="nav-toggle" disabled />
     <input type="radio" name="nav" id="tab-billing" class="nav-toggle" />
 
     <div class="page-container">
@@ -64,7 +64,7 @@
             </svg>
             Users
           </label>
-          <label for="tab-whitelist" class="nav-item">
+          <label for="tab-whitelist" class="nav-item is-disabled" aria-disabled="true" title="Coming soon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -72,7 +72,7 @@
             </svg>
             Whitelist
           </label>
-          <label for="tab-backups" class="nav-item">
+          <label for="tab-backups" class="nav-item is-disabled" aria-disabled="true" title="Coming soon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -329,21 +329,11 @@
               <div class="usage-section">
                 <h3 class="usage-title">Current Usage</h3>
                 <div class="usage-bar">
-                  <div class="usage-fill" style="width: 49%;"></div>
+                  <div class="usage-fill" id="usage-fill" style="width: 0%;"></div>
                 </div>
                 <div class="usage-labels">
-                  <span>247.3 MB used</span>
-                  <span>500 MB total</span>
-                </div>
-              </div>
-              <div class="usage-section">
-                <h3 class="usage-title">Connections</h3>
-                <div class="usage-bar">
-                  <div class="usage-fill" style="width: 49%;"></div>
-                </div>
-                <div class="usage-labels">
-                  <span>247 active</span>
-                  <span>500 max</span>
+                  <span id="usage-used">-- used</span>
+                  <span id="usage-total">-- total</span>
                 </div>
               </div>
               <div class="upgrade-section">
@@ -560,6 +550,7 @@
         const instanceId = "<%= instance && instance.id ? String(instance.id) : '' %>";
         const instanceConfirmText = "<%= (instance && (instance.name || instance.id)) ? String(instance.name || instance.id) : 'Database' %>";
         const instanceKeyspace = "<%= instance && instance.keyspace ? String(instance.keyspace) : '' %>";
+        const instancePlan = "<%= instance && instance.plan ? String(instance.plan) : 'free' %>";
         if (!instanceId) return;
 
         let cachedCreds = null;
@@ -608,6 +599,49 @@
 
         const statConnectionsEl = document.getElementById('stat-connections');
         const statQueriesEl = document.getElementById('stat-queries');
+        const usageFillEl = document.getElementById('usage-fill');
+        const usageUsedEl = document.getElementById('usage-used');
+        const usageTotalEl = document.getElementById('usage-total');
+
+        const planLower = String(instancePlan || 'free').trim().toLowerCase();
+        const quotaBytes = planLower === 'pro'
+          ? (100 * 1024 * 1024 * 1024)
+          : (500 * 1024 * 1024);
+
+        function clamp(n, a, b) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return a;
+          return Math.max(a, Math.min(b, v));
+        }
+
+        function formatBytesForQuota(bytes, total) {
+          const b = Math.max(0, Number(bytes) || 0);
+          const t = Math.max(0, Number(total) || 0);
+          const useGb = t >= (1024 * 1024 * 1024);
+          const unit = useGb ? 'GB' : 'MB';
+          const div = useGb ? (1024 * 1024 * 1024) : (1024 * 1024);
+          const val = b / div;
+          const digits = useGb ? 2 : 1;
+          const s = Number.isFinite(val) ? val.toFixed(digits) : '0';
+          const tidy = s
+            .replace(/\.0+$/, '')
+            .replace(/(\.[0-9]*[1-9])0+$/, '$1');
+          return tidy + ' ' + unit;
+        }
+
+        function updateUsage(metrics) {
+          if (!usageFillEl || !usageUsedEl || !usageTotalEl) return;
+
+          const used = metrics && Object.prototype.hasOwnProperty.call(metrics, 'bytes_used')
+            ? Number(metrics.bytes_used)
+            : NaN;
+          const usedBytes = Number.isFinite(used) ? Math.max(0, used) : 0;
+          const pct = quotaBytes > 0 ? (usedBytes / quotaBytes) * 100 : 0;
+          usageFillEl.style.width = clamp(pct, 0, 100).toFixed(1) + '%';
+
+          usageUsedEl.textContent = formatBytesForQuota(usedBytes, quotaBytes) + ' used';
+          usageTotalEl.textContent = formatBytesForQuota(quotaBytes, quotaBytes) + ' total';
+        }
 
         function formatCompact(n) {
           const v = Number(n);
@@ -645,6 +679,8 @@
             queriesChart.data.datasets[0].data = q4h.map((x) => Number(x) || 0);
             queriesChart.update('none');
           }
+
+          updateUsage(metrics);
         }
 
         async function refreshMetrics() {
@@ -1157,7 +1193,7 @@
         refreshBackups();
         refreshDbUsers();
         refreshMetrics();
-        setInterval(refreshMetrics, 5000);
+        setInterval(refreshMetrics, 60000);
 
         const deleteBackdrop = document.getElementById('delete-backdrop');
         const openDeleteBtns = document.querySelectorAll('.open-delete-modal');

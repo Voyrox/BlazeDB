@@ -12,6 +12,7 @@
 #include <cstring>
 #include <filesystem>
 #include <chrono>
+#include <system_error>
 #include <string>
 #include <thread>
 #include <functional>
@@ -51,6 +52,33 @@ static SqlLiteral litNumber(i64 v) {
     l.kind = SqlLiteral::Kind::Number;
     l.text = std::to_string(v);
     return l;
+}
+
+static u64 dirBytesUsedBestEffort(const path& root) {
+    u64 total = 0;
+    std::error_code ec;
+
+    if (root.empty()) {
+        return 0;
+    }
+    if (!std::filesystem::exists(root, ec) || ec) {
+        return 0;
+    }
+
+    std::filesystem::recursive_directory_iterator it(root, std::filesystem::directory_options::skip_permission_denied, ec);
+    const std::filesystem::recursive_directory_iterator end;
+
+    for (; !ec && it != end; it.increment(ec)) {
+        std::error_code ec2;
+        if (it->is_regular_file(ec2) && !ec2) {
+            const auto sz = it->file_size(ec2);
+            if (!ec2) {
+                total += static_cast<u64>(sz);
+            }
+        }
+    }
+
+    return total;
 }
 
 ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections, string authUsername, string authPassword)
@@ -479,6 +507,9 @@ void ServerTcp::handleClient(int clientFd) {
                     out += "]";
 
                     out += string(",\"queries_last24h_total\":") + std::to_string(m.queriesLast24hTotal);
+
+                    const u64 bytesUsed = db_ != nullptr ? dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), ks)) : 0;
+                    out += string(",\"bytes_used\":") + std::to_string(bytesUsed);
 
                     out += ",\"labels_last24h_4h\":[";
                     for (usize i = 0; i < m.labelsLast24h4h.size(); i++) {
