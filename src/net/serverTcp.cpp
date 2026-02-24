@@ -14,6 +14,7 @@
 #include <chrono>
 #include <string>
 #include <thread>
+#include <functional>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -129,6 +130,22 @@ void ServerTcp::run() {
                                                 " maxLineBytes=" + std::to_string(maxLineBytes_) + " maxConnections=" + std::to_string(maxConnections_) +
                                                 " auth=" + (authEnabled_ ? "enabled" : "disabled"));
 
+    if (db_ != nullptr) {
+        auto db = db_;
+        std::thread sampler([db]() {
+            using namespace std::chrono_literals;
+            for (;;) {
+                std::this_thread::sleep_for(30s);
+                try {
+                    db->metricsSampleAll();
+                } catch (...) {
+                    // ignore
+                }
+            }
+        });
+        sampler.detach();
+    }
+
     for (;;) {
         int clientSocketDesc = ::accept(socketFileDesc, nullptr, nullptr);
         if (clientSocketDesc < 0) {
@@ -159,6 +176,24 @@ void ServerTcp::handleClient(int clientFd) {
     string currentKeyspace;
     std::optional<AuthedUser> currentUser;
     AuthedUser noAuthRoot{"", 0};
+
+    struct ScopeExit {
+        std::function<void()> fn;
+        ~ScopeExit() {
+            if (fn)
+                fn();
+        }
+    } onExit;
+
+    onExit.fn = [this, &currentKeyspace]() {
+        try {
+            if (db_ != nullptr && !currentKeyspace.empty()) {
+                db_->metricsOnDisconnect(currentKeyspace);
+            }
+        } catch (...) {
+            // ignore
+        }
+    };
 
     while (true) {
         ssize_t recieved = ::recv(clientFd, tmp, sizeof(tmp), 0);
@@ -232,6 +267,10 @@ void ServerTcp::handleClient(int clientFd) {
                     const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
                     if (authEnabled_ && !db_->canAccessKeyspace(u, use->keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnUse(currentKeyspace, use->keyspace);
+                    }
                     currentKeyspace = use->keyspace;
                     response = jsonOk();
                 } else if (auto* createKeyspace = std::get_if<SqlCreateKeyspace>(&cmd)) {
@@ -240,6 +279,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("forbidden");
                     if (isSystemKeyspaceName(createKeyspace->keyspace))
                         throw runtimeError("cannot create SYSTEM");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(createKeyspace->keyspace);
+                    }
 
                     std::error_code ec;
                     const bool existed = std::filesystem::exists(keyspaceDir(db_->dataDir(), createKeyspace->keyspace), ec) && !ec;
@@ -270,6 +313,10 @@ void ServerTcp::handleClient(int clientFd) {
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
 
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
+
                     if (!createTable->ifNotExists) {
                         (void)db_->createTable(keyspace, createTable->table, createTable->schema);
                     } else {
@@ -294,6 +341,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
                     db_->dropTable(keyspace, dropTable->table, dropTable->ifExists);
                     response = jsonOk();
                 } else if (auto* dropKeyspace = std::get_if<SqlDropKeyspace>(&cmd)) {
@@ -302,6 +353,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("forbidden");
                     if (isSystemKeyspaceName(dropKeyspace->keyspace))
                         throw runtimeError("cannot drop SYSTEM");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(dropKeyspace->keyspace);
+                    }
                     db_->dropKeyspace(dropKeyspace->keyspace, dropKeyspace->ifExists);
                     if (authEnabled_) {
                         db_->cleanupKeyspaceSecurityMetadata(dropKeyspace->keyspace);
@@ -338,6 +393,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
                     auto tables = db_->listTables(keyspace);
                     string out = "{\"ok\":true,\"tables\":[";
                     for (usize i = 0; i < tables.size(); i++) {
@@ -354,6 +413,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
                     auto t = db_->openTable(keyspace, describe->table);
                     const auto& schema = t->schema();
                     string out = "{\"ok\":true,\"keyspace\":\"" + jsonEscape(keyspace) + "\",\"table\":\"" + jsonEscape(describe->table) + "\",";
@@ -374,6 +437,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
                     auto t = db_->openTable(keyspace, showCreate->table);
                     const auto& schema = t->schema();
                     auto pkName = schema.columns[schema.primaryKeyIndex].name;
@@ -385,6 +452,43 @@ void ServerTcp::handleClient(int clientFd) {
                     }
                     stmt += ", PRIMARY KEY (" + pkName + "));";
                     response = string("{\"ok\":true,\"create\":\"") + jsonEscape(stmt) + "\"}";
+                } else if (auto* showMetrics = std::get_if<SqlShowMetrics>(&cmd)) {
+                    const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
+                    const string& ks = showMetrics->keyspace;
+                    if (authEnabled_ && !db_->canAccessKeyspace(u, ks))
+                        throw runtimeError("forbidden");
+
+                    auto m = db_->keyspaceMetrics(ks);
+                    string out = string("{\"ok\":true,\"keyspace\":\"") + jsonEscape(ks) + "\"";
+                    out += string(",\"connections_active\":") + std::to_string(m.connectionsActive);
+
+                    out += ",\"connections_last24h_peak_4h\":[";
+                    for (usize i = 0; i < m.connectionsLast24hPeak4h.size(); i++) {
+                        if (i)
+                            out += ",";
+                        out += std::to_string(m.connectionsLast24hPeak4h[i]);
+                    }
+                    out += "]";
+
+                    out += ",\"queries_last24h_4h\":[";
+                    for (usize i = 0; i < m.queriesLast24h4h.size(); i++) {
+                        if (i)
+                            out += ",";
+                        out += std::to_string(m.queriesLast24h4h[i]);
+                    }
+                    out += "]";
+
+                    out += string(",\"queries_last24h_total\":") + std::to_string(m.queriesLast24hTotal);
+
+                    out += ",\"labels_last24h_4h\":[";
+                    for (usize i = 0; i < m.labelsLast24h4h.size(); i++) {
+                        if (i)
+                            out += ",";
+                        out += string("\"") + jsonEscape(m.labelsLast24h4h[i]) + "\"";
+                    }
+                    out += "]";
+                    out += "}";
+                    response = out;
                 } else if (auto* trunc = std::get_if<SqlTruncateTable>(&cmd)) {
                     const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
                     auto keyspace = trunc->keyspace.empty() ? currentKeyspace : trunc->keyspace;
@@ -392,6 +496,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
                     db_->truncateTable(keyspace, trunc->table);
                     response = jsonOk();
                 } else if (auto* insert = std::get_if<SqlInsert>(&cmd)) {
@@ -401,6 +509,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
 
                     auto retTable = db_->openTable(keyspace, insert->table);
                     auto pkIndex = retTable->schema().primaryKeyIndex;
@@ -485,6 +597,10 @@ void ServerTcp::handleClient(int clientFd) {
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
 
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
+
                     auto retTable = db_->openTable(keyspace, select->table);
                     auto pkIndex = retTable->schema().primaryKeyIndex;
                     auto pkName = retTable->schema().columns[pkIndex].name;
@@ -527,6 +643,10 @@ void ServerTcp::handleClient(int clientFd) {
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
 
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
+
                     auto retTable = db_->openTable(keyspace, flush->table);
                     retTable->flush();
                     response = jsonOk();
@@ -537,6 +657,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
 
                     auto retTable = db_->openTable(keyspace, del->table);
                     auto pkIndex = retTable->schema().primaryKeyIndex;
@@ -565,6 +689,10 @@ void ServerTcp::handleClient(int clientFd) {
                         throw runtimeError("No keyspace selected");
                     if (authEnabled_ && !db_->canAccessKeyspace(u, keyspace))
                         throw runtimeError("forbidden");
+
+                    if (db_ != nullptr) {
+                        db_->metricsOnCommand(keyspace);
+                    }
 
                     auto retTable = db_->openTable(keyspace, upd->table);
                     auto pkIndex = retTable->schema().primaryKeyIndex;

@@ -382,7 +382,29 @@ std::optional<SqlCommand> sqlCommand(const string& rawLine, string& error) {
                 }
             }
 
-            error = "Expected keyspaces, tables, or create";
+            {
+                usize k = i;
+                if (matchKeyword(s, k, "metrics")) {
+                    i = k;
+                    if (!matchKeyword(s, i, "in")) {
+                        error = "Expected in";
+                        return std::nullopt;
+                    }
+                    SqlShowMetrics cmd;
+                    if (!parseIdentifier(s, i, cmd.keyspace)) {
+                        error = "Expected keyspace";
+                        return std::nullopt;
+                    }
+                    skipWhitespace(s, i);
+                    if (i != s.size()) {
+                        error = "Unexpected trailing input";
+                        return std::nullopt;
+                    }
+                    return cmd;
+                }
+            }
+
+            error = "Expected keyspaces, tables, create, or metrics";
             return std::nullopt;
         }
     }

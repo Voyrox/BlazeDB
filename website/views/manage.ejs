@@ -136,7 +136,7 @@
                 <div class="stat-header">
                   <span class="stat-title">Connections</span>
                 </div>
-                <div class="stat-value">247 <span>active</span></div>
+                <div class="stat-value" id="stat-connections">-- <span>active</span></div>
                 <div class="chart-container">
                   <canvas id="connectionsChart"></canvas>
                 </div>
@@ -146,7 +146,7 @@
                 <div class="stat-header">
                   <span class="stat-title">Queries</span>
                 </div>
-                <div class="stat-value">1.4k <span>/day</span></div>
+                <div class="stat-value" id="stat-queries">-- <span>/day</span></div>
                 <div class="chart-container">
                   <canvas id="queriesChart"></canvas>
                 </div>
@@ -428,13 +428,14 @@
       Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
       Chart.defaults.font.family = '"Space Grotesk", sans-serif';
 
-      const connectionsCtx = document.getElementById('connectionsChart').getContext('2d');
-      new Chart(connectionsCtx, {
+      const connectionsCtxEl = document.getElementById('connectionsChart');
+      const connectionsCtx = connectionsCtxEl ? connectionsCtxEl.getContext('2d') : null;
+      const connectionsChart = connectionsCtx ? new Chart(connectionsCtx, {
         type: 'line',
         data: {
-          labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
+          labels: ['-24h', '-20h', '-16h', '-12h', '-8h', '-4h'],
           datasets: [{
-            data: [105, 165, 120, 225, 150, 255],
+            data: [0, 0, 0, 0, 0, 0],
             borderColor: '#39c6ff',
             backgroundColor: 'rgba(57, 198, 255, 0.1)',
             borderWidth: 2,
@@ -475,11 +476,9 @@
             },
             y: {
               min: 0,
-              max: 300,
               grid: { color: 'rgba(233, 230, 218, 0.05)' },
               ticks: {
                 font: { size: 10 },
-                stepSize: 100,
                 callback: function (value) {
                   return value;
                 }
@@ -491,15 +490,16 @@
             mode: 'index'
           }
         }
-      });
+      }) : null;
 
-      const queriesCtx = document.getElementById('queriesChart').getContext('2d');
-      new Chart(queriesCtx, {
+      const queriesCtxEl = document.getElementById('queriesChart');
+      const queriesCtx = queriesCtxEl ? queriesCtxEl.getContext('2d') : null;
+      const queriesChart = queriesCtx ? new Chart(queriesCtx, {
         type: 'line',
         data: {
-          labels: ['Feb 13', 'Feb 15', 'Feb 17', 'Feb 19', 'Feb 21', 'Feb 23'],
+          labels: ['-24h', '-20h', '-16h', '-12h', '-8h', '-4h'],
           datasets: [{
-            data: [1000, 1400, 900, 1700, 1200, 1900],
+            data: [0, 0, 0, 0, 0, 0],
             borderColor: '#2ed3a1',
             backgroundColor: 'rgba(46, 211, 161, 0.1)',
             borderWidth: 2,
@@ -528,7 +528,7 @@
               displayColors: false,
               callbacks: {
                 label: function (context) {
-                  return context.parsed.y + ' /day';
+                  return context.parsed.y + ' queries';
                 }
               }
             }
@@ -540,11 +540,9 @@
             },
             y: {
               min: 0,
-              max: 2000,
               grid: { color: 'rgba(233, 230, 218, 0.05)' },
               ticks: {
                 font: { size: 10 },
-                stepSize: 500,
                 callback: function (value) {
                   return value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value;
                 }
@@ -556,7 +554,7 @@
             mode: 'index'
           }
         }
-      });
+      }) : null;
 
       (function () {
         const instanceId = "<%= instance && instance.id ? String(instance.id) : '' %>";
@@ -606,6 +604,57 @@
             return;
           }
           if (typeof alert === 'function') alert(msg);
+        }
+
+        const statConnectionsEl = document.getElementById('stat-connections');
+        const statQueriesEl = document.getElementById('stat-queries');
+
+        function formatCompact(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return String(n || '0');
+          if (v >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'b';
+          if (v >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'm';
+          if (v >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+          return String(Math.round(v));
+        }
+
+        function updateStatsAndCharts(metrics) {
+          if (!metrics || typeof metrics !== 'object') return;
+          const active = Number(metrics.connections_active);
+          const qTotal = Number(metrics.queries_last24h_total);
+
+          if (statConnectionsEl) {
+            statConnectionsEl.innerHTML = `${Number.isFinite(active) ? active : '--'} <span>active</span>`;
+          }
+          if (statQueriesEl) {
+            statQueriesEl.innerHTML = `${Number.isFinite(qTotal) ? formatCompact(qTotal) : '--'} <span>/day</span>`;
+          }
+
+          const labels = Array.isArray(metrics.labels_last24h_4h) ? metrics.labels_last24h_4h : null;
+          const conn = Array.isArray(metrics.connections_last24h_peak_4h) ? metrics.connections_last24h_peak_4h : null;
+          const q4h = Array.isArray(metrics.queries_last24h_4h) ? metrics.queries_last24h_4h : null;
+
+          if (connectionsChart && labels && conn && labels.length === 6 && conn.length === 6) {
+            connectionsChart.data.labels = labels;
+            connectionsChart.data.datasets[0].data = conn.map((x) => Number(x) || 0);
+            connectionsChart.update('none');
+          }
+
+          if (queriesChart && labels && q4h && labels.length === 6 && q4h.length === 6) {
+            queriesChart.data.labels = labels;
+            queriesChart.data.datasets[0].data = q4h.map((x) => Number(x) || 0);
+            queriesChart.update('none');
+          }
+        }
+
+        async function refreshMetrics() {
+          if (!instanceId) return;
+          try {
+            const data = await getJson(`/api/instances/${instanceId}/metrics`);
+            updateStatsAndCharts(data.metrics);
+          } catch {
+            // ignore
+          }
         }
 
         document.querySelectorAll('[data-copy]').forEach((btn) => {
@@ -1107,6 +1156,8 @@
         refreshWhitelist();
         refreshBackups();
         refreshDbUsers();
+        refreshMetrics();
+        setInterval(refreshMetrics, 5000);
 
         const deleteBackdrop = document.getElementById('delete-backdrop');
         const openDeleteBtns = document.querySelectorAll('.open-delete-modal');

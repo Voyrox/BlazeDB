@@ -24,6 +24,14 @@ static i64 nowMs() {
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
+static u64 nowBucket5m() {
+    const i64 ms = nowMs();
+    if (ms <= 0)
+        return 0;
+    constexpr i64 bucketMs = 5 * 60 * 1000;
+    return static_cast<u64>(ms / bucketMs);
+}
+
 static string tableKey(const string& keyspace, const string& table) {
     return keyspace + "." + table;
 }
@@ -33,6 +41,127 @@ Db::Db(Settings settings)
     settings_.dataDir = resolveDataDir(settings_.dataDir);
     effectiveDataDir_ = settings_.dataDir;
     std::filesystem::create_directories(effectiveDataDir_);
+}
+
+void Db::metricsTouchBucketLocked(MetricsSeries& m, u64 absBucket) {
+    const usize idx = static_cast<usize>(absBucket % MetricsSeries::bucketCount);
+    if (m.bucketId[idx] != absBucket) {
+        m.bucketId[idx] = absBucket;
+        m.connPeak[idx] = 0;
+        m.queries[idx] = 0;
+    }
+}
+
+void Db::metricsObserveConnPeakLocked(MetricsSeries& m, u64 absBucket) {
+    metricsTouchBucketLocked(m, absBucket);
+    const usize idx = static_cast<usize>(absBucket % MetricsSeries::bucketCount);
+    if (m.connectionsActive > m.connPeak[idx])
+        m.connPeak[idx] = m.connectionsActive;
+}
+
+Db::KeyspaceMetrics Db::keyspaceMetricsLocked(const string& keyspace, u64 nowBucket) const {
+    KeyspaceMetrics out;
+    out.labelsLast24h4h = {"-24h", "-20h", "-16h", "-12h", "-8h", "-4h"};
+
+    auto it = metricsByKeyspace_.find(keyspace);
+    if (it == metricsByKeyspace_.end()) {
+        return out;
+    }
+    const MetricsSeries& m = it->second;
+    out.connectionsActive = m.connectionsActive;
+
+    auto bucketConnPeak = [&m](u64 absBucket) -> i64 {
+        const usize idx = static_cast<usize>(absBucket % MetricsSeries::bucketCount);
+        return (m.bucketId[idx] == absBucket) ? m.connPeak[idx] : 0;
+    };
+    auto bucketQueries = [&m](u64 absBucket) -> i64 {
+        const usize idx = static_cast<usize>(absBucket % MetricsSeries::bucketCount);
+        return (m.bucketId[idx] == absBucket) ? m.queries[idx] : 0;
+    };
+
+    const u64 firstBucket = (nowBucket >= MetricsSeries::bucketCount) ? (nowBucket - MetricsSeries::bucketCount + 1) : 0;
+    (void)firstBucket;
+
+    i64 totalQ = 0;
+    for (u64 b = (nowBucket >= MetricsSeries::bucketCount - 1 ? (nowBucket - (MetricsSeries::bucketCount - 1)) : 0); b <= nowBucket; b++) {
+        totalQ += bucketQueries(b);
+    }
+    out.queriesLast24hTotal = totalQ;
+
+    for (usize w = 0; w < 6; w++) {
+        // Window boundaries in buckets: 4h = 48 buckets.
+        const u64 endExclusive = nowBucket + 1 - static_cast<u64>((5 - w) * 48);
+        const u64 start = endExclusive - 48;
+
+        i64 peak = 0;
+        i64 sum = 0;
+        for (u64 b = start; b < endExclusive; b++) {
+            const i64 cp = bucketConnPeak(b);
+            if (cp > peak)
+                peak = cp;
+            sum += bucketQueries(b);
+        }
+        out.connectionsLast24hPeak4h[w] = peak;
+        out.queriesLast24h4h[w] = sum;
+    }
+
+    return out;
+}
+
+void Db::metricsOnUse(const string& oldKeyspace, const string& newKeyspace) {
+    if (oldKeyspace == newKeyspace)
+        return;
+    const u64 b = nowBucket5m();
+    std::lock_guard<std::mutex> lock(metricsMutex_);
+
+    if (!oldKeyspace.empty()) {
+        auto& m = metricsByKeyspace_[oldKeyspace];
+        if (m.connectionsActive > 0)
+            m.connectionsActive--;
+        metricsObserveConnPeakLocked(m, b);
+    }
+    if (!newKeyspace.empty()) {
+        auto& m = metricsByKeyspace_[newKeyspace];
+        m.connectionsActive++;
+        metricsObserveConnPeakLocked(m, b);
+    }
+}
+
+void Db::metricsOnDisconnect(const string& keyspace) {
+    if (keyspace.empty())
+        return;
+    const u64 b = nowBucket5m();
+    std::lock_guard<std::mutex> lock(metricsMutex_);
+    auto& m = metricsByKeyspace_[keyspace];
+    if (m.connectionsActive > 0)
+        m.connectionsActive--;
+    metricsObserveConnPeakLocked(m, b);
+}
+
+void Db::metricsOnCommand(const string& keyspace) {
+    if (keyspace.empty())
+        return;
+    const u64 b = nowBucket5m();
+    std::lock_guard<std::mutex> lock(metricsMutex_);
+    auto& m = metricsByKeyspace_[keyspace];
+    metricsTouchBucketLocked(m, b);
+    const usize idx = static_cast<usize>(b % MetricsSeries::bucketCount);
+    m.queries[idx]++;
+    metricsObserveConnPeakLocked(m, b);
+}
+
+void Db::metricsSampleAll() {
+    const u64 b = nowBucket5m();
+    std::lock_guard<std::mutex> lock(metricsMutex_);
+    for (auto& it : metricsByKeyspace_) {
+        metricsObserveConnPeakLocked(it.second, b);
+    }
+}
+
+Db::KeyspaceMetrics Db::keyspaceMetrics(const string& keyspace) const {
+    const u64 b = nowBucket5m();
+    std::lock_guard<std::mutex> lock(metricsMutex_);
+    return keyspaceMetricsLocked(keyspace, b);
 }
 
 bool Db::authEnabled() const {

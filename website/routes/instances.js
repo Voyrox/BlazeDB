@@ -449,6 +449,43 @@ router.post('/:id/query', async (req, res) => {
   }
 });
 
+router.get('/:id/metrics', async (req, res) => {
+  const id = String(req.params.id || '');
+  let client = null;
+  try {
+    const instance = await loadOwnedInstance(req, id);
+    const keyspace = instance && typeof instance.keyspace === 'string' ? String(instance.keyspace || '').trim() : '';
+    if (!keyspace || !isIdentifier(keyspace)) {
+      return res.status(400).json({ ok: false, error: 'Invalid keyspace' });
+    }
+
+    client = new XeondbClient({
+      host: instance.host,
+      port: Number(instance.port),
+      username: instance.db_username,
+      password: instance.db_password
+    });
+
+    const connected = await client.connect();
+    if (!connected) return res.status(502).json({ ok: false, error: 'Unable to connect to instance' });
+
+    const q = `SHOW METRICS IN ${keyspace};`;
+    const result = await client.query(q);
+    if (!result || result.ok !== true) {
+      return res.status(400).json({ ok: false, error: (result && result.error) || 'Failed to load metrics' });
+    }
+    return res.json({ ok: true, metrics: result });
+  } catch (err) {
+    return res.status(err && err.status ? err.status : 400).json({ ok: false, error: err && err.message ? err.message : 'Failed' });
+  } finally {
+    try {
+      if (client) client.close();
+    } catch {
+      // ignore
+    }
+  }
+});
+
 router.get('/:id/whitelist', async (req, res) => {
   const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });

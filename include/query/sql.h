@@ -85,6 +85,10 @@ struct SqlShowCreateTable {
     string table;
 };
 
+struct SqlShowMetrics {
+    string keyspace;
+};
+
 struct SqlTruncateTable {
     string keyspace;
     string table;
@@ -107,7 +111,7 @@ struct SqlUpdate {
 };
 
 using SqlCommand = std::variant<SqlPing, SqlAuth, SqlUse, SqlCreateKeyspace, SqlCreateTable, SqlInsert, SqlSelect, SqlFlush, SqlDelete, SqlUpdate, SqlDropTable,
-        SqlDropKeyspace, SqlShowKeyspaces, SqlShowTables, SqlDescribeTable, SqlShowCreateTable, SqlTruncateTable>;
+        SqlDropKeyspace, SqlShowKeyspaces, SqlShowTables, SqlDescribeTable, SqlShowCreateTable, SqlShowMetrics, SqlTruncateTable>;
 
 std::optional<SqlCommand> sqlCommand(const string& line, string& error);
 
