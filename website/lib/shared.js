@@ -12,7 +12,7 @@ function cleanSQL(v) {
   );
 }
 
-function normalizeEmail(s) {
+function cleanEmail(s) {
   return String(s || '').trim().toLowerCase();
 }
 
@@ -57,7 +57,7 @@ function clearAuthCookie(res) {
 
 module.exports = {
   cleanSQL,
-  normalizeEmail,
+  cleanEmail,
   isEmail,
   isIdentifier,
   getReqDb,

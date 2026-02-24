@@ -2,13 +2,13 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const { createUser, getUserByEmail, verifyUser } = require('../database/table/user.js');
 
-const { isEmail, normalizeEmail, issueAuthCookie, getReqDb } = require('../lib/shared');
+const { isEmail, cleanEmail, issueAuthCookie, getReqDb } = require('../lib/shared');
 
 router.post('/register', async (req, res) => {
     const db = getReqDb(req);
     if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
-    const email = normalizeEmail(req.body.email);
+    const email = cleanEmail(req.body.email);
     const password = String(req.body.password || '');
     const firstName = String(req.body.firstName || '').trim();
     const lastName = String(req.body.lastName || '').trim();
@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
     const db = getReqDb(req);
     if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
-    const email = normalizeEmail(req.body.email);
+    const email = cleanEmail(req.body.email);
     const password = String(req.body.password || '');
     if (!isEmail(email)) return res.status(400).json({ ok: false, error: 'Invalid email' });
     if (!password) return res.status(400).json({ ok: false, error: 'Password is required' });

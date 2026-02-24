@@ -2,14 +2,14 @@ const router = require('express').Router();
 const crypto = require('crypto');
 const { XeondbClient } = require('xeondb-driver');
 const { createInstance, getInstancesByUser, getInstanceById } = require('../database/table/instances.js');
-const { cleanSQL, normalizeEmail, isIdentifier, getReqDb } = require('../lib/shared');
+const { cleanSQL, cleanEmail, isIdentifier, getReqDb } = require('../lib/shared');
 const {
   addWhitelistEntry,
   listWhitelistByInstance,
   removeWhitelistEntry,
   deleteWhitelistEntryById,
-  normalizeIp,
-  normalizeCidr
+  cleanIp,
+  cleanCidr
 } = require('../database/table/whitelist');
 const {
   listBackupsByInstance,
@@ -21,7 +21,7 @@ async function loadOwnedInstance(req, id) {
   const db = getReqDb(req);
   if (!db) throw new Error('Database not ready');
 
-  const email = normalizeEmail(req.user && req.user.email);
+  const email = cleanEmail(req.user && req.user.email);
   if (!email) {
     const err = new Error('Not authenticated');
     err.status = 401;
@@ -34,7 +34,7 @@ async function loadOwnedInstance(req, id) {
     err.status = 404;
     throw err;
   }
-  if (normalizeEmail(instance.user_email) !== email) {
+  if (cleanEmail(instance.user_email) !== email) {
     const err = new Error('Forbidden');
     err.status = 403;
     throw err;
@@ -114,7 +114,7 @@ router.get('/', async (req, res) => {
   const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
-  const email = normalizeEmail(req.user && req.user.email);
+  const email = cleanEmail(req.user && req.user.email);
   if (!email) return res.status(401).json({ ok: false, error: 'Not authenticated' });
 
   try {
@@ -129,7 +129,7 @@ router.post('/', async (req, res) => {
   const db = getReqDb(req);
   if (!db) return res.status(500).json({ ok: false, error: 'Database not ready' });
 
-  const email = normalizeEmail(req.user && req.user.email);
+  const email = cleanEmail(req.user && req.user.email);
   if (!email) return res.status(401).json({ ok: false, error: 'Not authenticated' });
 
   const plan = String(req.body && req.body.plan ? req.body.plan : 'free').trim().toLowerCase() === 'pro' ? 'pro' : 'free';
@@ -144,7 +144,7 @@ router.post('/', async (req, res) => {
     }
 
     try {
-      const ip = normalizeIp(req.ip);
+      const ip = cleanIp(req.ip);
       if (ip) {
         const cidr = ip.includes(':') ? `${ip}/128` : `${ip}/32`;
         await addWhitelistEntry(db, { instanceId: instance.id, cidr, kind: 'auto' });
@@ -504,7 +504,7 @@ router.get('/:id/whitelist', async (req, res) => {
     }
 
     const whitelist = await listWhitelistByInstance(db, id);
-    const ip = normalizeIp(req.ip);
+    const ip = cleanIp(req.ip);
     const clientCidr = ip ? (ip.includes(':') ? `${ip}/128` : `${ip}/32`) : '';
     return res.json({ ok: true, whitelist, clientCidr });
   } catch (err) {
@@ -521,7 +521,7 @@ router.post('/:id/whitelist', async (req, res) => {
 
   try {
     await loadOwnedInstance(req, id);
-    const cidr = normalizeCidr(cidrInput);
+    const cidr = cleanCidr(cidrInput);
     const entry = await addWhitelistEntry(db, { instanceId: id, cidr, kind: 'custom' });
     return res.json({ ok: true, entry });
   } catch (err) {

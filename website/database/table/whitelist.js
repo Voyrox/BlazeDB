@@ -7,19 +7,19 @@ function newId() {
   return crypto.randomBytes(12).toString('hex');
 }
 
-function normalizeIp(ip) {
+function cleanIp(ip) {
   let s = String(ip || '').trim();
   if (!s) return '';
   if (s.startsWith('::ffff:')) s = s.slice(7);
   return s;
 }
 
-function normalizeCidr(input) {
+function cleanCidr(input) {
   const raw = String(input || '').trim();
   if (!raw) throw new Error('CIDR is required');
 
   const parts = raw.split('/');
-  const ip = normalizeIp(parts[0]);
+  const ip = cleanIp(parts[0]);
   const ipType = net.isIP(ip);
   if (!ipType) throw new Error('Invalid IP');
 
@@ -60,7 +60,7 @@ async function listWhitelistByInstance(db, instanceId) {
 
 async function addWhitelistEntry(db, data) {
   const instanceId = String(data.instanceId || '').trim();
-  const cidr = normalizeCidr(data.cidr);
+  const cidr = cleanCidr(data.cidr);
   const kind = String(data.kind || 'custom').trim().toLowerCase();
   const createdAt = Date.now();
 
@@ -119,6 +119,6 @@ module.exports = {
   addWhitelistEntry,
   removeWhitelistEntry,
   deleteWhitelistEntryById,
-  normalizeCidr,
-  normalizeIp
+  cleanCidr,
+  cleanIp
 };

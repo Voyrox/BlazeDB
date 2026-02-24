@@ -12,7 +12,7 @@ const requireAuth = require("./routes/verifyToken");
 const instancesApi = require('./routes/instances');
 const { getUserByEmail } = require('./database/table/user');
 const { getInstancesByUser, getInstanceById } = require('./database/table/instances');
-const { normalizeEmail, clearAuthCookie, getReqDb } = require('./lib/shared');
+const { cleanEmail, clearAuthCookie, getReqDb } = require('./lib/shared');
 
 app.use(cors());
 app.use(express.json());
@@ -42,7 +42,7 @@ app.get('/logout', (req, res) => {
 
 app.get("/dashboard", requireAuth, async (req, res) => {
   const db = getReqDb(req);
-  const email = normalizeEmail(req.user && req.user.email);
+  const email = cleanEmail(req.user && req.user.email);
 
   let name = 'ME';
   let instances = [];
@@ -65,7 +65,7 @@ app.get("/dashboard", requireAuth, async (req, res) => {
 
 app.get("/dashboard/:id", requireAuth, async (req, res) => {
   const db = getReqDb(req);
-  const email = normalizeEmail(req.user && req.user.email);
+  const email = cleanEmail(req.user && req.user.email);
   const id = String(req.params.id || '');
 
   if (!db) return res.status(500).send('Database not ready');
