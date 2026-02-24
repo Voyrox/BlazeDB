@@ -4,7 +4,7 @@ const { XeondbClient } = require('xeondb-driver');
 
 const { cleanSQL, isIdentifier } = require('../../lib/shared');
 
-function parseInstancePool(envValue) {
+function instancePool(envValue) {
   if (!envValue) return [];
   try {
     let parsed = null;
@@ -150,8 +150,8 @@ async function createInstance(db, data) {
   const userEmail = String(data.userEmail || '').trim().toLowerCase();
   const plan = String(data.plan || '').trim().toLowerCase() === 'pro' ? 'pro' : 'free';
 
-  const freePool = parseInstancePool(process.env.FREE_INSTANCES);
-  const paidPool = parseInstancePool(process.env.PAID_INSTANCES);
+  const freePool = instancePool(process.env.FREE_INSTANCES);
+  const paidPool = instancePool(process.env.PAID_INSTANCES);
   const pool = plan === 'pro' ? paidPool : freePool;
   const target = pickFromPool(pool);
   if (!target) {

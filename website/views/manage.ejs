@@ -278,41 +278,11 @@
               <div class="panel-header">
                 <h2 class="panel-title">Database Users</h2>
               </div>
-              <div class="user-list">
-                <div class="user-item">
-                  <div class="user-info">
-                    <div class="user-avatar-sm">AD</div>
-                    <div>
-                      <div class="user-name">admin</div>
-                      <div class="user-role">Superuser</div>
-                    </div>
-                  </div>
-                  <button class="user-remove-btn">Remove</button>
-                </div>
-                <div class="user-item">
-                  <div class="user-info">
-                    <div class="user-avatar-sm">AU</div>
-                    <div>
-                      <div class="user-name">app_user</div>
-                      <div class="user-role">Read/Write</div>
-                    </div>
-                  </div>
-                  <button class="user-remove-btn">Remove</button>
-                </div>
-                <div class="user-item">
-                  <div class="user-info">
-                    <div class="user-avatar-sm">RO</div>
-                    <div>
-                      <div class="user-name">readonly</div>
-                      <div class="user-role">Read Only</div>
-                    </div>
-                  </div>
-                  <button class="user-remove-btn">Remove</button>
-                </div>
-              </div>
-              <div class="add-user-form">
-                <input type="text" class="add-user-input" placeholder="New username..." />
-                <button class="add-user-btn">Add User</button>
+              <div class="user-list" id="db-users-list"></div>
+              <div class="add-user-form" id="db-users-form">
+                <input id="db-new-username" type="text" class="add-user-input" placeholder="New username..." autocomplete="off" />
+                <input id="db-new-password" type="text" class="add-user-input" placeholder="Password (optional)" autocomplete="off" />
+                <button class="add-user-btn" id="db-add-user" type="button">Add User</button>
               </div>
             </div>
 
@@ -824,6 +794,134 @@
           return data;
         }
 
+        const dbUsersListEl = document.getElementById('db-users-list');
+        const addDbUserBtn = document.getElementById('db-add-user');
+        const newDbUsernameEl = document.getElementById('db-new-username');
+        const newDbPasswordEl = document.getElementById('db-new-password');
+
+        function initials(s) {
+          const t = String(s || '').trim();
+          if (!t) return '--';
+          const parts = t.split(/[^A-Za-z0-9]+/g).filter(Boolean);
+          const a = (parts[0] && parts[0][0]) ? parts[0][0] : t[0];
+          const b = (parts.length > 1 && parts[1][0]) ? parts[1][0] : (t.length > 1 ? t[1] : '');
+          return (String(a) + String(b)).toUpperCase();
+        }
+
+        function renderDbUsers(list) {
+          if (!dbUsersListEl) return;
+          dbUsersListEl.innerHTML = '';
+
+          const users = Array.isArray(list) ? list : [];
+          if (users.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'user-item';
+            empty.innerHTML = '<div class="user-info"><div class="user-avatar-sm">--</div><div><div class="user-name">No users</div><div class="user-role">Create one to grant access to this keyspace</div></div></div>';
+            dbUsersListEl.appendChild(empty);
+            return;
+          }
+
+          for (const u of users) {
+            const username = String(u && u.username ? u.username : '');
+            const access = String(u && u.access ? u.access : '').toLowerCase();
+            const enabled = u && Object.prototype.hasOwnProperty.call(u, 'enabled') ? u.enabled : null;
+            const isOwner = access === 'owner';
+
+            const row = document.createElement('div');
+            row.className = 'user-item';
+
+            const info = document.createElement('div');
+            info.className = 'user-info';
+            info.innerHTML = '<div class="user-avatar-sm"></div><div><div class="user-name"></div><div class="user-role"></div></div>';
+            info.querySelector('.user-avatar-sm').textContent = initials(username);
+            info.querySelector('.user-name').textContent = username;
+
+            let role = isOwner ? 'Owner' : 'Granted';
+            if (enabled === false) role += ' (disabled)';
+            info.querySelector('.user-role').textContent = role;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'user-remove-btn';
+            btn.textContent = isOwner ? 'Owner' : 'Remove';
+            if (isOwner) {
+              btn.disabled = true;
+              btn.style.opacity = '0.55';
+              btn.style.cursor = 'not-allowed';
+            } else {
+              btn.addEventListener('click', async () => {
+                try {
+                  await deleteJson(`/api/instances/${instanceId}/db-users/${encodeURIComponent(username)}`);
+                  toast('success', 'Removed');
+                  await refreshDbUsers();
+                } catch (e) {
+                  toast('error', e && e.message ? e.message : 'Remove failed');
+                }
+              });
+            }
+
+            row.appendChild(info);
+            row.appendChild(btn);
+            dbUsersListEl.appendChild(row);
+          }
+        }
+
+        async function refreshDbUsers() {
+          if (!instanceId) return;
+          if (!instanceKeyspace) {
+            renderDbUsers([]);
+            return;
+          }
+          try {
+            const data = await getJson(`/api/instances/${instanceId}/db-users`);
+            renderDbUsers(data.users);
+          } catch (e) {
+            toast('error', e && e.message ? e.message : 'Failed to load database users');
+          }
+        }
+
+        if (addDbUserBtn) {
+          addDbUserBtn.addEventListener('click', async () => {
+            if (!instanceId) return;
+            if (!instanceKeyspace) {
+              toast('warning', 'No keyspace configured for this instance');
+              return;
+            }
+            const username = newDbUsernameEl ? String(newDbUsernameEl.value || '').trim() : '';
+            const password = newDbPasswordEl ? String(newDbPasswordEl.value || '').trim() : '';
+            if (!username) {
+              toast('warning', 'Enter a username');
+              return;
+            }
+
+            addDbUserBtn.disabled = true;
+            const prev = addDbUserBtn.textContent;
+            addDbUserBtn.textContent = 'Adding...';
+            try {
+              const data = await postJson(`/api/instances/${instanceId}/db-users`, { username, password });
+              const createdPassword = data && typeof data.password === 'string' ? data.password : '';
+              if (newDbUsernameEl) newDbUsernameEl.value = '';
+              if (newDbPasswordEl) newDbPasswordEl.value = '';
+              await refreshDbUsers();
+              if (createdPassword) {
+                try {
+                  await copyText(createdPassword);
+                  toast('success', 'User created (password copied)');
+                } catch {
+                  toast('success', 'User created');
+                }
+              } else {
+                toast('success', 'User created');
+              }
+            } catch (e) {
+              toast('error', e && e.message ? e.message : 'Add failed');
+            } finally {
+              addDbUserBtn.disabled = false;
+              addDbUserBtn.textContent = prev;
+            }
+          });
+        }
+
         const wlListEl = document.getElementById('whitelist-list');
         const addIpInput = document.getElementById('add-ip-input');
         const addIpBtn = document.getElementById('add-ip-btn');
@@ -1008,6 +1106,7 @@
 
         refreshWhitelist();
         refreshBackups();
+        refreshDbUsers();
 
         const deleteBackdrop = document.getElementById('delete-backdrop');
         const openDeleteBtns = document.querySelectorAll('.open-delete-modal');
