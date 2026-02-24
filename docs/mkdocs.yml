@@ -19,3 +19,5 @@ nav:
 
 extra_css:
   - css/theme.css
+extra:
+  generator: false
