@@ -7,13 +7,13 @@ const { XeondbClient } = require("xeondb-driver");
 const client = new XeondbClient({
 	host: 'au-central.xeondb.com',
     port: 9876,
-	username: 'xeon_fad01e30f7f5a0446a6c4f23',
-	password: 'd408c21da42c29d71c7a72947e35face',
-	keyspace: 'xeon_free_fad01e',
+	username: 'xeon_bd6058c693bbb594b384024a',
+	password: '11dc3a741c4219b86c3ee5dc1dd5761e',
+	keyspace: 'xeon_free_bd6058',
 });
 
 async function pushLargeData() {
-	const keyspace = 'xeon_free_fad01e';
+	const keyspace = 'xeon_free_bd6058';
 	const table = 'test_table';
 	let pushedChunks = 0;
 	try {

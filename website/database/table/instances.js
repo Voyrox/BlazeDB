@@ -156,6 +156,14 @@ async function createInstance(db, data) {
   const userEmail = String(data.userEmail || '').trim().toLowerCase();
   const plan = String(data.plan || '').trim().toLowerCase() === 'pro' ? 'pro' : 'free';
 
+  const maxPerUser = Number(process.env.MAX_DATABASES_PER_USER || 0);
+  if (maxPerUser > 0) {
+    const userInstances = await getInstancesByUser(db, userEmail);
+    if (userInstances.length >= maxPerUser) {
+      throw new Error(`You have reached the maximum allowed databases (${maxPerUser})`);
+    }
+  }
+
   const freePool = instancePool(process.env.FREE_INSTANCES);
   const paidPool = instancePool(process.env.PAID_INSTANCES);
   const pool = plan === 'pro' ? paidPool : freePool;
@@ -172,7 +180,7 @@ async function createInstance(db, data) {
   const createdAt = Date.now();
   const status = 'online';
 
-  const quotaBytes = plan === 'pro' ? (100 * 1024 * 1024 * 1024) : (500 * 1024 * 1024);
+  const quotaBytes = plan === 'pro' ? (Number(process.env.PAID_INSTANCE_STORAGE || 100) * 1024 * 1024 * 1024) : (Number(process.env.FREE_INSTANCE_STORAGE || 500) * 1024 * 1024);
   await provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword, quotaBytes);
 
   const q = `INSERT INTO instances (id, user_email, name, plan, host, port, keyspace, db_username, db_password, status, created_at) VALUES (${cleanSQL(
