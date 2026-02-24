@@ -6,8 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>XeonDB - Low latency database for real-time apps</title>
-  <meta name="description"
-    content="XeonDB is a real-time database with an optional Cloud dashboard: start on the free tier, with Pro ($15/mo) coming soon." />
+  <meta name="description" content="Create a database in XeonDB Cloud (free tier). The XeonDB engine is open source (MIT) and built for low-latency, real-time apps." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,9 +15,10 @@
     rel="stylesheet" />
 
   <link rel="icon" href="logo.png" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <meta property="og:title" content="XeonDB" />
-  <meta property="og:description" content="Low latency database with an optional Cloud dashboard: free tier now, Pro ($15/mo) coming soon." />
-  <meta property="og:image" content="banner.png" />
+  <meta property="og:description" content="Create a database in XeonDB Cloud (free tier). Open source engine (MIT) for low-latency, real-time apps." />
+  <meta property="og:image" content="logo.png" />
   <link rel="stylesheet" href="/css/index.css" />
 </head>
 
@@ -31,8 +31,8 @@
       </a>
 
       <nav class="navlinks" aria-label="Primary">
-        <a class="btn primary" href="./login" title="Free tier available - Pro ($15/mo) coming soon"
-          aria-label="Cloud Login (Free tier available, Pro $15/mo coming soon)">Cloud Login</a>
+        <a class="btn primary" href="./login#signup" aria-label="Create a free database">Get Started Free</a>
+        <a class="btn" href="./dashboard" aria-label="Open Cloud Dashboard">Cloud Dashboard</a>
         <a class="btn primary" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">
           Docs
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -55,41 +55,36 @@
   </header>
 
   <main id="top" class="wrap">
-    <section class="hero" aria-label="XeonDB hero">
+    <section class="hero" aria-label="XeonDB">
       <div class="hero-inner">
         <img class="octo-cameo" src="logo.png" alt="" aria-hidden="true">
         <div>
-          <div class="kicker">Real-time database</div>
-          <h1>Scale Confidently with XeonDB</h1>
-          <p class="lead">XeonDB focuses on stable response times and operational clarity: fast primary key reads, WAL
-            backed durability, and a config surface area you can understand at a glance.</p>
-          <p class="lead" style="margin-top: 12px;">Prefer hosted? Use XeonDB Cloud (free tier), with Pro ($15/mo) coming
-            soon.</p>
-
+          <div class="kicker">XeonDB Cloud</div>
+          <h1>Scale Courageously with XeonDB</h1>
+          <p class="lead">Create a database in minutes with the XeonDB Cloud dashboard (free tier) and ship faster with
+            predictable performance and simple operations.</p>
           <div class="hero-cta" aria-label="Primary actions">
-            <a class="btn primary" href="./login">Open Cloud Dashboard</a>
-            <a class="btn" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Read docs</a>
-            <a class="btn" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">View GitHub</a>
-            <a class="btn" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank"
-              rel="noreferrer">Open an issue</a>
+            <a class="btn primary" href="./login#signup">Create Free Database</a>
+            <a class="btn" href="./login">Open Cloud Dashboard</a>
+            <a class="btn" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Docs</a>
           </div>
 
-          <div class="facts" aria-label="Default facts">
-            <div class="fact">
-              <div class="label">License</div>
-              <div class="value">MIT</div>
-            </div>
+          <div class="facts" aria-label="Highlights">
             <div class="fact">
               <div class="label">Cloud</div>
-              <div class="value">Free / Pro</div>
+              <div class="value">Free tier</div>
             </div>
             <div class="fact">
-              <div class="label">Durability</div>
-              <div class="value">WAL + fsync policy</div>
+              <div class="label">Open source</div>
+              <div class="value">MIT license</div>
             </div>
             <div class="fact">
               <div class="label">Drivers</div>
               <div class="value">Node.js + Go</div>
+            </div>
+            <div class="fact">
+              <div class="label">Workflow</div>
+              <div class="value">Simple SQL</div>
             </div>
           </div>
         </div>
@@ -102,91 +97,167 @@
                 <span class="dot"></span>
                 <span class="dot"></span>
               </span>
-              <span class="proof-title"><img src="logo.png" alt="" aria-hidden="true" /> xeondb</span>
+              <span class="proof-title"><img src="logo.png" alt="" aria-hidden="true" /> Cloud dashboard</span>
             </div>
 
             <div class="proof-body">
-              <pre class="terminal" aria-label="Example request response"><span class="dim"># Request/response example</span>
-<span class="key">&gt;</span> CREATE KEYSPACE IF NOT EXISTS testKeyspace;
-<span class="ok">&lt;</span> {"ok":true}
+              <div class="dash-preview" aria-label="Dashboard preview">
+                <div class="dash-kpis" aria-label="Key metrics">
+                  <div class="kpi">
+                    <div class="k">Databases</div>
+                    <div class="v">1 free</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="k">Endpoint</div>
+                    <div class="v mono">db.xeondb.cloud:9876</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="k">Status</div>
+                    <div class="v ok">Online</div>
+                  </div>
+                </div>
 
-<span class="key">&gt;</span> USE testKeyspace;
-<span class="ok">&lt;</span> {"ok":true}
+                <div class="dash-metrics" aria-label="Live preview">
+                  <div class="metric">
+                    <div class="metric-head">
+                      <span>Connections</span>
+                    </div>
+                    <div class="metric-value" id="home-metric-connections">-- <span>active</span></div>
+                    <div class="metric-chart">
+                      <canvas id="homeConnectionsChart" aria-label="Connections chart"></canvas>
+                    </div>
+                  </div>
 
-<span class="key">&gt;</span> INSERT INTO testTable (id, value) VALUES (1, "hello");
-<span class="ok">&lt;</span> {"ok":true,"rowsAffected":1}
-</pre>
+                  <div class="metric">
+                    <div class="metric-head">
+                      <span>Queries</span>
+                    </div>
+                    <div class="metric-value" id="home-metric-queries">-- <span>/min</span></div>
+                    <div class="metric-chart">
+                      <canvas id="homeQueriesChart" aria-label="Queries chart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="proof-foot" aria-label="Quick facts">
-              <span class="chip"><b>Fast:</b> Responds quickly</span>
-              <span class="chip"><b>Reliable:</b> Keeps writes safe</span>
-              <span class="chip"><b>Simple:</b> Easy to run</span>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-label="Start in Cloud">
+      <div class="start-shell">
+        <div class="start-head">
+          <div>
+            <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Start in Cloud (Free tier)</h2>
+            <p class="sub">Sign up, create a database, and run your first query in Query Editor.</p>
+          </div>
+        </div>
+
+        <div class="steps-container" aria-label="Getting started steps">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3 class="step-title">Sign up</h3>
+            <p class="step-desc">Create your account and open the Cloud Dashboard to manage databases.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3 class="step-title">Create a database</h3>
+            <p class="step-desc">Provision on the free tier and get an endpoint + credentials instantly.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3 class="step-title">Query Editor</h3>
+            <p class="step-desc">Run a query in the browser to verify your setup and explore your schema.</p>
+          </div>
+        </div>
+
+        <div class="start-glance" aria-label="Cloud features">
+          <div class="glance-card">
+            <div class="glance-head">
+              <strong>Query Editor</strong>
+              <span class="pill" aria-hidden="true">In Cloud</span>
+            </div>
+            <div class="glance-body" aria-label="Query Editor preview">
+              <div class="glance-line"><span class="dim">SELECT</span> * <span class="dim">FROM</span> users <span class="dim">WHERE</span> id = 1;</div>
+              <div class="glance-hint">Run SQL and view results instantly.</div>
+            </div>
+          </div>
+
+          <div class="glance-card">
+            <div class="glance-head">
+              <strong>Database Users</strong>
+              <span class="pill" aria-hidden="true">In Cloud</span>
+            </div>
+            <div class="glance-body" aria-label="Users preview">
+              <div class="glance-line"><span class="dim">Owner</span> xeon_********</div>
+              <div class="glance-hint">Create users and rotate credentials.</div>
+            </div>
+          </div>
+
+          <div class="glance-card">
+            <div class="glance-head">
+              <strong>IP Whitelist</strong>
+              <span class="pill" aria-hidden="true">In Cloud</span>
+            </div>
+            <div class="glance-body" aria-label="Whitelist preview">
+              <div class="glance-line"><span class="dim">Allow</span> 127.0.0.1/32</div>
+              <div class="glance-hint">Control who can connect to your database.</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="capabilities" class="section" aria-label="Capabilities">
-      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Capabilities</h2>
-      <p class="sub">Built for predictable response times and clear operations. The goal is a database you can run in
-        production without a maze of moving parts.</p>
+    <section id="capabilities" class="section" aria-label="Why XeonDB">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Why XeonDB</h2>
+      <p class="sub">Built for user-facing features: predictable latency, durable writes, and clear operations without a
+        maze of knobs.</p>
 
       <div class="grid">
-        <div class="card reveal">
+        <div class="card card--slab reveal">
           <div class="card-inner">
             <div class="card-head">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M4 14l4-4 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round"></path>
+                  <path d="M4 14l4-4 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </span>
               <div>
-                <h3 style="margin:0;">Predictable performance</h3>
+                <h3 style="margin:0;">Predictable latency</h3>
               </div>
             </div>
-            <p>Fast primary key reads on the common path, with efficient scans when you need to walk ranges.</p>
+            <p>Stable response times on the common path so your app stays snappy as traffic grows.</p>
+            <div class="tags" aria-label="Highlights">
+              <span class="tag">Real-time workloads</span>
+              <span class="tag">Tail-latency focused</span>
+            </div>
           </div>
         </div>
 
-        <div class="card reveal d2">
+        <div class="card card--slab reveal d2">
           <div class="card-inner">
             <div class="card-head">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                  <path d="M8 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                  <path d="M6 14a6 6 0 1 0 12 0c0-3-2-6-6-6s-6 3-6 6Z" stroke="currentColor" stroke-width="2"></path>
+                  <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
                 </svg>
               </span>
               <div>
-                <h3 style="margin:0;">Latency you can reason about</h3>
+                <h3 style="margin:0;">Durable writes</h3>
               </div>
             </div>
-            <p>Designed for stable tail behavior: fewer surprises, fewer knobs, and clearer operational limits.</p>
+            <p>Write-ahead logging (WAL) keeps writes durable and recovery behavior easy to reason about.</p>
+            <div class="tags" aria-label="Highlights">
+              <span class="tag">WAL durability</span>
+              <span class="tag">Recovery</span>
+            </div>
           </div>
         </div>
 
-        <div class="card reveal d3">
-          <div class="card-inner">
-            <div class="card-head">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="2"
-                    stroke-linejoin="round"></path>
-                </svg>
-              </span>
-              <div>
-                <h3 style="margin:0;">WAL backed durability</h3>
-              </div>
-            </div>
-            <p>Write ahead logging with configurable fsync behavior so you can choose throughput vs. risk.</p>
-          </div>
-        </div>
-
-        <div class="card reveal d4">
+        <div class="card card--slab reveal d3">
           <div class="card-inner">
             <div class="card-head">
               <span class="ico" aria-hidden="true">
@@ -196,135 +267,58 @@
                 </svg>
               </span>
               <div>
-                <h3 style="margin:0;">Operational clarity</h3>
+                <h3 style="margin:0;">Simple operations</h3>
               </div>
             </div>
-            <p>YAML configuration, safety limits, and deployment options that behave predictably.</p>
+            <p>Readable YAML config, sane limits, and straightforward permissions for teams.</p>
+            <div class="tags" aria-label="Highlights">
+              <span class="tag">YAML config</span>
+              <span class="tag">Keyspaces</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="card reveal">
-          <div class="card-inner">
-            <div class="card-head">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  </path>
-                  <path d="M6 11h12v10H6V11Z" stroke="currentColor" stroke-width="2"></path>
-                </svg>
-              </span>
-              <div>
-                <h3 style="margin:0;">Optional authentication</h3>
-              </div>
-            </div>
-            <p>Enable auth when you need it. Keep the client workflow straightforward when you don’t.</p>
-          </div>
+    </section>
+
+    <section class="section" aria-label="Use cases">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Use cases</h2>
+      <p class="sub">Common patterns that benefit from low-latency reads/writes.</p>
+
+      <div class="usecases" aria-label="Example use cases">
+        <div class="usecard">
+          <strong>Realtime UI &amp; dashboards</strong>
+          <p>Live product views that stay responsive under load.</p>
         </div>
-
-        <div class="card reveal d2">
-          <div class="card-inner">
-            <div class="card-head">
-              <span class="ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                  <path d="M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                  <path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="2"></path>
-                </svg>
-              </span>
-              <div>
-                <h3 style="margin:0;">Simple integration</h3>
-              </div>
-            </div>
-            <p>Request/response over the wire with structured replies, plus official Node.js and Go drivers.</p>
-          </div>
+        <div class="usecard">
+          <strong>Collaboration &amp; presence</strong>
+          <p>Presence, shared state, and “who’s online” style features.</p>
+        </div>
+        <div class="usecard">
+          <strong>Sessions &amp; application state</strong>
+          <p>Fast-changing state you can’t afford to lag.</p>
+        </div>
+        <div class="usecard">
+          <strong>Events &amp; activity feeds</strong>
+          <p>Ingest events and query them quickly with simple SQL.</p>
         </div>
       </div>
     </section>
 
-    <section class="how" aria-label="How it works">
-      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />How it works</h2>
-      <p class="sub">A simple write path you can explain on a whiteboard: append to WAL, stage in memory, flush to
-        sorted tables, and compact in the background.</p>
+    <section class="section" aria-label="Learn more">
+      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Learn more</h2>
+      <p class="sub">Everything you need to evaluate XeonDB.</p>
 
-      <div class="steps" aria-label="Write path steps">
-        <div class="step">
-          <div class="n"><span class="badge">1</span> Write path</div>
-          <strong>Append to WAL</strong>
-          <p>Durability starts with write ahead logging. Fsync policy is configurable for your risk/throughput needs.
-          </p>
-        </div>
-        <div class="step">
-          <div class="n"><span class="badge">2</span> In memory</div>
-          <strong>Update memtable</strong>
-          <p>In memory staging keeps the common path fast and predictable while batching work efficiently.</p>
-        </div>
-        <div class="step">
-          <div class="n"><span class="badge">3</span> On disk</div>
-          <strong>Flush to SSTables</strong>
-          <p>Sorted immutable tables make reads and scans efficient and keep file formats straightforward.</p>
-        </div>
-        <div class="step">
-          <div class="n"><span class="badge">4</span> Background</div>
-          <strong>Compact</strong>
-          <p>Compaction keeps space under control and maintains read performance without requiring constant tuning.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="get-started" class="get" aria-label="Get started">
-      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Get started</h2>
-      <p class="sub">Run it locally in minutes. Use the docs for full deployment and configuration details.</p>
-
-      <div class="split" aria-label="Get started examples">
-        <div>
-          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Run the server</h3>
-          <pre class="code" aria-label="Run command"><span class="comment"># Build + run (Ninja/CMake)</span>
-<span class="prompt">$</span> cmake -S . -B build -G Ninja
-<span class="prompt">$</span> ninja -C build
-<span class="prompt">$</span> ninja -C build run
-
-<span class="comment"># System install (Linux, systemd)</span>
-<span class="prompt">$</span> sudo ./install.sh</pre>
-        </div>
-        <div>
-          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Connect</h3>
-          <pre class="code" aria-label="Connect example"><span class="comment"># Node.js driver</span>
-<span class="prompt">$</span> npm i xeondb-driver
-<span class="prompt">$</span> node packages/test_nodeJS.js
-
-<span class="comment"># Go driver</span>
-<span class="prompt">$</span> go get github.com/Voyrox/Xeondb/packages/golang@latest
-<span class="prompt">$</span> go run packages/test_golang.go</pre>
-        </div>
-        <div>
-          <h3 style="margin:0 0 10px; font-size: 15px; letter-spacing: 0.10px;">Docker</h3>
-          <pre class="code" aria-label="Docker example"><span class="comment"># Quick eval (container)</span>
-<span class="prompt">$</span> docker build -t xeondb .
-<span class="prompt">$</span> docker run --rm -p 9876:9876 xeondb</pre>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" aria-label="Resources">
-      <h2><img class="octo-mini" src="logo.png" alt="" aria-hidden="true" />Resources</h2>
-      <p class="sub">Documentation, drivers, and support channels to evaluate and integrate XeonDB.</p>
-
-      <div class="links">
+      <div class="links links--3">
         <a class="linkcard" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">
           <strong>Documentation</strong>
-          <p>Quick start, deployment, and query examples.</p>
+          <p>Quick Start, drivers, deployment, and query examples.</p>
           <span class="go">Open docs</span>
-        </a>
-
-        <a class="linkcard" href="https://docs.xeondb.com/drivers" target="_blank" rel="noreferrer">
-          <strong>Drivers</strong>
-          <p>Official Node.js and Go drivers.</p>
-          <span class="go">See drivers</span>
         </a>
 
         <a class="linkcard" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">
           <strong>GitHub</strong>
-          <p>Source code, issues, and releases.</p>
+          <p>Source code, releases, and issues.</p>
           <span class="go">Open repo</span>
         </a>
 
@@ -338,14 +332,14 @@
 
     <section class="cta" aria-label="Call to action">
       <div>
-        <h2>Ready to evaluate XeonDB?</h2>
-        <p>Start with the docs for architecture and usage. If you hit anything, open an issue and we will track it.</p>
+        <h2>Create your first XeonDB database</h2>
+        <p>Start free in Cloud, then connect with Node.js or Go. Prefer self-hosting? The engine is open source (MIT)
+          and documented end-to-end.</p>
       </div>
       <div class="rhs">
-        <a class="btn primary" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Read docs</a>
-        <a class="btn" href="https://github.com/Voyrox/Xeondb" target="_blank" rel="noreferrer">View GitHub</a>
-        <a class="btn" href="https://github.com/Voyrox/Xeondb/issues/new/choose" target="_blank" rel="noreferrer">Open
-          an issue</a>
+        <a class="btn primary" href="./login#signup">Get started free</a>
+        <a class="btn" href="./login">Open dashboard</a>
+        <a class="btn" href="https://docs.xeondb.com/" target="_blank" rel="noreferrer">Docs</a>
       </div>
     </section>
 
@@ -367,6 +361,109 @@
     </footer>
   </main>
 
+
+
 </body>
+
+<script>
+  (function () {
+    if (!window.Chart) return;
+    Chart.defaults.color = 'rgba(233, 230, 218, 0.74)';
+    Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
+    Chart.defaults.font.family = '"Space Grotesk", sans-serif';
+    function clamp(n, a, b) {
+      var v = Number(n);
+      if (!Number.isFinite(v)) return a;
+      return Math.max(a, Math.min(b, v));
+    }
+    function bumpSeries(series, maxDelta) {
+      var out = series.slice(1);
+      var last = series[series.length - 1];
+      var d = (Math.random() - 0.45) * maxDelta;
+      out.push(clamp(last + d, 0, 9999));
+      return out;
+    }
+    var labels = ['-25m', '-20m', '-15m', '-10m', '-5m', 'now'];
+    var conn = [8, 10, 9, 12, 14, 13];
+    var qpm = [120, 160, 140, 190, 210, 205];
+    var connValEl = document.getElementById('home-metric-connections');
+    var qValEl = document.getElementById('home-metric-queries');
+    function setMetric(el, n, suffix) {
+      if (!el) return;
+      var v = Math.max(0, Math.round(Number(n) || 0));
+      el.innerHTML = v + ' <span>' + suffix + '</span>';
+    }
+    var connCanvas = document.getElementById('homeConnectionsChart');
+    var qCanvas = document.getElementById('homeQueriesChart');
+    var connCtx = connCanvas ? connCanvas.getContext('2d') : null;
+    var qCtx = qCanvas ? qCanvas.getContext('2d') : null;
+    var connChart = connCtx ? new Chart(connCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: conn,
+          borderColor: '#39c6ff',
+          backgroundColor: 'rgba(57, 198, 255, 0.10)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true } },
+          y: { grid: { color: 'rgba(233, 230, 218, 0.05)' }, ticks: { font: { size: 10 }, maxTicksLimit: 4 } }
+        }
+      }
+    }) : null;
+    var qChart = qCtx ? new Chart(qCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: qpm,
+          borderColor: '#2ed3a1',
+          backgroundColor: 'rgba(46, 211, 161, 0.10)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true } },
+          y: { grid: { color: 'rgba(233, 230, 218, 0.05)' }, ticks: { font: { size: 10 }, maxTicksLimit: 4 } }
+        }
+      }
+    }) : null;
+    setMetric(connValEl, conn[conn.length - 1], 'active');
+    setMetric(qValEl, qpm[qpm.length - 1], '/min');
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+    setInterval(function () {
+      conn = bumpSeries(conn, 4.5);
+      qpm = bumpSeries(qpm, 28);
+      setMetric(connValEl, conn[conn.length - 1], 'active');
+      setMetric(qValEl, qpm[qpm.length - 1], '/min');
+      if (connChart) {
+        connChart.data.datasets[0].data = conn;
+        connChart.update('none');
+      }
+      if (qChart) {
+        qChart.data.datasets[0].data = qpm;
+        qChart.update('none');
+      }
+    }, 1800);
+  })();
+</script>
 
 </html>
