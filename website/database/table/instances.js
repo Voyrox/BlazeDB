@@ -32,8 +32,8 @@ function parseInstancePool(envValue) {
 
 function pickFromPool(pool) {
   if (!pool || pool.length === 0) return null;
-  const idx = Math.floor(Math.random() * pool.length);
-  return pool[idx] || null;
+  const num = Math.floor(Math.random() * pool.length);
+  return pool[num] || null;
 }
 
 function generateInstanceId() {
