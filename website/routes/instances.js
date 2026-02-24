@@ -437,6 +437,9 @@ router.post('/:id/query', async (req, res) => {
     }
 
     const result = await client.query(query);
+    if (!result || result.ok !== true) {
+      return res.status(400).json({ ok: false, error: (result && result.error) || 'Query failed' });
+    }
     return res.json({ ok: true, result });
   } catch (err) {
     return res.status(400).json({ ok: false, error: err && err.message ? err.message : 'Query failed' });

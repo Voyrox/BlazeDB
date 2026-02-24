@@ -63,6 +63,11 @@ storage:
 limits:
   maxLineBytes: 1048576
   maxConnections: 1024
+  # Optional quota enforcement (auth-enabled deployments only)
+  # - quotaEnforcementEnabled: when true, enforce per-keyspace quota rows in SYSTEM.KEYSPACE_QUOTAS
+  # - quotaBytesUsedCacheTtlMs: Limit the size that a keyspace can be.
+  quotaEnforcementEnabled: false
+  quotaBytesUsedCacheTtlMs: 2000
 
 # Write-ahead log (WAL)
 # - walFsync: "always" or "periodic" (periodic is faster, slightly less durable)
@@ -103,6 +108,44 @@ ninja -C build test
 
 ## Documentation
 Docs can be found [here](https://voyrox.github.io/Xeondb/). The documentation includes a quick start guide, deployment instructions, and detailed information about the database's features and configuration options.
+
+## Keyspace Quotas
+
+XeonDB can enforce per-keyspace storage quotas by switching the server into a "read-only when over quota" mode.
+
+Config (`limits:` section):
+
+```yml
+limits:
+  quotaEnforcementEnabled: true
+  quotaBytesUsedCacheTtlMs: 2000
+```
+
+Quota rows live in `SYSTEM.KEYSPACE_QUOTAS` (requires auth enabled). If a keyspace has no quota row (or `quota_bytes <= 0`), it is treated as unlimited.
+
+Set a quota (example: 500MB):
+
+```sql
+INSERT INTO SYSTEM.KEYSPACE_QUOTAS (keyspace,quota_bytes,updated_at)
+VALUES ("myks", 524288000, 0);
+```
+
+Update a quota (example: 1GB):
+
+```sql
+UPDATE SYSTEM.KEYSPACE_QUOTAS
+SET quota_bytes=1073741824
+WHERE keyspace="myks";
+```
+
+Remove a quota (unlimited):
+
+```sql
+DELETE FROM SYSTEM.KEYSPACE_QUOTAS
+WHERE keyspace="myks";
+```
+
+When a keyspace is over quota, XeonDB rejects writes that increase storage (`INSERT`, `UPDATE`, `CREATE TABLE`, etc.) with `quota_exceeded`, but still allows reads and recovery operations (`TRUNCATE`, `DROP`).
 
 ## Contributing
 If you want to report a bug, suggest a feature, or contribute to the development of Xeondb, please feel free to open an issue or submit a pull request on our GitHub repository. We welcome contributions from the community and are always looking for ways to improve Xeondb.

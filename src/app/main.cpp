@@ -46,6 +46,10 @@ int main(int argc, char** argv) {
 
     xeondb::log(xeondb::LogLevel::INFO, std::string("Loading configPath=") + configPath);
 
+    if (settings.quotaEnforcementEnabled && (settings.authUsername.empty() || settings.authPassword.empty())) {
+        xeondb::log(xeondb::LogLevel::WARN, "Quota enforcement enabled but auth is disabled; quotas will not be enforced");
+    }
+
     auto db = std::make_shared<xeondb::Db>(settings);
     try {
         db->bootstrapAuthSystem();
@@ -57,8 +61,8 @@ int main(int argc, char** argv) {
     xeondb::log(xeondb::LogLevel::CONFIG,
             std::string("Host=") + settings.host + " port=" + std::to_string(settings.port) + " dataDir=" + db->dataDir().string() +
                     " walFsync=" + settings.walFsync + " walFsyncIntervalMs=" + std::to_string(settings.walFsyncIntervalMs) +
-                    " walFsyncBytes=" + std::to_string(settings.walFsyncBytes) + " maxLineBytes=" + std::to_string(settings.maxLineBytes) +
-                    " maxConnections=" + std::to_string(settings.maxConnections) +
+                    " walFsyncBytes=" + std::to_string(settings.walFsyncBytes) + " maxLineBytes=" + std::to_string(settings.maxLineBytes) + " maxConnections=" +
+                    std::to_string(settings.maxConnections) + " quota=" + std::string(settings.quotaEnforcementEnabled ? "enabled" : "disabled") +
                     " auth=" + ((!settings.authUsername.empty() && !settings.authPassword.empty()) ? "enabled" : "disabled"));
 
     xeondb::ServerTcp server(db, settings.host, settings.port, settings.maxLineBytes, settings.maxConnections, settings.authUsername, settings.authPassword);

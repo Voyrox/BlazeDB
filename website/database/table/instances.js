@@ -101,7 +101,7 @@ async function getInstancesByUser(db, email) {
   return out.filter((r) => String(r.user_email || '').trim().toLowerCase() === needle);
 }
 
-async function provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword) {
+async function provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword, quotaBytes) {
   if (!target || !target.host || !Number.isFinite(Number(target.port))) {
     throw new Error('Invalid target instance');
   }
@@ -137,6 +137,12 @@ async function provisionInstanceOnTarget(target, keyspace, dbUsername, dbPasswor
       `${cleanSQL(keyspace)}, ${cleanSQL(dbUsername)}, ${createdAt});`;
     const r3 = await client.query(qOwner);
     if (!r3 || r3.ok !== true) throw new Error((r3 && r3.error) || 'Failed to set keyspace owner');
+
+    const qQuota =
+      `INSERT INTO SYSTEM.KEYSPACE_QUOTAS (keyspace,quota_bytes,updated_at) VALUES (` +
+      `${cleanSQL(keyspace)}, ${Number(quotaBytes)}, ${createdAt});`;
+    const r4 = await client.query(qQuota);
+    if (!r4 || r4.ok !== true) throw new Error((r4 && r4.error) || 'Failed to set keyspace quota');
   } finally {
     try {
       client.close();
@@ -166,7 +172,8 @@ async function createInstance(db, data) {
   const createdAt = Date.now();
   const status = 'online';
 
-  await provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword);
+  const quotaBytes = plan === 'pro' ? (100 * 1024 * 1024 * 1024) : (500 * 1024 * 1024);
+  await provisionInstanceOnTarget(target, keyspace, dbUsername, dbPassword, quotaBytes);
 
   const q = `INSERT INTO instances (id, user_email, name, plan, host, port, keyspace, db_username, db_password, status, created_at) VALUES (${cleanSQL(
     id

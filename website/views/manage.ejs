@@ -133,11 +133,15 @@
 
             <div class="shell-main">
               <div class="overview-section">
-             <div class="stats-grid">
-               <div class="stat-card">
-                 <div class="stat-header">
-                   <span class="stat-title">Connections</span>
-                 </div>
+                <div id="quota-warning" class="quota-warning" hidden role="status" aria-live="polite">
+                  <div class="quota-warning-title" id="quota-warning-title"></div>
+                  <div class="quota-warning-text" id="quota-warning-text"></div>
+                </div>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-header">
+                    <span class="stat-title">Connections</span>
+                  </div>
                 <div class="stat-value" id="stat-connections">-- <span>active</span></div>
                 <div class="chart-container">
                   <canvas id="connectionsChart"></canvas>
@@ -606,6 +610,9 @@
         const usageFillEl = document.getElementById('usage-fill');
         const usageUsedEl = document.getElementById('usage-used');
         const usageTotalEl = document.getElementById('usage-total');
+        const quotaWarnEl = document.getElementById('quota-warning');
+        const quotaWarnTitleEl = document.getElementById('quota-warning-title');
+        const quotaWarnTextEl = document.getElementById('quota-warning-text');
 
         const planLower = String(instancePlan || 'free').trim().toLowerCase();
         const quotaBytes = planLower === 'pro'
@@ -647,6 +654,51 @@
           usageTotalEl.textContent = formatBytesForQuota(quotaBytes, quotaBytes) + ' total';
         }
 
+        function updateQuotaWarning(metrics) {
+          if (!quotaWarnEl || !quotaWarnTitleEl || !quotaWarnTextEl) return;
+
+          const used = metrics && Object.prototype.hasOwnProperty.call(metrics, 'bytes_used')
+            ? Number(metrics.bytes_used)
+            : NaN;
+          const usedBytes = Number.isFinite(used) ? Math.max(0, used) : 0;
+
+          const serverQuota = metrics && Object.prototype.hasOwnProperty.call(metrics, 'quota_bytes')
+            ? Number(metrics.quota_bytes)
+            : NaN;
+          const effectiveQuotaBytes = (Number.isFinite(serverQuota) && serverQuota > 0)
+            ? serverQuota
+            : quotaBytes;
+
+          if (!(effectiveQuotaBytes > 0)) {
+            quotaWarnEl.hidden = true;
+            return;
+          }
+
+          const pct = usedBytes / effectiveQuotaBytes;
+          const over = (metrics && metrics.over_quota === true) || usedBytes >= effectiveQuotaBytes;
+          const near = pct >= 0.90;
+
+          if (!over && !near) {
+            quotaWarnEl.hidden = true;
+            return;
+          }
+
+          quotaWarnEl.hidden = false;
+          quotaWarnEl.classList.toggle('is-danger', over);
+          quotaWarnEl.classList.toggle('is-warn', !over);
+
+          if (over) {
+            quotaWarnTitleEl.textContent = 'Storage quota exceeded';
+            quotaWarnTextEl.textContent = 'Writes are disabled until you free space (TRUNCATE/DROP) or upgrade.';
+            return;
+          }
+
+          quotaWarnTitleEl.textContent = 'Approaching storage quota';
+          quotaWarnTextEl.textContent =
+            `You are using ${Math.round(pct * 100)}% of your quota (` +
+            `${formatBytesForQuota(usedBytes, effectiveQuotaBytes)} / ${formatBytesForQuota(effectiveQuotaBytes, effectiveQuotaBytes)}).`;
+        }
+
         function formatCompact(n) {
           const v = Number(n);
           if (!Number.isFinite(v)) return String(n || '0');
@@ -685,6 +737,7 @@
           }
 
           updateUsage(metrics);
+          updateQuotaWarning(metrics);
         }
 
         async function refreshMetrics() {

@@ -302,6 +302,25 @@ void Db::onSystemKeyspaceGrantsDelete(const string& keyspace, const string& user
     keyspaceGrants_.erase(grantKey(keyspace, username));
 }
 
+void Db::onSystemKeyspaceQuotasPut(const string& keyspace, u64 quotaBytes) {
+    std::unique_lock<std::shared_mutex> lock(authMutex_);
+    keyspaceQuotaBytes_[keyspace] = quotaBytes;
+}
+
+void Db::onSystemKeyspaceQuotasDelete(const string& keyspace) {
+    std::unique_lock<std::shared_mutex> lock(authMutex_);
+    keyspaceQuotaBytes_.erase(keyspace);
+}
+
+std::optional<u64> Db::keyspaceQuotaBytes(const string& keyspace) const {
+    std::shared_lock<std::shared_mutex> lock(authMutex_);
+    auto it = keyspaceQuotaBytes_.find(keyspace);
+    if (it == keyspaceQuotaBytes_.end()) {
+        return std::nullopt;
+    }
+    return it->second;
+}
+
 static SqlLiteral litQuoted(const string& s) {
     SqlLiteral l;
     l.kind = SqlLiteral::Kind::Quoted;
@@ -414,6 +433,17 @@ void Db::bootstrapAuthSystem() {
         return s;
     };
 
+    auto makeQuotasSchema = []() {
+        TableSchema s;
+        s.columns = {
+                {"keyspace", ColumnType::Text},
+                {"quota_bytes", ColumnType::Int64},
+                {"updated_at", ColumnType::Timestamp},
+        };
+        s.primaryKeyIndex = 0;
+        return s;
+    };
+
     auto ensureTable = [this](const string& keyspace, const string& table, const TableSchema& schema) {
         try {
             (void)createTable(keyspace, table, schema);
@@ -427,9 +457,17 @@ void Db::bootstrapAuthSystem() {
     ensureTable("SYSTEM", "KEYSPACE_OWNERS", makeOwnersSchema());
     ensureTable("SYSTEM", "KEYSPACE_GRANTS", makeGrantsSchema());
 
+    if (settings_.quotaEnforcementEnabled) {
+        ensureTable("SYSTEM", "KEYSPACE_QUOTAS", makeQuotasSchema());
+    }
+
     auto usersTable = openTable("SYSTEM", "USERS");
     auto ownersTable = openTable("SYSTEM", "KEYSPACE_OWNERS");
     auto grantsTable = openTable("SYSTEM", "KEYSPACE_GRANTS");
+    shared_ptr<Table> quotasTable;
+    if (settings_.quotaEnforcementEnabled) {
+        quotasTable = openTable("SYSTEM", "KEYSPACE_QUOTAS");
+    }
 
     std::vector<string> ksList = listKeyspaces();
     if (std::find(ksList.begin(), ksList.end(), string("SYSTEM")) == ksList.end()) {
@@ -442,6 +480,7 @@ void Db::bootstrapAuthSystem() {
     std::unordered_map<string, bool> usersEnabled;
     std::unordered_map<string, string> owners;
     std::unordered_set<string> grants;
+    std::unordered_map<string, u64> quotas;
 
     for (const auto& row : usersTable->scanAllRowsByPk(false)) {
         string username = pkText(row.pkBytes);
@@ -479,6 +518,22 @@ void Db::bootstrapAuthSystem() {
         grants.insert(ksu);
     }
 
+    if (settings_.quotaEnforcementEnabled && quotasTable != nullptr) {
+        for (const auto& row : quotasTable->scanAllRowsByPk(false)) {
+            string keyspace = pkText(row.pkBytes);
+            usize o = 0;
+            if (readU32(row.rowBytes, o) != 1)
+                continue;
+            auto quota = readI64OrNull(row.rowBytes, o);
+            (void)readI64OrNull(row.rowBytes, o);
+            if (!quota.has_value())
+                continue;
+            if (*quota <= 0)
+                continue;
+            quotas[keyspace] = static_cast<u64>(*quota);
+        }
+    }
+
     {
         std::unique_lock<std::shared_mutex> lock(authMutex_);
         usersPassword_ = std::move(usersPass);
@@ -487,6 +542,7 @@ void Db::bootstrapAuthSystem() {
         keyspaceOwner_ = std::move(owners);
         keyspaceGrants_ = std::move(grants);
         keyspacesCache_ = ksList;
+        keyspaceQuotaBytes_ = std::move(quotas);
     }
 
     {
@@ -539,6 +595,10 @@ void Db::cleanupKeyspaceSecurityMetadata(const string& keyspace) {
 
     auto ownersTable = openTable("SYSTEM", "KEYSPACE_OWNERS");
     auto grantsTable = openTable("SYSTEM", "KEYSPACE_GRANTS");
+    shared_ptr<Table> quotasTable;
+    if (settings_.quotaEnforcementEnabled) {
+        quotasTable = openTable("SYSTEM", "KEYSPACE_QUOTAS");
+    }
 
     {
         auto ksLit = litQuoted(keyspace);
@@ -563,6 +623,13 @@ void Db::cleanupKeyspaceSecurityMetadata(const string& keyspace) {
         if (pos != string::npos) {
             onSystemKeyspaceGrantsDelete(keyspace, k.substr(pos + 1));
         }
+    }
+
+    if (quotasTable != nullptr) {
+        auto ksLit = litQuoted(keyspace);
+        byteVec pkBytes = partitionKeyBytes(ColumnType::Text, ksLit);
+        quotasTable->deleteRow(pkBytes);
+        onSystemKeyspaceQuotasDelete(keyspace);
     }
 }
 

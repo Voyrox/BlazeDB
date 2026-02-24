@@ -51,6 +51,10 @@ public:
     void onSystemKeyspaceGrantsPut(const string& keyspace, const string& username);
     void onSystemKeyspaceGrantsDelete(const string& keyspace, const string& username);
 
+    void onSystemKeyspaceQuotasPut(const string& keyspace, u64 quotaBytes);
+    void onSystemKeyspaceQuotasDelete(const string& keyspace);
+    std::optional<u64> keyspaceQuotaBytes(const string& keyspace) const;
+
     void createKeyspace(const string& keyspace);
     path createTable(const string& keyspace, const string& table, const TableSchema& schema);
 
@@ -116,6 +120,7 @@ private:
     std::unordered_map<string, string> keyspaceOwner_;
     std::unordered_set<string> keyspaceGrants_;
     std::vector<string> keyspacesCache_;
+    std::unordered_map<string, u64> keyspaceQuotaBytes_;
 };
 
 }

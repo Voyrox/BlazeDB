@@ -1087,6 +1087,45 @@
       -webkit-user-select: none;
   }
 
+  .quota-warning {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke2);
+      background: rgba(15, 23, 51, 0.55);
+  }
+
+  .quota-warning-title {
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+  }
+
+  .quota-warning-text {
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+  }
+
+  .quota-warning.is-warn {
+      border-color: rgba(246, 193, 119, 0.35);
+      background: rgba(246, 193, 119, 0.10);
+  }
+
+  .quota-warning.is-warn .quota-warning-title {
+      color: rgba(246, 193, 119, 0.98);
+  }
+
+  .quota-warning.is-danger {
+      border-color: rgba(247, 109, 109, 0.35);
+      background: rgba(247, 109, 109, 0.10);
+  }
+
+  .quota-warning.is-danger .quota-warning-title {
+      color: rgba(247, 109, 109, 0.98);
+  }
+
   .delete-input {
       width: 100%;
       padding: 10px 12px;

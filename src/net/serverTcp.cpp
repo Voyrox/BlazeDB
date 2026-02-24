@@ -16,6 +16,8 @@
 #include <string>
 #include <thread>
 #include <functional>
+#include <mutex>
+#include <unordered_map>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -79,6 +81,101 @@ static u64 dirBytesUsedBestEffort(const path& root) {
     }
 
     return total;
+}
+
+std::optional<u64> ServerTcp::quotaBytesForKeyspace(const std::string& keyspace) const {
+    if (db_ == nullptr) {
+        return std::nullopt;
+    }
+    const auto& s = db_->settings();
+    if (!s.quotaEnforcementEnabled) {
+        return std::nullopt;
+    }
+    return db_->keyspaceQuotaBytes(keyspace);
+}
+
+u64 ServerTcp::bytesUsedForKeyspaceCached(const std::string& keyspace) {
+    if (db_ == nullptr) {
+        return 0;
+    }
+
+    const u64 ttlMs = db_->settings().quotaBytesUsedCacheTtlMs == 0 ? 2000 : db_->settings().quotaBytesUsedCacheTtlMs;
+    const i64 now = nowMs();
+
+    {
+        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+        auto it = bytesUsedCache_.find(keyspace);
+        if (it != bytesUsedCache_.end() && it->second.computedAtMs > 0) {
+            const i64 age = now - it->second.computedAtMs;
+            if (age >= 0 && static_cast<u64>(age) < ttlMs) {
+                return it->second.bytesUsed;
+            }
+        }
+    }
+
+    const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
+
+    {
+        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+        auto& e = bytesUsedCache_[keyspace];
+        e.bytesUsed = fresh;
+        e.computedAtMs = now;
+    }
+    return fresh;
+}
+
+void ServerTcp::invalidateBytesUsedCache(const std::string& keyspace) {
+    std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+    auto it = bytesUsedCache_.find(keyspace);
+    if (it != bytesUsedCache_.end()) {
+        it->second.computedAtMs = 0;
+    }
+}
+
+bool ServerTcp::quotaWouldAllowAndReserve(const std::string& keyspace, u64 quotaBytes, u64 estimatedWriteBytes) {
+    if (db_ == nullptr) {
+        return true;
+    }
+    if (quotaBytes == 0) {
+        return true;
+    }
+    if (estimatedWriteBytes == 0) {
+        return true;
+    }
+
+    const u64 ttlMs = db_->settings().quotaBytesUsedCacheTtlMs == 0 ? 2000 : db_->settings().quotaBytesUsedCacheTtlMs;
+    const i64 now = nowMs();
+
+    bool needScan = false;
+    {
+        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+        auto& e = bytesUsedCache_[keyspace];
+        if (e.computedAtMs <= 0) {
+            needScan = true;
+        } else {
+            const i64 age = now - e.computedAtMs;
+            if (age < 0 || static_cast<u64>(age) >= ttlMs) {
+                needScan = true;
+            }
+        }
+    }
+
+    if (needScan) {
+        const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
+        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+        auto& e = bytesUsedCache_[keyspace];
+        e.bytesUsed = fresh;
+        e.computedAtMs = now;
+    }
+
+    std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
+    auto& e = bytesUsedCache_[keyspace];
+    if (e.bytesUsed + estimatedWriteBytes > quotaBytes) {
+        return false;
+    }
+
+    e.bytesUsed += estimatedWriteBytes;
+    return true;
 }
 
 ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections, string authUsername, string authPassword)
@@ -345,6 +442,12 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->metricsOnCommand(keyspace);
                     }
 
+                    if (auto quota = quotaBytesForKeyspace(keyspace); quota.has_value() && *quota > 0) {
+                        constexpr u64 estCreateTableBytes = 16ull * 1024ull;
+                        if (!quotaWouldAllowAndReserve(keyspace, *quota, estCreateTableBytes))
+                            throw runtimeError("quota_exceeded");
+                    }
+
                     if (!createTable->ifNotExists) {
                         (void)db_->createTable(keyspace, createTable->table, createTable->schema);
                     } else {
@@ -374,6 +477,7 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->metricsOnCommand(keyspace);
                     }
                     db_->dropTable(keyspace, dropTable->table, dropTable->ifExists);
+                    invalidateBytesUsedCache(keyspace);
                     response = jsonOk();
                 } else if (auto* dropKeyspace = std::get_if<SqlDropKeyspace>(&cmd)) {
                     const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
@@ -386,6 +490,7 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->metricsOnCommand(dropKeyspace->keyspace);
                     }
                     db_->dropKeyspace(dropKeyspace->keyspace, dropKeyspace->ifExists);
+                    invalidateBytesUsedCache(dropKeyspace->keyspace);
                     if (authEnabled_) {
                         db_->cleanupKeyspaceSecurityMetadata(dropKeyspace->keyspace);
                         db_->onKeyspaceDropped(dropKeyspace->keyspace);
@@ -508,8 +613,13 @@ void ServerTcp::handleClient(int clientFd) {
 
                     out += string(",\"queries_last24h_total\":") + std::to_string(m.queriesLast24hTotal);
 
-                    const u64 bytesUsed = db_ != nullptr ? dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), ks)) : 0;
+                    const u64 bytesUsed = bytesUsedForKeyspaceCached(ks);
                     out += string(",\"bytes_used\":") + std::to_string(bytesUsed);
+
+                    if (auto quota = quotaBytesForKeyspace(ks); quota.has_value() && *quota > 0) {
+                        out += string(",\"quota_bytes\":") + std::to_string(*quota);
+                        out += string(",\"over_quota\":") + ((bytesUsed >= *quota) ? string("true") : string("false"));
+                    }
 
                     out += ",\"labels_last24h_4h\":[";
                     for (usize i = 0; i < m.labelsLast24h4h.size(); i++) {
@@ -532,6 +642,7 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->metricsOnCommand(keyspace);
                     }
                     db_->truncateTable(keyspace, trunc->table);
+                    invalidateBytesUsedCache(keyspace);
                     response = jsonOk();
                 } else if (auto* insert = std::get_if<SqlInsert>(&cmd)) {
                     const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
@@ -557,11 +668,26 @@ void ServerTcp::handleClient(int clientFd) {
                     if (!pkPos.has_value())
                         throw runtimeError("Missing pk");
 
+                    std::vector<std::pair<byteVec, byteVec>> prepared;
+                    prepared.reserve(insert->rows.size());
+                    u64 estimatedWriteBytes = 0;
                     for (const auto& row : insert->rows) {
                         auto pkLit = row[*pkPos];
                         byteVec pkBytes = partitionKeyBytes(retTable->schema().columns[pkIndex].type, pkLit);
                         byteVec rowBytesBuf = rowBytes(retTable->schema(), insert->columns, row, pkBytes);
-                        retTable->putRow(pkBytes, rowBytesBuf);
+                        estimatedWriteBytes += static_cast<u64>(pkBytes.size());
+                        estimatedWriteBytes += static_cast<u64>(rowBytesBuf.size());
+                        estimatedWriteBytes += 64; // small WAL/metadata overhead estimate
+                        prepared.push_back({std::move(pkBytes), std::move(rowBytesBuf)});
+                    }
+
+                    if (auto quota = quotaBytesForKeyspace(keyspace); quota.has_value() && *quota > 0) {
+                        if (!quotaWouldAllowAndReserve(keyspace, *quota, estimatedWriteBytes))
+                            throw runtimeError("quota_exceeded");
+                    }
+
+                    for (const auto& r : prepared) {
+                        retTable->putRow(r.first, r.second);
                     }
 
                     if (authEnabled_ && isSystemKeyspaceName(keyspace)) {
@@ -615,6 +741,22 @@ void ServerTcp::handleClient(int clientFd) {
                                     if (pos == string::npos || pos == 0 || pos + 1 >= v.text.size())
                                         continue;
                                     db_->onSystemKeyspaceGrantsPut(v.text.substr(0, pos), v.text.substr(pos + 1));
+                                }
+                            }
+                        } else if (insert->table == "KEYSPACE_QUOTAS") {
+                            for (const auto& row : insert->rows) {
+                                std::optional<string> ks;
+                                std::optional<i64> quotaBytes;
+                                for (usize i = 0; i < insert->columns.size(); i++) {
+                                    const auto& c = insert->columns[i];
+                                    const auto& v = row[i];
+                                    if (c == "keyspace" && v.kind == SqlLiteral::Kind::Quoted)
+                                        ks = v.text;
+                                    else if (c == "quota_bytes" && v.kind == SqlLiteral::Kind::Number)
+                                        quotaBytes = std::stoll(v.text);
+                                }
+                                if (ks.has_value() && quotaBytes.has_value() && *quotaBytes > 0) {
+                                    db_->onSystemKeyspaceQuotasPut(*ks, static_cast<u64>(*quotaBytes));
                                 }
                             }
                         }
@@ -678,8 +820,15 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->metricsOnCommand(keyspace);
                     }
 
+                    if (auto quota = quotaBytesForKeyspace(keyspace); quota.has_value() && *quota > 0) {
+                        const u64 used = bytesUsedForKeyspaceCached(keyspace);
+                        if (used >= *quota)
+                            throw runtimeError("quota_exceeded");
+                    }
+
                     auto retTable = db_->openTable(keyspace, flush->table);
                     retTable->flush();
+                    invalidateBytesUsedCache(keyspace);
                     response = jsonOk();
                 } else if (auto* del = std::get_if<SqlDelete>(&cmd)) {
                     const AuthedUser& u = authEnabled_ ? *currentUser : noAuthRoot;
@@ -710,6 +859,8 @@ void ServerTcp::handleClient(int clientFd) {
                             auto pos = del->whereValue.text.find('#');
                             if (pos != string::npos)
                                 db_->onSystemKeyspaceGrantsDelete(del->whereValue.text.substr(0, pos), del->whereValue.text.substr(pos + 1));
+                        } else if (del->table == "KEYSPACE_QUOTAS" && del->whereValue.kind == SqlLiteral::Kind::Quoted) {
+                            db_->onSystemKeyspaceQuotasDelete(del->whereValue.text);
                         }
                     }
                     response = jsonOk();
@@ -742,6 +893,12 @@ void ServerTcp::handleClient(int clientFd) {
                     byteVec pkBytes = partitionKeyBytes(retTable->schema().columns[pkIndex].type, upd->whereValue);
                     auto existing = retTable->getRow(pkBytes);
                     byteVec newRowBytes = mergeRowBytesForUpdate(retTable->schema(), existing, upd->setColumns, upd->setValues);
+
+                    if (auto quota = quotaBytesForKeyspace(keyspace); quota.has_value() && *quota > 0) {
+                        u64 est = static_cast<u64>(pkBytes.size()) + static_cast<u64>(newRowBytes.size()) + 64;
+                        if (!quotaWouldAllowAndReserve(keyspace, *quota, est))
+                            throw runtimeError("quota_exceeded");
+                    }
                     retTable->putRow(pkBytes, newRowBytes);
 
                     if (authEnabled_ && isSystemKeyspaceName(keyspace)) {
@@ -766,6 +923,17 @@ void ServerTcp::handleClient(int clientFd) {
                             for (usize i = 0; i < upd->setColumns.size(); i++) {
                                 if (upd->setColumns[i] == "owner_username" && upd->setValues[i].kind == SqlLiteral::Kind::Quoted) {
                                     db_->onSystemKeyspaceOwnersPut(upd->whereValue.text, upd->setValues[i].text);
+                                }
+                            }
+                        } else if (upd->whereValue.kind == SqlLiteral::Kind::Quoted && upd->table == "KEYSPACE_QUOTAS") {
+                            for (usize i = 0; i < upd->setColumns.size(); i++) {
+                                if (upd->setColumns[i] == "quota_bytes" && upd->setValues[i].kind == SqlLiteral::Kind::Number) {
+                                    i64 q = std::stoll(upd->setValues[i].text);
+                                    if (q > 0) {
+                                        db_->onSystemKeyspaceQuotasPut(upd->whereValue.text, static_cast<u64>(q));
+                                    } else {
+                                        db_->onSystemKeyspaceQuotasDelete(upd->whereValue.text);
+                                    }
                                 }
                             }
                         }

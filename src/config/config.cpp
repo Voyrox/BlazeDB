@@ -44,6 +44,15 @@ static string toLower(string s) {
     return s;
 }
 
+static bool parseBool(const string& s, const string& key) {
+    string v = toLower(s);
+    if (v == "1" || v == "true" || v == "yes" || v == "y" || v == "on")
+        return true;
+    if (v == "0" || v == "false" || v == "no" || v == "n" || v == "off")
+        return false;
+    throw runtimeError("Invalid value for " + key);
+}
+
 static u64 parseU64(const string& s, const string& key) {
     try {
         usize i = 0;
@@ -74,6 +83,8 @@ Settings loadSettings(const string& filePath) {
     s.walFsyncBytes = 1024 * 1024;
     s.memtableMaxBytes = 32ull * 1024ull * 1024ull;
     s.sstableIndexStride = 16;
+    s.quotaEnforcementEnabled = false;
+    s.quotaBytesUsedCacheTtlMs = 2000;
     s.authUsername.clear();
     s.authPassword.clear();
 
@@ -117,6 +128,10 @@ Settings loadSettings(const string& filePath) {
             s.maxLineBytes = parseSize(value, key);
         } else if (key == "maxConnections") {
             s.maxConnections = parseSize(value, key);
+        } else if (key == "quotaEnforcementEnabled") {
+            s.quotaEnforcementEnabled = parseBool(value, key);
+        } else if (key == "quotaBytesUsedCacheTtlMs") {
+            s.quotaBytesUsedCacheTtlMs = parseU64(value, key);
         } else if (key == "walFsync") {
             s.walFsync = toLower(value);
         } else if (key == "walFsyncIntervalMs") {

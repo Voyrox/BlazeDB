@@ -19,6 +19,8 @@ struct Settings {
     usize walFsyncBytes;
     usize memtableMaxBytes;
     usize sstableIndexStride;
+    bool quotaEnforcementEnabled;
+    u64 quotaBytesUsedCacheTtlMs;
     string authUsername;
     string authPassword;
 };
