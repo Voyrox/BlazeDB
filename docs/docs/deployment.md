@@ -2,21 +2,28 @@
 
 This page focuses on the basics: keeping your data durable, configuring the server, and running it via Docker or as a native binary.
 
-## Option 1: Run the native binary
+## Option 1: Run the install script
+The install script sets up Xeondb as a systemd service on Linux, with sane defaults for durability and performance.
+
+```bash
+sudo ./install.sh
+```
+
+## Option 2: Run the native binary
 
 Build `Xeondb` (see [Quick Start](quickstart.md)), then run it with a config file:
 
 ```bash
-./build/xeondb --config /etc/xeondb/settings.yml
+ninja -C build run
 ```
 
 Make sure the configured `dataDir` points to persistent storage.
 
-## Option 2: Run with Docker
+## Option 3: Run with Docker
 
 ```bash
 docker build -t xeondb .
-docker run --name xeondb
+docker run --name xeondb (timestamp)
 ```
 
 For real deployments you will typically also:
@@ -25,7 +32,7 @@ For real deployments you will typically also:
 - mount a persistent volume for `dataDir`
 - mount a config file into the container
 
-## Option 3: ISO
+## Option 4: ISO
 Coming soon: a standalone ISO image with everything included, for easy deployment on bare metal or in the cloud.
 
 ## Configuration
@@ -80,9 +87,12 @@ sstable:
 # - If either is missing/empty, auth is disabled.
 # - Client must send: AUTH "<username>" "<password>";
 auth:
-  # username: admin
+  # username: root
   # password: change-me
 ```
+
+When auth is enabled, the configured credentials become the system/root account (`level=0`).
+See [Permissions](permissions.md) for how keyspace access and user management works.
 
 ## Durability and restarts
 
