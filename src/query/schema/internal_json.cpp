@@ -11,7 +11,7 @@ namespace xeondb::schema_detail {
 
 std::string jsonValueFromBytes(ColumnType type, const byteVec& b, usize& o) {
     if (type == ColumnType::Text || type == ColumnType::Char) {
-        u32 len = readU32(b, o);
+        u32 len = readBeU32(b, o);
         if (o + len > b.size())
             throw runtimeError("bad row");
         std::string s;
@@ -20,7 +20,7 @@ std::string jsonValueFromBytes(ColumnType type, const byteVec& b, usize& o) {
         return std::string("\"") + jsonEscape(s) + "\"";
     }
     if (type == ColumnType::Blob) {
-        u32 len = readU32(b, o);
+        u32 len = readBeU32(b, o);
         if (o + len > b.size())
             throw runtimeError("bad row");
         byteVec v;

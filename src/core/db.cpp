@@ -352,7 +352,7 @@ static std::optional<string> readTextOrNull(const byteVec& rowBytes, usize& o) {
     u8 isNull = rowBytes[o++];
     if (isNull != 0)
         return std::nullopt;
-    u32 len = readU32(rowBytes, o);
+    u32 len = readBeU32(rowBytes, o);
     if (o + len > rowBytes.size())
         throw runtimeError("bad row");
     string s(reinterpret_cast<const char*>(rowBytes.data() + o), reinterpret_cast<const char*>(rowBytes.data() + o + len));
@@ -485,7 +485,7 @@ void Db::bootstrapAuthSystem() {
     for (const auto& row : usersTable->scanAllRowsByPk(false)) {
         string username = pkText(row.pkBytes);
         usize o = 0;
-        if (readU32(row.rowBytes, o) != 1)
+        if (readBeU32(row.rowBytes, o) != 1)
             continue;
         auto password = readTextOrNull(row.rowBytes, o);
         auto level = readI32OrNull(row.rowBytes, o);
@@ -501,7 +501,7 @@ void Db::bootstrapAuthSystem() {
     for (const auto& row : ownersTable->scanAllRowsByPk(false)) {
         string keyspace = pkText(row.pkBytes);
         usize o = 0;
-        if (readU32(row.rowBytes, o) != 1)
+        if (readBeU32(row.rowBytes, o) != 1)
             continue;
         auto owner = readTextOrNull(row.rowBytes, o);
         (void)readI64OrNull(row.rowBytes, o);
@@ -522,7 +522,7 @@ void Db::bootstrapAuthSystem() {
         for (const auto& row : quotasTable->scanAllRowsByPk(false)) {
             string keyspace = pkText(row.pkBytes);
             usize o = 0;
-            if (readU32(row.rowBytes, o) != 1)
+            if (readBeU32(row.rowBytes, o) != 1)
                 continue;
             auto quota = readI64OrNull(row.rowBytes, o);
             (void)readI64OrNull(row.rowBytes, o);

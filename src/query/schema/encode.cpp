@@ -111,7 +111,7 @@ byteVec rowBytes(const TableSchema& schema, const std::vector<string>& columnNam
     }
 
     byteVec out;
-    appendU32(out, 1);
+    appendBeU32(out, 1);
     for (usize i = 0; i < schema.columns.size(); i++) {
         if (i == schema.primaryKeyIndex)
             continue;

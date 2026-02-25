@@ -72,13 +72,21 @@ byteVec readBytes(ifstream& data) {
 }
 
 void appendU32(byteVec& data, u32 v) {
+    appendBeU32(data, v);
+}
+
+u32 readU32(const byteVec& data, usize& o) {
+    return readBeU32(data, o);
+}
+
+void appendBeU32(byteVec& data, u32 v) {
     data.push_back(static_cast<u8>((v >> 24) & 0xFF));
     data.push_back(static_cast<u8>((v >> 16) & 0xFF));
     data.push_back(static_cast<u8>((v >> 8) & 0xFF));
     data.push_back(static_cast<u8>((v >> 0) & 0xFF));
 }
 
-u32 readU32(const byteVec& data, usize& o) {
+u32 readBeU32(const byteVec& data, usize& o) {
     if (o + 4 > data.size())
         throw runtimeError("Bad bytes");
     u32 val = 0;
@@ -91,11 +99,7 @@ u32 readU32(const byteVec& data, usize& o) {
 }
 
 void appendBe32(byteVec& data, i32 v) {
-    u32 val = static_cast<u32>(v);
-    data.push_back(static_cast<u8>((val >> 24) & 0xFF));
-    data.push_back(static_cast<u8>((val >> 16) & 0xFF));
-    data.push_back(static_cast<u8>((val >> 8) & 0xFF));
-    data.push_back(static_cast<u8>((val >> 0) & 0xFF));
+    appendBeU32(data, static_cast<u32>(v));
 }
 
 void appendBe64(byteVec& data, i64 v) {
@@ -111,15 +115,7 @@ void appendBe64(byteVec& data, i64 v) {
 }
 
 i32 readBe32(const byteVec& data, usize& o) {
-    if (o + 4 > data.size())
-        throw runtimeError("Bad bytes");
-    u32 val = 0;
-    val |= static_cast<u32>(data[o + 0]) << 24;
-    val |= static_cast<u32>(data[o + 1]) << 16;
-    val |= static_cast<u32>(data[o + 2]) << 8;
-    val |= static_cast<u32>(data[o + 3]) << 0;
-    o += 4;
-    return static_cast<i32>(val);
+    return static_cast<i32>(readBeU32(data, o));
 }
 
 i64 readBe64(const byteVec& data, usize& o) {

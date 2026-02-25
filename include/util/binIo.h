@@ -24,6 +24,9 @@ byteVec readBytes(ifstream& in);
 void appendU32(byteVec& out, u32 v);
 u32 readU32(const byteVec& b, usize& o);
 
+void appendBeU32(byteVec& out, u32 v);
+u32 readBeU32(const byteVec& b, usize& o);
+
 void appendBe32(byteVec& out, i32 v);
 void appendBe64(byteVec& out, i64 v);
 i32 readBe32(const byteVec& b, usize& o);

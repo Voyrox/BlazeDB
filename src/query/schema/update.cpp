@@ -34,7 +34,7 @@ byteVec mergeRowBytesForUpdate(const TableSchema& schema, const std::optional<by
     if (existingRowBytes.has_value()) {
         const auto& rowBytes = *existingRowBytes;
         usize o = 0;
-        auto version = readU32(rowBytes, o);
+        auto version = readBeU32(rowBytes, o);
         if (version != 1)
             throw runtimeError("bad row version");
 
@@ -57,7 +57,7 @@ byteVec mergeRowBytesForUpdate(const TableSchema& schema, const std::optional<by
     }
 
     byteVec out;
-    appendU32(out, 1);
+    appendBeU32(out, 1);
     for (usize i = 0; i < schema.columns.size(); i++) {
         if (i == schema.primaryKeyIndex)
             continue;

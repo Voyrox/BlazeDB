@@ -14,14 +14,14 @@ void appendValueBytes(byteVec& out, ColumnType type, const SqlLiteral& lit) {
     case ColumnType::Char: {
         if (lit.kind != SqlLiteral::Kind::Quoted || lit.text.size() != 1)
             throw runtimeError("char");
-        appendU32(out, 1);
+        appendBeU32(out, 1);
         out.push_back(static_cast<u8>(lit.text[0]));
         return;
     }
     case ColumnType::Text: {
         if (lit.kind != SqlLiteral::Kind::Quoted)
             throw runtimeError("text");
-        appendU32(out, static_cast<u32>(lit.text.size()));
+        appendBeU32(out, static_cast<u32>(lit.text.size()));
         out.insert(out.end(), lit.text.begin(), lit.text.end());
         return;
     }
@@ -33,7 +33,7 @@ void appendValueBytes(byteVec& out, ColumnType type, const SqlLiteral& lit) {
             b = base64ToBytes(lit.text);
         else
             throw runtimeError("blob");
-        appendU32(out, static_cast<u32>(b.size()));
+        appendBeU32(out, static_cast<u32>(b.size()));
         out.insert(out.end(), b.begin(), b.end());
         return;
     }
@@ -90,7 +90,7 @@ void appendValueBytes(byteVec& out, ColumnType type, const SqlLiteral& lit) {
 
 void skipValueBytes(ColumnType type, const byteVec& b, usize& o) {
     if (type == ColumnType::Text || type == ColumnType::Char || type == ColumnType::Blob) {
-        u32 len = readU32(b, o);
+        u32 len = readBeU32(b, o);
         if (o + len > b.size())
             throw runtimeError("bad row");
         o += len;
