@@ -369,13 +369,15 @@ void Table::recover() {
         ssTables_.push_back(loadSsTableIndex(tableDirPath_ / tableFiles));
     }
 
+    nextSeq_ = manifest_.lastFlushedSeq + 1;
+
     ifstream stream(commitLogPath(tableDirPath_), std::ios::binary);
     if (stream.is_open()) {
         char magic[8]{};
         if (readExact(stream, magic, 8)) {
             u32 ver = 0;
             if (readExact(stream, &ver, sizeof(ver))) {
-                if (string(magic, 7) == string("BZWAL001", 7) && ver == 1) {
+                if (string(magic, commitLogMagicLen) == string(commitLogMagic, commitLogMagicLen) && ver == commitLogVersion) {
                     while (stream) {
                         u64 seq = 0;
                         u32 keyLen = 0;

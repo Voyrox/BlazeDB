@@ -10,27 +10,66 @@
 #include <unistd.h>
 
 namespace xeondb {
-static constexpr const char* walMagic = "BZWAL001";
-static constexpr u32 walVersion = 1;
-
 static void writeAll(int fd, const void* p, usize n) {
     const u8* buffer = static_cast<const u8*>(p);
     usize offset = 0;
     while (offset < n) {
-        ssize_t write = ::write(fd, buffer + offset, n - offset);
-        if (write < 0) {
+        ssize_t wrote = ::write(fd, buffer + offset, n - offset);
+        if (wrote < 0) {
             if (errno == EINTR) {
                 continue;
             }
             throw runtimeError("write failed");
         }
-        offset += static_cast<usize>(write);
+        offset += static_cast<usize>(wrote);
     }
 }
 
+static bool readAllExact(int fd, void* p, usize n) {
+    u8* buffer = static_cast<u8*>(p);
+    usize offset = 0;
+    while (offset < n) {
+        ssize_t got = ::read(fd, buffer + offset, n - offset);
+        if (got == 0) {
+            return false;
+        }
+        if (got < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            return false;
+        }
+        offset += static_cast<usize>(got);
+    }
+    return true;
+}
+
 static void writeHeader(int fd) {
-    writeAll(fd, walMagic, 8);
-    writeAll(fd, &walVersion, sizeof(walVersion));
+    writeAll(fd, commitLogMagic, commitLogMagicLen);
+    u8 pad = 0;
+    writeAll(fd, &pad, 1);
+    u32 ver = commitLogVersion;
+    writeAll(fd, &ver, sizeof(ver));
+}
+
+static bool validateHeader(int fd) {
+    if (::lseek(fd, 0, SEEK_SET) < 0) {
+        return false;
+    }
+    char magic[commitLogMagicLen]{};
+    u8 pad = 0;
+    u32 ver = 0;
+    if (!readAllExact(fd, magic, commitLogMagicLen))
+        return false;
+    if (!readAllExact(fd, &pad, 1))
+        return false;
+    if (!readAllExact(fd, &ver, sizeof(ver)))
+        return false;
+    if (std::memcmp(magic, commitLogMagic, commitLogMagicLen) != 0)
+        return false;
+    if (pad != 0)
+        return false;
+    return ver == commitLogVersion;
 }
 
 CommitLog::CommitLog()
@@ -40,19 +79,15 @@ CommitLog::CommitLog()
 }
 
 CommitLog::~CommitLog() {
-    try {
-        close();
-    } catch (...) {
-    }
+    close();
 }
 
 void CommitLog::openOrCreate(const std::filesystem::path& path, bool truncate) {
     close();
     path_ = path;
-    int flags = O_CREAT | O_WRONLY | O_APPEND;
-    if (truncate) {
-        flags = O_CREAT | O_WRONLY | O_TRUNC;
-    }
+    int flags = O_CREAT | O_RDWR | O_APPEND;
+    if (truncate)
+        flags = O_CREAT | O_RDWR | O_TRUNC | O_APPEND;
     fileDesc = ::open(path_.c_str(), flags, 0644);
     if (fileDesc < 0) {
         throw runtimeError("cannot open commitlog");
@@ -64,6 +99,15 @@ void CommitLog::openOrCreate(const std::filesystem::path& path, bool truncate) {
         if (::fstat(fileDesc, &st) == 0) {
             if (st.st_size == 0) {
                 writeHeader(fileDesc);
+            } else {
+                if (!validateHeader(fileDesc)) {
+                    ::close(fileDesc);
+                    fileDesc = ::open(path_.c_str(), O_CREAT | O_RDWR | O_TRUNC | O_APPEND, 0644);
+                    if (fileDesc < 0) {
+                        throw runtimeError("cannot open commitlog");
+                    }
+                    writeHeader(fileDesc);
+                }
             }
         }
     }

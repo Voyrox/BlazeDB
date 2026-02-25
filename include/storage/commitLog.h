@@ -8,6 +8,10 @@
 
 namespace xeondb {
 
+inline constexpr const char* commitLogMagic = "BZWAL002";
+inline constexpr usize commitLogMagicLen = 7;
+inline constexpr u32 commitLogVersion = 2;
+
 class CommitLog {
 public:
     CommitLog();
