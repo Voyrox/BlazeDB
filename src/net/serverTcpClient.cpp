@@ -1,28 +1,22 @@
 #include "net/serverTcp.h"
 
-#include "util/json.h"
-#include "query/sql.h"
+#include "net/detail/serverTcpInternal.h"
 
 #include "core/paths.h"
 
-#include "util/log.h"
+#include "query/sql.h"
 
-#include <cerrno>
+#include "util/ascii.h"
+#include "util/json.h"
+
 #include <cctype>
-#include <cstring>
 #include <filesystem>
-#include <chrono>
-#include <system_error>
-#include <string>
-#include <thread>
 #include <functional>
 #include <mutex>
-#include <unordered_map>
+#include <optional>
+#include <string>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 using std::string;
@@ -30,270 +24,15 @@ using std::string;
 namespace xeondb {
 
 static bool isSystemKeyspaceName(const string& keyspace) {
-    if (keyspace.size() != 6)
-        return false;
-    return (std::tolower(static_cast<unsigned char>(keyspace[0])) == 's') && (std::tolower(static_cast<unsigned char>(keyspace[1])) == 'y') &&
-           (std::tolower(static_cast<unsigned char>(keyspace[2])) == 's') && (std::tolower(static_cast<unsigned char>(keyspace[3])) == 't') &&
-           (std::tolower(static_cast<unsigned char>(keyspace[4])) == 'e') && (std::tolower(static_cast<unsigned char>(keyspace[5])) == 'm');
-}
-
-static i64 nowMs() {
-    using namespace std::chrono;
-    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-}
-
-static SqlLiteral litQuoted(const string& s) {
-    SqlLiteral l;
-    l.kind = SqlLiteral::Kind::Quoted;
-    l.text = s;
-    return l;
-}
-
-static SqlLiteral litNumber(i64 v) {
-    SqlLiteral l;
-    l.kind = SqlLiteral::Kind::Number;
-    l.text = std::to_string(v);
-    return l;
-}
-
-static u64 dirBytesUsedBestEffort(const path& root) {
-    u64 total = 0;
-    std::error_code ec;
-
-    if (root.empty()) {
-        return 0;
-    }
-    if (!std::filesystem::exists(root, ec) || ec) {
-        return 0;
-    }
-
-    std::filesystem::recursive_directory_iterator it(root, std::filesystem::directory_options::skip_permission_denied, ec);
-    const std::filesystem::recursive_directory_iterator end;
-
-    for (; !ec && it != end; it.increment(ec)) {
-        std::error_code ec2;
-        if (it->is_regular_file(ec2) && !ec2) {
-            const auto sz = it->file_size(ec2);
-            if (!ec2) {
-                total += static_cast<u64>(sz);
-            }
-        }
-    }
-
-    return total;
-}
-
-std::optional<u64> ServerTcp::quotaBytesForKeyspace(const std::string& keyspace) const {
-    if (db_ == nullptr) {
-        return std::nullopt;
-    }
-    const auto& s = db_->settings();
-    if (!s.quotaEnforcementEnabled) {
-        return std::nullopt;
-    }
-    return db_->keyspaceQuotaBytes(keyspace);
-}
-
-u64 ServerTcp::bytesUsedForKeyspaceCached(const std::string& keyspace) {
-    if (db_ == nullptr) {
-        return 0;
-    }
-
-    const u64 ttlMs = db_->settings().quotaBytesUsedCacheTtlMs == 0 ? 2000 : db_->settings().quotaBytesUsedCacheTtlMs;
-    const i64 now = nowMs();
-
-    {
-        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-        auto it = bytesUsedCache_.find(keyspace);
-        if (it != bytesUsedCache_.end() && it->second.computedAtMs > 0) {
-            const i64 age = now - it->second.computedAtMs;
-            if (age >= 0 && static_cast<u64>(age) < ttlMs) {
-                return it->second.bytesUsed;
-            }
-        }
-    }
-
-    const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
-
-    {
-        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-        auto& e = bytesUsedCache_[keyspace];
-        e.bytesUsed = fresh;
-        e.computedAtMs = now;
-    }
-    return fresh;
-}
-
-void ServerTcp::invalidateBytesUsedCache(const std::string& keyspace) {
-    std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-    auto it = bytesUsedCache_.find(keyspace);
-    if (it != bytesUsedCache_.end()) {
-        it->second.computedAtMs = 0;
-    }
-}
-
-bool ServerTcp::quotaWouldAllowAndReserve(const std::string& keyspace, u64 quotaBytes, u64 estimatedWriteBytes) {
-    if (db_ == nullptr) {
-        return true;
-    }
-    if (quotaBytes == 0) {
-        return true;
-    }
-    if (estimatedWriteBytes == 0) {
-        return true;
-    }
-
-    const u64 ttlMs = db_->settings().quotaBytesUsedCacheTtlMs == 0 ? 2000 : db_->settings().quotaBytesUsedCacheTtlMs;
-    const i64 now = nowMs();
-
-    bool needScan = false;
-    {
-        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-        auto& e = bytesUsedCache_[keyspace];
-        if (e.computedAtMs <= 0) {
-            needScan = true;
-        } else {
-            const i64 age = now - e.computedAtMs;
-            if (age < 0 || static_cast<u64>(age) >= ttlMs) {
-                needScan = true;
-            }
-        }
-    }
-
-    if (needScan) {
-        const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
-        std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-        auto& e = bytesUsedCache_[keyspace];
-        e.bytesUsed = fresh;
-        e.computedAtMs = now;
-    }
-
-    std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
-    auto& e = bytesUsedCache_[keyspace];
-    if (e.bytesUsed + estimatedWriteBytes > quotaBytes) {
-        return false;
-    }
-
-    e.bytesUsed += estimatedWriteBytes;
-    return true;
-}
-
-ServerTcp::ServerTcp(std::shared_ptr<Db> db, string host, u16 port, usize maxLineBytes, usize maxConnections, string authUsername, string authPassword)
-    : db_(std::move(db))
-    , host_(std::move(host))
-    , port_(port)
-    , maxLineBytes_(maxLineBytes)
-    , maxConnections_(maxConnections)
-    , authUsername_(std::move(authUsername))
-    , authPassword_(std::move(authPassword))
-    , authEnabled_(db_ != nullptr ? db_->authEnabled() : (!authUsername_.empty() && !authPassword_.empty()))
-    , connectionCount_(0) {
-}
-
-ServerTcp::~ServerTcp() {
-}
-
-static bool sendAll(int fd, const string& s) {
-    const char* p = s.data();
-    usize i = s.size();
-    usize j = 0;
-    while (j < i) {
-        ssize_t sentBytes = ::send(fd, p + j, i - j, 0);
-        if (sentBytes < 0) {
-            if (errno == EINTR)
-                continue;
-            return false;
-        }
-        j += static_cast<usize>(sentBytes);
-    }
-    return true;
-}
-
-static runtimeError errnoError(const string& prefix) {
-    return runtimeError(prefix + " errno=" + std::to_string(errno) + " err=" + string(::strerror(errno)));
-}
-
-static bool schemaEquals(const TableSchema& schema, const TableSchema& schemaB) {
-    if (schema.primaryKeyIndex != schemaB.primaryKeyIndex)
-        return false;
-    if (schema.columns.size() != schemaB.columns.size())
-        return false;
-    for (usize i = 0; i < schema.columns.size(); i++) {
-        if (schema.columns[i].name != schemaB.columns[i].name)
-            return false;
-        if (schema.columns[i].type != schemaB.columns[i].type)
-            return false;
-    }
-    return true;
-}
-
-void ServerTcp::run() {
-    int socketFileDesc = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (socketFileDesc < 0)
-        throw errnoError("socket failed");
-    int addrFlag = 1;
-    ::setsockopt(socketFileDesc, SOL_SOCKET, SO_REUSEADDR, &addrFlag, sizeof(addrFlag));
-
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port_);
-    if (::inet_pton(AF_INET, host_.c_str(), &addr.sin_addr) != 1) {
-        ::close(socketFileDesc);
-        throw runtimeError("bad host");
-    }
-
-    if (::bind(socketFileDesc, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0) {
-        ::close(socketFileDesc);
-        throw errnoError("bind failed");
-    }
-    if (::listen(socketFileDesc, 128) != 0) {
-        ::close(socketFileDesc);
-        throw errnoError("listen failed");
-    }
-
-    xeondb::log(xeondb::LogLevel::INFO, std::string("Listening host=") + host_ + " port=" + std::to_string(port_) +
-                                                " maxLineBytes=" + std::to_string(maxLineBytes_) + " maxConnections=" + std::to_string(maxConnections_) +
-                                                " auth=" + (authEnabled_ ? "enabled" : "disabled"));
-
-    if (db_ != nullptr) {
-        auto db = db_;
-        std::thread sampler([db]() {
-            using namespace std::chrono_literals;
-            for (;;) {
-                std::this_thread::sleep_for(30s);
-                try {
-                    db->metricsSampleAll();
-                } catch (...) {
-                    // ignore
-                }
-            }
-        });
-        sampler.detach();
-    }
-
-    for (;;) {
-        int clientSocketDesc = ::accept(socketFileDesc, nullptr, nullptr);
-        if (clientSocketDesc < 0) {
-            if (errno == EINTR)
-                continue;
-            continue;
-        }
-        if (connectionCount_.load() >= maxConnections_) {
-            sendAll(clientSocketDesc, jsonError("too_many_connections") + "\n");
-            ::close(clientSocketDesc);
-            continue;
-        }
-        connectionCount_++;
-        std::thread t([this, clientSocketDesc]() {
-            handleClient(clientSocketDesc);
-            ::close(clientSocketDesc);
-            connectionCount_--;
-        });
-        t.detach();
-    }
+    return asciiIEquals(keyspace, "system");
 }
 
 void ServerTcp::handleClient(int clientFd) {
+    using server_tcp_detail::litNumber;
+    using server_tcp_detail::litQuoted;
+    using server_tcp_detail::schemaEquals;
+    using server_tcp_detail::sendAll;
+
     string buf;
     buf.reserve(4096);
     char tmp[4096];
@@ -348,15 +87,7 @@ void ServerTcp::handleClient(int clientFd) {
                 continue;
 
             if (authEnabled_ && !currentUser.has_value()) {
-                usize k = 0;
-                while (k < line.size() && std::isspace(static_cast<unsigned char>(line[k])))
-                    k++;
-                auto eq = [](char a, char b) {
-                    return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
-                };
-                const bool isAuth = (k + 4 <= line.size()) && eq(line[k + 0], 'a') && eq(line[k + 1], 'u') && eq(line[k + 2], 't') && eq(line[k + 3], 'h') &&
-                                    (k + 4 == line.size() || std::isspace(static_cast<unsigned char>(line[k + 4])));
-                if (!isAuth) {
+                if (!startsWithKeywordIcase(line, "auth")) {
                     sendAll(clientFd, jsonError("unauthorized") + "\n");
                     continue;
                 }
@@ -416,7 +147,7 @@ void ServerTcp::handleClient(int clientFd) {
                         db_->onKeyspaceCreated(createKeyspace->keyspace);
                         if (!existed) {
                             auto ownersTable = db_->openTable("SYSTEM", "KEYSPACE_OWNERS");
-                            const i64 createdAt = nowMs();
+                            const i64 createdAt = server_tcp_detail::nowMs();
                             auto ksLit = litQuoted(createKeyspace->keyspace);
                             byteVec pkBytes = partitionKeyBytes(ColumnType::Text, ksLit);
                             std::vector<string> cols = {"keyspace", "owner_username", "created_at"};
@@ -677,7 +408,7 @@ void ServerTcp::handleClient(int clientFd) {
                         byteVec rowBytesBuf = rowBytes(retTable->schema(), insert->columns, row, pkBytes);
                         estimatedWriteBytes += static_cast<u64>(pkBytes.size());
                         estimatedWriteBytes += static_cast<u64>(rowBytesBuf.size());
-                        estimatedWriteBytes += 64; // small WAL/metadata overhead estimate
+                        estimatedWriteBytes += 64;
                         prepared.push_back({std::move(pkBytes), std::move(rowBytesBuf)});
                     }
 
@@ -784,11 +515,11 @@ void ServerTcp::handleClient(int clientFd) {
                         if (*select->whereColumn != pkName)
                             throw runtimeError("Where must use primary key");
                         byteVec pkBytes = partitionKeyBytes(retTable->schema().columns[pkIndex].type, *select->whereValue);
-                        auto rowBytes = retTable->getRow(pkBytes);
-                        if (!rowBytes.has_value()) {
+                        auto rowBytesBuf = retTable->getRow(pkBytes);
+                        if (!rowBytesBuf.has_value()) {
                             response = string("{\"ok\":true,\"found\":false}");
                         } else {
-                            string rowJson = rowToJson(retTable->schema(), pkBytes, *rowBytes, select->columns);
+                            string rowJson = rowToJson(retTable->schema(), pkBytes, *rowBytesBuf, select->columns);
                             response = string("{\"ok\":true,\"found\":true,\"row\":") + rowJson + "}";
                         }
                     } else {

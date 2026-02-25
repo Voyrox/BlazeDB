@@ -1,6 +1,8 @@
 #include "core/db.h"
 
 #include "core/paths.h"
+
+#include "util/ascii.h"
 #include "util/uuid.h"
 
 #include "query/schema.h"
@@ -169,11 +171,7 @@ bool Db::authEnabled() const {
 }
 
 bool Db::isSystemKeyspace(const string& keyspace) {
-    if (keyspace.size() != 6)
-        return false;
-    return (std::tolower(static_cast<unsigned char>(keyspace[0])) == 's') && (std::tolower(static_cast<unsigned char>(keyspace[1])) == 'y') &&
-           (std::tolower(static_cast<unsigned char>(keyspace[2])) == 's') && (std::tolower(static_cast<unsigned char>(keyspace[3])) == 't') &&
-           (std::tolower(static_cast<unsigned char>(keyspace[4])) == 'e') && (std::tolower(static_cast<unsigned char>(keyspace[5])) == 'm');
+    return asciiIEquals(keyspace, "system");
 }
 
 string Db::grantKey(const string& keyspace, const string& username) {

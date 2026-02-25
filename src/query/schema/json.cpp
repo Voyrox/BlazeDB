@@ -62,8 +62,8 @@ string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVe
             if (isNull[i]) {
                 out += "null";
             } else {
-                usize offset = valueOffsets[i];
-                out += schema_detail::jsonValueFromBytes(schema.columns[i].type, rowBytes, offset);
+                usize valueOffset = valueOffsets[i];
+                out += schema_detail::jsonValueFromBytes(schema.columns[i].type, rowBytes, valueOffset);
             }
         }
     }
