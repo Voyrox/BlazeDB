@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>XeonDB - Low latency database for real-time apps</title>
-  <meta name="description" content="Create a database in XeonDB Cloud (free tier). The XeonDB engine is open source (MIT) and built for low-latency, real-time apps." />
+  <meta name="description"
+    content="XeonDB is the cloud database for data intensive apps that require predictable performance and low latency." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,8 +18,10 @@
   <link rel="icon" href="logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <meta property="og:title" content="XeonDB" />
-  <meta property="og:description" content="Create a database in XeonDB Cloud (free tier). Open source engine (MIT) for low-latency, real-time apps." />
-  <meta property="og:image" content="logo.png" />
+  <meta property="og:description"
+    content="XeonDB is the cloud database for data intensive apps that require predictable performance and low latency." />
+  <meta property="og:image" content="banner.png" />
+  <meta name="theme-color" content="#48d7fb" />
   <link rel="stylesheet" href="/css/index.css" />
 </head>
 
@@ -60,7 +63,7 @@
         <img class="octo-cameo" src="logo.png" alt="" aria-hidden="true">
         <div>
           <div class="kicker">XeonDB Cloud</div>
-          <h1>Scale Courageously with XeonDB</h1>
+          <h1>Scale Confidently with XeonDB</h1>
           <p class="lead">Create a database in minutes with the XeonDB Cloud dashboard (free tier) and ship faster with
             predictable performance and simple operations.</p>
           <div class="hero-cta" aria-label="Primary actions">
@@ -120,7 +123,7 @@
                 <div class="dash-metrics" aria-label="Live preview">
                   <div class="metric">
                     <div class="metric-head">
-                      <span>Connections</span>
+                      <span>Peak connections</span>
                     </div>
                     <div class="metric-value" id="home-metric-connections">-- <span>active</span></div>
                     <div class="metric-chart">
@@ -141,7 +144,7 @@
               </div>
             </div>
 
-            
+
           </div>
         </div>
       </div>
@@ -177,17 +180,6 @@
         <div class="start-glance" aria-label="Cloud features">
           <div class="glance-card">
             <div class="glance-head">
-              <strong>Query Editor</strong>
-              <span class="pill" aria-hidden="true">In Cloud</span>
-            </div>
-            <div class="glance-body" aria-label="Query Editor preview">
-              <div class="glance-line"><span class="dim">SELECT</span> * <span class="dim">FROM</span> users <span class="dim">WHERE</span> id = 1;</div>
-              <div class="glance-hint">Run SQL and view results instantly.</div>
-            </div>
-          </div>
-
-          <div class="glance-card">
-            <div class="glance-head">
               <strong>Database Users</strong>
               <span class="pill" aria-hidden="true">In Cloud</span>
             </div>
@@ -207,6 +199,18 @@
               <div class="glance-hint">Control who can connect to your database.</div>
             </div>
           </div>
+
+          <div class="glance-card">
+            <div class="glance-head">
+              <strong>Query Editor</strong>
+              <span class="pill" aria-hidden="true">In Cloud</span>
+            </div>
+            <div class="glance-body" aria-label="Query Editor preview">
+              <div class="glance-line"><span class="dim">SELECT</span> * <span class="dim">FROM</span> users <span
+                  class="dim">WHERE</span> id = 1;</div>
+              <div class="glance-hint">Run SQL and view results instantly.</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -222,7 +226,8 @@
             <div class="card-head">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M4 14l4-4 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M4 14l4-4 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
                 </svg>
               </span>
               <div>
@@ -231,8 +236,8 @@
             </div>
             <p>Stable response times on the common path so your app stays snappy as traffic grows.</p>
             <div class="tags" aria-label="Highlights">
-              <span class="tag">Real-time workloads</span>
-              <span class="tag">Tail-latency focused</span>
+              <span class="tag">Real time workloads</span>
+              <span class="tag">Tail latency focused</span>
             </div>
           </div>
         </div>
@@ -242,7 +247,8 @@
             <div class="card-head">
               <span class="ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+                  <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="2"
+                    stroke-linejoin="round"></path>
                 </svg>
               </span>
               <div>
@@ -363,107 +369,131 @@
 
 
 
-</body>
+  <script>
+    (function () {
+      if (!window.Chart) return;
+      Chart.defaults.color = 'rgba(233, 230, 218, 0.74)';
+      Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
+      Chart.defaults.font.family = '"Space Grotesk", sans-serif';
 
-<script>
-  (function () {
-    if (!window.Chart) return;
-    Chart.defaults.color = 'rgba(233, 230, 218, 0.74)';
-    Chart.defaults.borderColor = 'rgba(233, 230, 218, 0.08)';
-    Chart.defaults.font.family = '"Space Grotesk", sans-serif';
-    function clamp(n, a, b) {
-      var v = Number(n);
-      if (!Number.isFinite(v)) return a;
-      return Math.max(a, Math.min(b, v));
-    }
-    function bumpSeries(series, maxDelta) {
-      var out = series.slice(1);
-      var last = series[series.length - 1];
-      var d = (Math.random() - 0.45) * maxDelta;
-      out.push(clamp(last + d, 0, 9999));
-      return out;
-    }
-    var labels = ['-25m', '-20m', '-15m', '-10m', '-5m', 'now'];
-    var conn = [8, 10, 9, 12, 14, 13];
-    var qpm = [120, 160, 140, 190, 210, 205];
-    var connValEl = document.getElementById('home-metric-connections');
-    var qValEl = document.getElementById('home-metric-queries');
-    function setMetric(el, n, suffix) {
-      if (!el) return;
-      var v = Math.max(0, Math.round(Number(n) || 0));
-      el.innerHTML = v + ' <span>' + suffix + '</span>';
-    }
-    var connCanvas = document.getElementById('homeConnectionsChart');
-    var qCanvas = document.getElementById('homeQueriesChart');
-    var connCtx = connCanvas ? connCanvas.getContext('2d') : null;
-    var qCtx = qCanvas ? qCanvas.getContext('2d') : null;
-    var connChart = connCtx ? new Chart(connCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: conn,
-          borderColor: '#39c6ff',
-          backgroundColor: 'rgba(57, 198, 255, 0.10)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true } },
-          y: { grid: { color: 'rgba(233, 230, 218, 0.05)' }, ticks: { font: { size: 10 }, maxTicksLimit: 4 } }
+      function formatCompact(n) {
+        var v = Number(n);
+        if (!Number.isFinite(v)) return String(n || '0');
+        if (v >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'b';
+        if (v >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'm';
+        if (v >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+        return String(Math.round(v));
+      }
+
+      function clamp(n, a, b) {
+        var v = Number(n);
+        if (!Number.isFinite(v)) return a;
+        return Math.max(a, Math.min(b, v));
+      }
+      function bumpSeries(series, maxDelta) {
+        var out = series.slice(1);
+        var last = series[series.length - 1];
+        var d = (Math.random() - 0.45) * maxDelta;
+        out.push(clamp(last + d, 0, 9999));
+        return out;
+      }
+      var labels = ['-24h', '-20h', '-16h', '-12h', '-8h', '-4h', 'now'];
+      var conn = [620, 710, 760, 820, 940, 880, 1020];
+      var q4h = [1100000, 1300000, 1250000, 1400000, 1550000, 1480000, 1650000];
+      var connValEl = document.getElementById('home-metric-connections');
+      var qValEl = document.getElementById('home-metric-queries');
+      function setMetric(el, n, suffix) {
+        if (!el) return;
+        el.innerHTML = String(n) + ' <span>' + suffix + '</span>';
+      }
+
+      function sum(arr) {
+        var s = 0;
+        for (var i = 0; i < arr.length; i++) s += Number(arr[i]) || 0;
+        return s;
+      }
+      var connCanvas = document.getElementById('homeConnectionsChart');
+      var qCanvas = document.getElementById('homeQueriesChart');
+      var connCtx = connCanvas ? connCanvas.getContext('2d') : null;
+      var qCtx = qCanvas ? qCanvas.getContext('2d') : null;
+      var connChart = connCtx ? new Chart(connCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: conn,
+            borderColor: '#39c6ff',
+            backgroundColor: 'rgba(57, 198, 255, 0.10)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { left: 6, right: 12, top: 0, bottom: 0 } },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: false } },
+            y: {
+              grid: { color: 'rgba(233, 230, 218, 0.05)' },
+              ticks: { font: { size: 10 }, maxTicksLimit: 4, callback: function (value) { return value; } }
+            }
+          }
         }
-      }
-    }) : null;
-    var qChart = qCtx ? new Chart(qCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: qpm,
-          borderColor: '#2ed3a1',
-          backgroundColor: 'rgba(46, 211, 161, 0.10)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true } },
-          y: { grid: { color: 'rgba(233, 230, 218, 0.05)' }, ticks: { font: { size: 10 }, maxTicksLimit: 4 } }
+      }) : null;
+      var qChart = qCtx ? new Chart(qCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: q4h,
+            borderColor: '#2ed3a1',
+            backgroundColor: 'rgba(46, 211, 161, 0.10)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { left: 6, right: 12, top: 0, bottom: 0 } },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: false } },
+            y: {
+              grid: { color: 'rgba(233, 230, 218, 0.05)' },
+              ticks: { font: { size: 10 }, maxTicksLimit: 4, callback: function (value) { return formatCompact(value); } }
+            }
+          }
         }
-      }
-    }) : null;
-    setMetric(connValEl, conn[conn.length - 1], 'active');
-    setMetric(qValEl, qpm[qpm.length - 1], '/min');
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) return;
-    setInterval(function () {
-      conn = bumpSeries(conn, 4.5);
-      qpm = bumpSeries(qpm, 28);
-      setMetric(connValEl, conn[conn.length - 1], 'active');
-      setMetric(qValEl, qpm[qpm.length - 1], '/min');
-      if (connChart) {
-        connChart.data.datasets[0].data = conn;
-        connChart.update('none');
-      }
-      if (qChart) {
-        qChart.data.datasets[0].data = qpm;
-        qChart.update('none');
-      }
-    }, 1800);
-  })();
-</script>
+      }) : null;
+
+      setMetric(connValEl, Math.round(conn[conn.length - 1]), 'peak');
+      setMetric(qValEl, formatCompact(sum(q4h)), '/day');
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) return;
+      setInterval(function () {
+        conn = bumpSeries(conn, 95);
+        q4h = bumpSeries(q4h, 240000);
+        setMetric(connValEl, Math.round(conn[conn.length - 1]), 'peak');
+        setMetric(qValEl, formatCompact(sum(q4h)), '/day');
+        if (connChart) {
+          connChart.data.datasets[0].data = conn;
+          connChart.update('none');
+        }
+        if (qChart) {
+          qChart.data.datasets[0].data = q4h;
+          qChart.update('none');
+        }
+      }, 1800);
+    })();
+  </script>
+
+</body>
 
 </html>

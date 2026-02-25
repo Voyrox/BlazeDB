@@ -485,10 +485,15 @@
        margin-left: 6px;
    }
 
-   .metric-chart {
-       position: relative;
-       height: 120px;
-   }
+    .metric-chart {
+        position: relative;
+        height: 140px;
+    }
+
+    .metric-chart canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
 
    .terminal {
        border-radius: 14px;

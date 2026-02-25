@@ -1,6 +1,6 @@
 site_name: Xeondb Documentation
 site_url: https://voyrox.github.io/Xeondb/
-site_description: Xeondb is a real-time big data database that is designed to be fast, efficient, and easy to use. It is built on top of a custom storage engine that is optimized for high performance and low latency. 
+site_description: XeonDB is the cloud database for data intensive apps that require predictable performance and low latency.
 
 theme:
   name: mkdocs
