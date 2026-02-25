@@ -72,7 +72,7 @@ void ServerTcp::run() {
                 try {
                     db->metricsSampleAll();
                 } catch (...) {
-                    // best-effort metrics; never crash sampler
+                    // ignore
                 }
             }
         });

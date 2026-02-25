@@ -9,7 +9,7 @@
 
 namespace xeondb {
 
-static u64 dirBytesUsedBestEffort(const path& root) {
+static u64 dirBytesUsed(const path& root) {
     u64 total = 0;
     std::error_code ec;
 
@@ -68,7 +68,7 @@ u64 ServerTcp::bytesUsedForKeyspaceCached(const std::string& keyspace) {
         }
     }
 
-    const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
+    const u64 fresh = dirBytesUsed(keyspaceDir(db_->dataDir(), keyspace));
 
     {
         std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
@@ -118,7 +118,7 @@ bool ServerTcp::quotaWouldAllowAndReserve(const std::string& keyspace, u64 quota
     }
 
     if (needScan) {
-        const u64 fresh = dirBytesUsedBestEffort(keyspaceDir(db_->dataDir(), keyspace));
+        const u64 fresh = dirBytesUsed(keyspaceDir(db_->dataDir(), keyspace));
         std::lock_guard<std::mutex> lock(bytesUsedCacheMutex_);
         auto& e = bytesUsedCache_[keyspace];
         e.bytesUsed = fresh;
