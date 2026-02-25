@@ -6,45 +6,22 @@
 
 using std::string;
 
-namespace xeondb
-{
+namespace xeondb {
 
-enum class ColumnType : u8
-{
-    Char = 1,
-    Text = 2,
-    Blob = 3,
-    Int32 = 4,
-    Int64 = 5,
-    Boolean = 6,
-    Float32 = 7,
-    Date = 8,
-    Timestamp = 9
-};
+enum class ColumnType : u8 { Char = 1, Text = 2, Blob = 3, Int32 = 4, Int64 = 5, Boolean = 6, Float32 = 7, Date = 8, Timestamp = 9 };
 
-struct ColumnDef
-{
+struct ColumnDef {
     std::string name;
     ColumnType type;
 };
 
-struct TableSchema
-{
+struct TableSchema {
     std::vector<ColumnDef> columns;
     usize primaryKeyIndex;
 };
 
-struct SqlLiteral
-{
-    enum class Kind : u8
-    {
-        Null = 1,
-        Number = 2,
-        Bool = 3,
-        Quoted = 4,
-        Hex = 5,
-        Base64 = 6
-    };
+struct SqlLiteral {
+    enum class Kind : u8 { Null = 1, Number = 2, Bool = 3, Quoted = 4, Hex = 5, Base64 = 6 };
 
     Kind kind;
     string text;
@@ -64,10 +41,7 @@ string timestampFromMs(i64 ms);
 
 string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns);
 
-byteVec mergeRowBytesForUpdate(
-    const TableSchema& schema,
-    const std::optional<byteVec>& existingRowBytes,
-    const std::vector<string>& setColumns,
-    const std::vector<SqlLiteral>& setValues);
+byteVec mergeRowBytesForUpdate(const TableSchema& schema, const std::optional<byteVec>& existingRowBytes, const std::vector<string>& setColumns,
+        const std::vector<SqlLiteral>& setValues);
 
 }

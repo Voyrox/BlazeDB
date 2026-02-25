@@ -2,20 +2,18 @@
 
 #include <string_view>
 
-namespace xeondb
-{
+namespace xeondb {
 
-    enum class LogLevel
-    {
-        INFO,
-        CONFIG,
-        WARN,
-        ERROR,
-        INTERRUPT,
-        DEBUG,
-        TRACE,
-    };
+enum class LogLevel {
+    INFO,
+    CONFIG,
+    WARN,
+    ERROR,
+    INTERRUPT,
+    DEBUG,
+    TRACE,
+};
 
-    void log(LogLevel level, std::string_view message);
+void log(LogLevel level, std::string_view message);
 
 }

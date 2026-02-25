@@ -8,8 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace xeondb
-{
+namespace xeondb {
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -24,8 +23,7 @@ using byteVec = std::vector<u8>;
 using stringView = std::string_view;
 using path = std::filesystem::path;
 
-struct runtimeError : std::runtime_error
-{
+struct runtimeError : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 

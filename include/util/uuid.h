@@ -2,9 +2,8 @@
 
 #include <string>
 
-namespace xeondb
-{
+namespace xeondb {
 
-    std::string newUuidHex();
+std::string newUuidHex();
 
 }

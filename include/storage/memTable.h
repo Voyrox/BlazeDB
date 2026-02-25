@@ -13,31 +13,28 @@ using std::unordered_map;
 using std::vector;
 using std::pair;
 
-namespace xeondb
-{
+namespace xeondb {
 
-    struct MemValue
-    {
-        u64 seq;
-        byteVec value;
-    };
+struct MemValue {
+    u64 seq;
+    byteVec value;
+};
 
-    class MemTable
-    {
-    public:
-        MemTable();
+class MemTable {
+public:
+    MemTable();
 
-        void put(const string &key, u64 seq, const byteVec &value);
-        optional<MemValue> get(const string &key) const;
-        usize bytes() const;
-        usize size() const;
-        void clear();
+    void put(const string& key, u64 seq, const byteVec& value);
+    optional<MemValue> get(const string& key) const;
+    usize bytes() const;
+    usize size() const;
+    void clear();
 
-        vector<pair<string, MemValue>> snapshot() const;
+    vector<pair<string, MemValue>> snapshot() const;
 
-    private:
-        unordered_map<string, MemValue> map;
-        usize bytes_;
-    };
+private:
+    unordered_map<string, MemValue> map;
+    usize bytes_;
+};
 
 }

@@ -6,35 +6,33 @@
 #include <filesystem>
 #include <string>
 
-namespace xeondb
-{
+namespace xeondb {
 
-    class CommitLog
-    {
-    public:
-        CommitLog();
-        ~CommitLog();
+class CommitLog {
+public:
+    CommitLog();
+    ~CommitLog();
 
-        CommitLog(const CommitLog &) = delete;
-        CommitLog &operator=(const CommitLog &) = delete;
+    CommitLog(const CommitLog&) = delete;
+    CommitLog& operator=(const CommitLog&) = delete;
 
-        void openOrCreate(const std::filesystem::path &path, bool truncate);
-        void append(u64 seq, stringView key, const byteVec &value);
-        void fsyncNow();
-        void close();
+    void openOrCreate(const std::filesystem::path& path, bool truncate);
+    void append(u64 seq, stringView key, const byteVec& value);
+    void fsyncNow();
+    void close();
 
-        usize bytesSinceFsync() const;
-        void resetBytesSinceFsync();
-        bool isDirty() const;
-        void clearDirty();
+    usize bytesSinceFsync() const;
+    void resetBytesSinceFsync();
+    bool isDirty() const;
+    void clearDirty();
 
-        const std::filesystem::path &path() const;
+    const std::filesystem::path& path() const;
 
-    private:
-        int fileDesc;
-        std::filesystem::path path_;
-        std::atomic<usize> bytesSinceFsync_;
-        std::atomic<bool> logDirty;
-    };
+private:
+    int fileDesc;
+    std::filesystem::path path_;
+    std::atomic<usize> bytesSinceFsync_;
+    std::atomic<bool> logDirty;
+};
 
 }

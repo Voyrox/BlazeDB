@@ -1,16 +1,13 @@
 #include "util/murmur3.h"
 // Reference: https://github.com/PeterScott/murmur3
 
-namespace xeondb
-{
+namespace xeondb {
 
-static u64 rotateLeft64(u64 value, int bits)
-{
+static u64 rotateLeft64(u64 value, int bits) {
     return (value << bits) | (value >> (64 - bits));
 }
 
-static u64 finalMix64(u64 hash)
-{
+static u64 finalMix64(u64 hash) {
     hash ^= hash >> 33;
     hash *= 0xff51afd7ed558ccdULL;
     hash ^= hash >> 33;
@@ -19,8 +16,7 @@ static u64 finalMix64(u64 hash)
     return hash;
 }
 
-static u64 readBlock64(const u8* p)
-{
+static u64 readBlock64(const u8* p) {
     u64 val = 0;
     val |= static_cast<u64>(p[0]) << 0;
     val |= static_cast<u64>(p[1]) << 8;
@@ -33,8 +29,7 @@ static u64 readBlock64(const u8* p)
     return val;
 }
 
-i64 murmur3Token(const byteVec& bytes)
-{
+i64 murmur3Token(const byteVec& bytes) {
     const u8* data = bytes.data();
     usize len = bytes.size();
     const usize nblocks = len / 16;
@@ -46,8 +41,7 @@ i64 murmur3Token(const byteVec& bytes)
     const u64 c2 = 0x4cf5ad432745937fULL;
 
     const u8* blocks = data;
-    for (usize i = 0; i < nblocks; i++)
-    {
+    for (usize i = 0; i < nblocks; i++) {
         u64 block = readBlock64(blocks + i * 16 + 0);
         u64 block2 = readBlock64(blocks + i * 16 + 8);
 
@@ -74,8 +68,7 @@ i64 murmur3Token(const byteVec& bytes)
     u64 tailFirst8 = 0;
     u64 tailNext8 = 0;
 
-    switch (len & 15)
-    {
+    switch (len & 15) {
     case 15:
         tailNext8 ^= static_cast<u64>(tail[14]) << 48;
         [[fallthrough]];

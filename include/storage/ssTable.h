@@ -6,32 +6,28 @@
 #include <vector>
 #include <utility>
 
-namespace xeondb
-{
+namespace xeondb {
 
-    struct SsEntry
-    {
-        byteVec key;
-        u64 seq;
-        byteVec value;
-    };
+struct SsEntry {
+    byteVec key;
+    u64 seq;
+    byteVec value;
+};
 
-    struct SsIndexEntry
-    {
-        byteVec key;
-        u64 offset;
-    };
+struct SsIndexEntry {
+    byteVec key;
+    u64 offset;
+};
 
-    struct SsTableFile
-    {
-        path filePath;
-        std::vector<SsIndexEntry> index;
-    };
+struct SsTableFile {
+    path filePath;
+    std::vector<SsIndexEntry> index;
+};
 
-    void writeSsTable(const path &path, const std::vector<SsEntry> &entries, usize indexStride);
-    SsTableFile loadSsTableIndex(const path &path);
-    std::optional<byteVec> ssTableGet(const SsTableFile &file, const byteVec &key);
+void writeSsTable(const path& path, const std::vector<SsEntry>& entries, usize indexStride);
+SsTableFile loadSsTableIndex(const path& path);
+std::optional<byteVec> ssTableGet(const SsTableFile& file, const byteVec& key);
 
-    std::vector<SsEntry> ssTableScanAll(const SsTableFile &file);
+std::vector<SsEntry> ssTableScanAll(const SsTableFile& file);
 
 }

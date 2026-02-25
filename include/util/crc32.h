@@ -2,9 +2,8 @@
 
 #include "prelude.h"
 
-namespace xeondb
-{
+namespace xeondb {
 
-    u32 crc32(const u8 *data, usize size);
+u32 crc32(const u8* data, usize size);
 
 }

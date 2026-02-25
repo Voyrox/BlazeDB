@@ -5,15 +5,14 @@
 
 using std::string;
 
-namespace xeondb
-{
+namespace xeondb {
 
-    string jsonEscape(const string &s);
+string jsonEscape(const string& s);
 
-    string jsonOk();
-    string jsonString(const string &key, const string &value);
-    string jsonBool(const string &key, bool value);
-    string jsonOptionalString(const string &key, const std::optional<string> &value);
-    string jsonError(const string &message);
+string jsonOk();
+string jsonString(const string& key, const string& value);
+string jsonBool(const string& key, bool value);
+string jsonOptionalString(const string& key, const std::optional<string>& value);
+string jsonError(const string& message);
 
 }

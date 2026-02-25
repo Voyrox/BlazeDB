@@ -2,8 +2,7 @@
 
 #include "prelude.h"
 
-namespace xeondb
-{
+namespace xeondb {
 
 i64 murmur3Token(const byteVec& bytes);
 

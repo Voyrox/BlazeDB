@@ -4,8 +4,7 @@
 
 using std::string;
 
-namespace xeondb
-{
+namespace xeondb {
 
 byteVec hexToBytes(const string& hex);
 byteVec base64ToBytes(const string& s);
