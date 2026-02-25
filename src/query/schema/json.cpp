@@ -16,8 +16,8 @@ string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVe
         cols = selectColumns;
     }
 
-    usize num = 0;
-    auto version = readU32(rowBytes, num);
+    usize offset = 0;
+    auto version = readBeU32(rowBytes, offset);
     if (version != 1)
         throw runtimeError("bad row version");
 
@@ -31,18 +31,18 @@ string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVe
     for (usize i = 0; i < schema.columns.size(); i++) {
         if (i == schema.primaryKeyIndex)
             continue;
-        if (num >= rowBytes.size())
+        if (offset >= rowBytes.size())
             throw runtimeError("bad row");
-        u8 row = rowBytes[num++];
+        u8 row = rowBytes[offset++];
         if (row != 0) {
             isNull[i] = true;
             continue;
         }
         isNull[i] = false;
-        usize before = num;
-        (void)schema_detail::jsonValueFromBytes(schema.columns[i].type, rowBytes, num);
+        usize before = offset;
+        (void)schema_detail::jsonValueFromBytes(schema.columns[i].type, rowBytes, offset);
         valueOffsets[i] = before;
-        valueSizes[i] = num - before;
+        valueSizes[i] = offset - before;
     }
 
     string out = "{";
