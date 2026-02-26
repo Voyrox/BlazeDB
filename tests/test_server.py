@@ -508,7 +508,62 @@ def testSelectScanOrderByAscDesc(tmp_path):
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY name DESC;"))
         assert isinstance(r["rows"], list)
-        assert [row["id"] for row in r["rows"]] == [3, 6, 5, 2, 1, 4]
+        assert [row["id"] for row in r["rows"]] == [3, 2, 5, 6, 1, 4]
+    finally:
+        stopServer(proc)
+
+
+def testSelectAggregatesGroupByOrderBy(tmp_path):
+    repoRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataDir = tmp_path / "data"
+    dataDir.mkdir(parents=True, exist_ok=True)
+    port = pickFreePort()
+    cfg = tmp_path / "settings.yml"
+    writeConfig(str(cfg), port, str(dataDir))
+
+    proc = startServer(repoRoot, str(cfg))
+    try:
+        mustOk(tcpQuery("127.0.0.1", port, "CREATE KEYSPACE IF NOT EXISTS aggTest;"))
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                "CREATE TABLE IF NOT EXISTS aggTest.sales (id int64, dept varchar, amount int64, score float, PRIMARY KEY (id));",
+            )
+        )
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                'INSERT INTO aggTest.sales (id,dept,amount,score) VALUES (1,"a",10,1.0), (2,"a",20,2.0), (3,"b",null,3.0), (4,null,5,4.0), (5,"b",7,null), (6,"b",3,1.0);',
+            )
+        )
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT COUNT(*) AS n FROM aggTest.sales;"))
+        assert r["rows"][0]["n"] == 6
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT COUNT(*) AS n FROM aggTest.sales WHERE id=999;"))
+        assert r["rows"][0]["n"] == 0
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept, COUNT(*) AS n FROM aggTest.sales GROUP BY dept ORDER BY n DESC, dept ASC;"))
+        assert [(row["dept"], row["n"]) for row in r["rows"]] == [("b", 3), ("a", 2), (None, 1)]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept, COUNT(*) n FROM aggTest.sales GROUP BY dept ORDER BY COUNT(*) DESC;"))
+        assert [row["n"] for row in r["rows"]] == [3, 2, 1]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept, COUNT(*) n FROM aggTest.sales GROUP BY dept ORDER BY 2 DESC;"))
+        assert [row["n"] for row in r["rows"]] == [3, 2, 1]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept, SUM(amount) AS total FROM aggTest.sales GROUP BY dept ORDER BY total DESC;"))
+        assert [(row["dept"], row["total"]) for row in r["rows"]] == [("a", 30), ("b", 10), (None, 5)]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept, AVG(amount) AS avg FROM aggTest.sales GROUP BY dept ORDER BY dept ASC;"))
+        assert r["rows"][0]["dept"] is None and abs(r["rows"][0]["avg"] - 5.0) < 1e-9
+        assert r["rows"][1]["dept"] == "a" and abs(r["rows"][1]["avg"] - 15.0) < 1e-9
+        assert r["rows"][2]["dept"] == "b" and abs(r["rows"][2]["avg"] - 5.0) < 1e-9
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT dept FROM aggTest.sales GROUP BY dept ORDER BY dept ASC;"))
+        assert [row["dept"] for row in r["rows"]] == [None, "a", "b"]
     finally:
         stopServer(proc)
 
@@ -642,7 +697,6 @@ def testAuthOwnershipAndGrants(tmp_path):
 
     proc = startServer(repoRoot, str(cfg))
     try:
-        # Root creates users + keyspaces, assigns ownership and grants.
         res = tcpSession(
             "127.0.0.1",
             port,

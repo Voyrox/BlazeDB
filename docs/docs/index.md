@@ -74,9 +74,9 @@
     <div class="home-grid home-grid--2">
       <div class="home-card home-card--static">
         <div class="home-card__title">SQL subset</div>
-        <div class="home-card__body">
-          PING, AUTH, USE, CREATE, INSERT, SELECT, UPDATE, DELETE, FLUSH, SHOW, DESCRIBE, DROP, TRUNCATE, ORDER BY.
-        </div>
+          <div class="home-card__body">
+          PING, AUTH, USE, CREATE, INSERT, SELECT, UPDATE, DELETE, FLUSH, SHOW, DESCRIBE, DROP, TRUNCATE, ORDER BY, GROUP BY, MIN/MAX/COUNT/SUM/AVG.
+          </div>
       </div>
 
       <div class="home-card home-card--static">

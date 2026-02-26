@@ -98,8 +98,34 @@ Response shape:
 Notes:
 
 - `ASC` is the default if you omit it.
-- `ORDER BY` supports any column. Ordering by a non-primary-key column does a full scan + in memory sort, so I reccommend using a `LIMIT`.
+- `ORDER BY` supports any column. Ordering by a non-primary-key column does a full scan + in-memory sort, so prefer using `LIMIT`.
 - `NULL` sorts first in `ASC` and last in `DESC`.
+
+## Aggregates + GROUP BY
+
+Supported aggregate functions: `COUNT`, `MIN`, `MAX`, `SUM`, `AVG`.
+
+```sql
+SELECT dept, COUNT(*) AS n
+FROM myapp.users
+GROUP BY dept
+ORDER BY n DESC, dept ASC
+LIMIT 10;
+```
+
+You can `ORDER BY` an alias, a select position, or repeat the aggregate expression:
+
+```sql
+SELECT users, COUNT(*) n
+FROM myapp.users
+GROUP BY users
+ORDER BY 2 DESC;
+
+SELECT users, COUNT(*) n
+FROM myapp.users
+GROUP BY users
+ORDER BY COUNT(*) DESC;
+```
 
 ## Update (upsert)
 

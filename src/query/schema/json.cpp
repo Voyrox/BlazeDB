@@ -7,13 +7,15 @@
 
 namespace xeondb {
 
-string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns) {
+string rowToJsonMapped(
+        const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<std::pair<string, string>>& selectColumns) {
     std::vector<string> cols;
+    std::vector<std::pair<string, string>> mapped;
     if (selectColumns.empty()) {
         for (const auto& column : schema.columns)
-            cols.push_back(column.name);
+            mapped.push_back({column.name, column.name});
     } else {
-        cols = selectColumns;
+        mapped = selectColumns;
     }
 
     usize offset = 0;
@@ -47,15 +49,17 @@ string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVe
 
     string out = "{";
     bool first = true;
-    for (const auto& name : cols) {
-        auto columnIndex = findColumnIndex(schema, name);
+    for (const auto& it : mapped) {
+        const auto& outName = it.first;
+        const auto& sourceName = it.second;
+        auto columnIndex = findColumnIndex(schema, sourceName);
         if (!columnIndex.has_value())
             throw runtimeError("unknown column");
         usize i = *columnIndex;
         if (!first)
             out += ",";
         first = false;
-        out += "\"" + jsonEscape(name) + "\":";
+        out += "\"" + jsonEscape(outName) + "\":";
         if (i == schema.primaryKeyIndex) {
             out += schema_detail::jsonPkValue(schema.columns[i].type, pkBytes);
         } else {
@@ -69,6 +73,14 @@ string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVe
     }
     out += "}";
     return out;
+}
+
+string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns) {
+    std::vector<std::pair<string, string>> mapped;
+    mapped.reserve(selectColumns.size());
+    for (const auto& c : selectColumns)
+        mapped.push_back({c, c});
+    return rowToJsonMapped(schema, pkBytes, rowBytes, mapped);
 }
 
 }

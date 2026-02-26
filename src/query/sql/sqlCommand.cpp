@@ -2,6 +2,9 @@
 
 #include "query/sql/detail/parse_utils.h"
 
+#include <cctype>
+#include <stdexcept>
+
 using std::string;
 using std::vector;
 
@@ -625,15 +628,124 @@ static bool tryParseSelect(stringView s, usize& i, std::optional<SqlCommand>& ou
         return false;
     i = j;
     SqlSelect cmd;
+
+    auto parseAggFunc = [](const string& name, std::optional<SqlSelect::AggFunc>& outFunc) {
+        string n = name;
+        for (auto& c : n)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (n == "count") {
+            outFunc = SqlSelect::AggFunc::Count;
+            return true;
+        }
+        if (n == "min") {
+            outFunc = SqlSelect::AggFunc::Min;
+            return true;
+        }
+        if (n == "max") {
+            outFunc = SqlSelect::AggFunc::Max;
+            return true;
+        }
+        if (n == "sum") {
+            outFunc = SqlSelect::AggFunc::Sum;
+            return true;
+        }
+        if (n == "avg") {
+            outFunc = SqlSelect::AggFunc::Avg;
+            return true;
+        }
+        outFunc.reset();
+        return false;
+    };
+
+    auto parseOptionalAlias = [&](std::optional<string>& outAlias) {
+        outAlias.reset();
+        {
+            usize k = i;
+            if (matchKeyword(s, k, "as")) {
+                i = k;
+                string a;
+                if (!parseIdentifier(s, i, a))
+                    return false;
+                outAlias = a;
+                return true;
+            }
+        }
+        {
+            usize k = i;
+            string a;
+            if (!parseIdentifier(s, k, a))
+                return true;
+            string lower = a;
+            for (auto& c : lower)
+                c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            if (lower == "from" || lower == "where" || lower == "group" || lower == "order" || lower == "limit")
+                return true;
+            i = k;
+            outAlias = a;
+            return true;
+        }
+    };
+
     if (consumeChar(s, i, '*')) {
+        cmd.selectStar = true;
     } else {
         while (true) {
-            string col;
-            if (!requireIdentifier(s, i, col, error, "Expected column")) {
+            string name;
+            if (!requireIdentifier(s, i, name, error, "Expected column")) {
                 out.reset();
                 return true;
             }
-            cmd.columns.push_back(col);
+
+            usize k = i;
+            if (consumeChar(s, k, '(')) {
+                std::optional<SqlSelect::AggFunc> func;
+                if (!parseAggFunc(name, func)) {
+                    error = "Unknown function";
+                    out.reset();
+                    return true;
+                }
+                i = k;
+                SqlSelect::SelectAggregate agg;
+                agg.func = *func;
+
+                if (consumeChar(s, i, '*')) {
+                    if (agg.func != SqlSelect::AggFunc::Count) {
+                        error = "Only COUNT supports *";
+                        out.reset();
+                        return true;
+                    }
+                    agg.starArg = true;
+                } else {
+                    string arg;
+                    if (!requireIdentifier(s, i, arg, error, "Expected function argument")) {
+                        out.reset();
+                        return true;
+                    }
+                    agg.columnArg = arg;
+                }
+
+                if (!requireChar(s, i, ')', error, "Expected )")) {
+                    out.reset();
+                    return true;
+                }
+
+                if (!parseOptionalAlias(agg.alias)) {
+                    error = "Expected alias";
+                    out.reset();
+                    return true;
+                }
+                cmd.selectItems.push_back(agg);
+            } else {
+                SqlSelect::SelectColumn col;
+                col.name = name;
+                if (!parseOptionalAlias(col.alias)) {
+                    error = "Expected alias";
+                    out.reset();
+                    return true;
+                }
+                cmd.selectItems.push_back(col);
+            }
+
             if (consumeChar(s, i, ','))
                 continue;
             break;
@@ -673,15 +785,156 @@ static bool tryParseSelect(stringView s, usize& i, std::optional<SqlCommand>& ou
     }
 
     {
-        string col;
-        bool desc = false;
-        if (!orderByClause(s, i, col, desc, error)) {
-            out.reset();
-            return true;
+        usize k = i;
+        if (matchKeyword(s, k, "group")) {
+            i = k;
+            if (!requireKeyword(s, i, "by", error, "Expected by")) {
+                out.reset();
+                return true;
+            }
+
+            while (true) {
+                SqlSelect::GroupByItem gb;
+
+                string n;
+                usize p = i;
+                if (numberToken(s, p, n)) {
+                    bool ok = !n.empty();
+                    for (char c : n) {
+                        if (c < '0' || c > '9')
+                            ok = false;
+                    }
+                    if (ok) {
+                        try {
+                            auto pos = static_cast<usize>(std::stoull(n));
+                            if (pos == 0)
+                                throw std::runtime_error("bad");
+                            gb.position = pos;
+                            i = p;
+                        } catch (...) {
+                            error = "Bad GROUP BY position";
+                            out.reset();
+                            return true;
+                        }
+                    }
+                }
+
+                if (!gb.position.has_value()) {
+                    string name;
+                    if (!requireIdentifier(s, i, name, error, "Expected group by column")) {
+                        out.reset();
+                        return true;
+                    }
+                    gb.name = name;
+                }
+
+                cmd.groupBy.push_back(std::move(gb));
+
+                if (consumeChar(s, i, ','))
+                    continue;
+                break;
+            }
         }
-        if (!col.empty()) {
-            cmd.orderByColumn = col;
-            cmd.orderDesc = desc;
+    }
+
+    {
+        usize k = i;
+        if (matchKeyword(s, k, "order")) {
+            i = k;
+            if (!requireKeyword(s, i, "by", error, "Expected by")) {
+                out.reset();
+                return true;
+            }
+
+            while (true) {
+                SqlSelect::OrderByExpr ob;
+
+                {
+                    string n;
+                    usize p = i;
+                    if (numberToken(s, p, n)) {
+                        bool ok = !n.empty();
+                        for (char c : n) {
+                            if (c < '0' || c > '9')
+                                ok = false;
+                        }
+                        if (ok) {
+                            try {
+                                auto pos = static_cast<usize>(std::stoull(n));
+                                if (pos == 0)
+                                    throw std::runtime_error("bad");
+                                ob.position = pos;
+                                i = p;
+                            } catch (...) {
+                                error = "Bad ORDER BY position";
+                                out.reset();
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                if (!ob.position.has_value()) {
+                    string name;
+                    if (!requireIdentifier(s, i, name, error, "Expected order by")) {
+                        out.reset();
+                        return true;
+                    }
+                    usize p = i;
+                    if (consumeChar(s, p, '(')) {
+                        std::optional<SqlSelect::AggFunc> func;
+                        if (!parseAggFunc(name, func)) {
+                            error = "Unknown function";
+                            out.reset();
+                            return true;
+                        }
+                        SqlSelect::SelectAggregate agg;
+                        agg.func = *func;
+                        i = p;
+                        if (consumeChar(s, i, '*')) {
+                            if (agg.func != SqlSelect::AggFunc::Count) {
+                                error = "Only COUNT supports *";
+                                out.reset();
+                                return true;
+                            }
+                            agg.starArg = true;
+                        } else {
+                            string arg;
+                            if (!requireIdentifier(s, i, arg, error, "Expected function argument")) {
+                                out.reset();
+                                return true;
+                            }
+                            agg.columnArg = arg;
+                        }
+                        if (!requireChar(s, i, ')', error, "Expected )")) {
+                            out.reset();
+                            return true;
+                        }
+                        ob.aggregateExpr = agg;
+                    } else {
+                        ob.nameOrAlias = name;
+                    }
+                }
+
+                {
+                    usize t = i;
+                    if (matchKeyword(s, t, "asc")) {
+                        i = t;
+                        ob.desc = false;
+                    } else {
+                        t = i;
+                        if (matchKeyword(s, t, "desc")) {
+                            i = t;
+                            ob.desc = true;
+                        }
+                    }
+                }
+
+                cmd.orderBy.push_back(std::move(ob));
+                if (consumeChar(s, i, ','))
+                    continue;
+                break;
+            }
         }
     }
 

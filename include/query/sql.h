@@ -45,12 +45,47 @@ struct SqlInsert {
 struct SqlSelect {
     string keyspace;
     string table;
-    vector<string> columns;
+    enum class AggFunc {
+        Count,
+        Min,
+        Max,
+        Sum,
+        Avg,
+    };
+
+    struct SelectColumn {
+        string name;
+        std::optional<string> alias;
+    };
+
+    struct SelectAggregate {
+        AggFunc func;
+        bool starArg = false; // only valid for COUNT(*)
+        std::optional<string> columnArg;
+        std::optional<string> alias;
+    };
+
+    using SelectItem = std::variant<SelectColumn, SelectAggregate>;
+
+    bool selectStar = false;
+    vector<SelectItem> selectItems;
+
     std::optional<string> whereColumn;
     std::optional<SqlLiteral> whereValue;
 
-    std::optional<string> orderByColumn;
-    bool orderDesc = false;
+    struct GroupByItem {
+        std::optional<string> name;
+        std::optional<usize> position;
+    };
+    vector<GroupByItem> groupBy;
+
+    struct OrderByExpr {
+        std::optional<string> nameOrAlias;
+        std::optional<usize> position;
+        std::optional<SelectAggregate> aggregateExpr;
+        bool desc = false;
+    };
+    vector<OrderByExpr> orderBy;
 
     std::optional<usize> limit;
 };

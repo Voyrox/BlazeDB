@@ -3,6 +3,7 @@
 #include "prelude.h"
 
 #include <optional>
+#include <utility>
 
 using std::string;
 
@@ -38,6 +39,8 @@ byteVec rowBytes(const TableSchema& schema, const std::vector<string>& columnNam
 
 string dateFromDays(i32 days);
 string timestampFromMs(i64 ms);
+
+string rowToJsonMapped(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<std::pair<string, string>>& selectColumns);
 
 string rowToJson(const TableSchema& schema, const byteVec& pkBytes, const byteVec& rowBytes, const std::vector<string>& selectColumns);
 
