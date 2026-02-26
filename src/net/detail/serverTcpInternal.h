@@ -4,6 +4,8 @@
 
 #include "query/schema.h"
 
+#include "util/ascii.h"
+
 #include <cerrno>
 #include <chrono>
 #include <cstring>
@@ -12,6 +14,10 @@
 #include <sys/socket.h>
 
 namespace xeondb::server_tcp_detail {
+
+inline bool isSystemKeyspaceName(const std::string& keyspace) {
+    return asciiIEquals(keyspace, "system");
+}
 
 inline i64 nowMs() {
     using namespace std::chrono;
