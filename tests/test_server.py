@@ -474,9 +474,21 @@ def testSelectScanOrderByAscDesc(tmp_path):
         assert isinstance(r["rows"], list)
         assert [row["id"] for row in r["rows"]] == [1, 2, 3]
 
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id ASC LIMIT 2;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [1, 2]
+
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC;"))
         assert isinstance(r["rows"], list)
         assert [row["id"] for row in r["rows"]] == [3, 2, 1]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC LIMIT 2;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [3, 2]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC LIMIT 0;"))
+        assert isinstance(r["rows"], list)
+        assert r["rows"] == []
     finally:
         stopServer(proc)
 

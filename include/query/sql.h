@@ -51,6 +51,8 @@ struct SqlSelect {
 
     std::optional<string> orderByColumn;
     bool orderDesc = false;
+
+    std::optional<usize> limit;
 };
 
 struct SqlFlush {

@@ -86,6 +86,7 @@ To return multiple rows, omit `WHERE` and use `ORDER BY` on the primary key.
 ```sql
 SELECT * FROM myapp.users ORDER BY id ASC;
 SELECT * FROM myapp.users ORDER BY id DESC;
+SELECT * FROM myapp.users ORDER BY id ASC LIMIT 100;
 ```
 
 Response shape:

@@ -530,11 +530,15 @@ void ServerTcp::handleClient(int clientFd) {
                         auto rows = retTable->scanAllRowsByPk(desc);
                         string out = "{\"ok\":true,\"rows\":[";
                         bool first = true;
+                        usize emitted = 0;
                         for (const auto& r : rows) {
+                            if (select->limit.has_value() && emitted >= *select->limit)
+                                break;
                             if (!first)
                                 out += ",";
                             first = false;
                             out += rowToJson(retTable->schema(), r.pkBytes, r.rowBytes, select->columns);
+                            emitted++;
                         }
                         out += "]}";
                         response = out;

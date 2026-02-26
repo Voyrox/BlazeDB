@@ -685,6 +685,38 @@ static bool tryParseSelect(stringView s, usize& i, std::optional<SqlCommand>& ou
         }
     }
 
+    {
+        usize k = i;
+        if (matchKeyword(s, k, "limit")) {
+            i = k;
+            string n;
+            if (!numberToken(s, i, n)) {
+                error = "Expected limit";
+                out.reset();
+                return true;
+            }
+            if (n.empty()) {
+                error = "Expected integer limit";
+                out.reset();
+                return true;
+            }
+            for (char c : n) {
+                if (c < '0' || c > '9') {
+                    error = "Expected integer limit";
+                    out.reset();
+                    return true;
+                }
+            }
+            try {
+                cmd.limit = static_cast<usize>(std::stoull(n));
+            } catch (const std::exception&) {
+                error = "limit out of range";
+                out.reset();
+                return true;
+            }
+        }
+    }
+
     if (!requireEof(s, i, error)) {
         out.reset();
         return true;
