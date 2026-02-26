@@ -470,9 +470,17 @@ def testSelectScanOrderByAscDesc(tmp_path):
             )
         )
 
+        mustOk(
+            tcpQuery(
+                "127.0.0.1",
+                port,
+                'INSERT INTO orderTest.people (id,name) VALUES (4,null), (5,"b"), (6,"b");',
+            )
+        )
+
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id ASC;"))
         assert isinstance(r["rows"], list)
-        assert [row["id"] for row in r["rows"]] == [1, 2, 3]
+        assert [row["id"] for row in r["rows"]] == [1, 2, 3, 4, 5, 6]
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id ASC LIMIT 2;"))
         assert isinstance(r["rows"], list)
@@ -480,15 +488,27 @@ def testSelectScanOrderByAscDesc(tmp_path):
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC;"))
         assert isinstance(r["rows"], list)
-        assert [row["id"] for row in r["rows"]] == [3, 2, 1]
+        assert [row["id"] for row in r["rows"]] == [6, 5, 4, 3, 2, 1]
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC LIMIT 2;"))
         assert isinstance(r["rows"], list)
-        assert [row["id"] for row in r["rows"]] == [3, 2]
+        assert [row["id"] for row in r["rows"]] == [6, 5]
 
         r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY id DESC LIMIT 0;"))
         assert isinstance(r["rows"], list)
         assert r["rows"] == []
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY name ASC;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [4, 1, 2, 5, 6, 3]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY name ASC LIMIT 4;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [4, 1, 2, 5]
+
+        r = mustOk(tcpQuery("127.0.0.1", port, "SELECT * FROM orderTest.people ORDER BY name DESC;"))
+        assert isinstance(r["rows"], list)
+        assert [row["id"] for row in r["rows"]] == [3, 6, 5, 2, 1, 4]
     finally:
         stopServer(proc)
 

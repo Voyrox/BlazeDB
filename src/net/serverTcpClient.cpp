@@ -7,12 +7,19 @@
 #include "query/sql.h"
 
 #include "util/ascii.h"
+#include "util/binIo.h"
 #include "util/json.h"
 
+#include "query/schema/detail/internal.h"
+
+#include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <functional>
 #include <mutex>
+#include <numeric>
 #include <optional>
 #include <string>
 
@@ -25,6 +32,156 @@ namespace xeondb {
 
 static bool isSystemKeyspaceName(const string& keyspace) {
     return asciiIEquals(keyspace, "system");
+}
+
+struct OrderByKey {
+    bool isNull = true;
+    ColumnType type = ColumnType::Text;
+    std::vector<u8> bytes;
+    i32 i32v = 0;
+    i64 i64v = 0;
+    u8 u8v = 0;
+    float f32v = 0.0f;
+};
+
+static OrderByKey orderByKeyFromRowBytes(const TableSchema& schema, usize orderByColumnIndex, const byteVec& rowBytes) {
+    if (orderByColumnIndex >= schema.columns.size())
+        throw runtimeError("unknown column");
+    if (orderByColumnIndex == schema.primaryKeyIndex)
+        throw runtimeError("bad order by");
+
+    OrderByKey key;
+    key.type = schema.columns[orderByColumnIndex].type;
+
+    usize o = 0;
+    auto version = readBeU32(rowBytes, o);
+    if (version != 1)
+        throw runtimeError("bad row version");
+
+    for (usize i = 0; i < schema.columns.size(); i++) {
+        if (i == schema.primaryKeyIndex)
+            continue;
+        if (o >= rowBytes.size())
+            throw runtimeError("bad row");
+        u8 nullMarker = rowBytes[o++];
+        bool isNull = (nullMarker != 0);
+
+        if (i != orderByColumnIndex) {
+            if (!isNull)
+                schema_detail::skipValueBytes(schema.columns[i].type, rowBytes, o);
+            continue;
+        }
+
+        key.isNull = isNull;
+        if (isNull)
+            return key;
+
+        ColumnType type = schema.columns[i].type;
+        if (type == ColumnType::Text || type == ColumnType::Char || type == ColumnType::Blob) {
+            u32 len = readBeU32(rowBytes, o);
+            if (o + len > rowBytes.size())
+                throw runtimeError("bad row");
+            key.bytes.assign(rowBytes.begin() + static_cast<byteVec::difference_type>(o), rowBytes.begin() + static_cast<byteVec::difference_type>(o + len));
+            o += len;
+            return key;
+        }
+        if (type == ColumnType::Int32 || type == ColumnType::Date) {
+            key.i32v = readBe32(rowBytes, o);
+            return key;
+        }
+        if (type == ColumnType::Int64 || type == ColumnType::Timestamp) {
+            key.i64v = readBe64(rowBytes, o);
+            return key;
+        }
+        if (type == ColumnType::Boolean) {
+            if (o + 1 > rowBytes.size())
+                throw runtimeError("bad row");
+            key.u8v = rowBytes[o++];
+            return key;
+        }
+        if (type == ColumnType::Float32) {
+            if (o + 4 > rowBytes.size())
+                throw runtimeError("bad row");
+            u32 u = 0;
+            u |= static_cast<u32>(rowBytes[o + 0]) << 24;
+            u |= static_cast<u32>(rowBytes[o + 1]) << 16;
+            u |= static_cast<u32>(rowBytes[o + 2]) << 8;
+            u |= static_cast<u32>(rowBytes[o + 3]) << 0;
+            o += 4;
+            std::memcpy(&key.f32v, &u, 4);
+            return key;
+        }
+
+        throw runtimeError("bad type");
+    }
+
+    throw runtimeError("bad row");
+}
+
+static int orderByKeyCompareNonNull(const OrderByKey& a, const OrderByKey& b) {
+    ColumnType type = a.type;
+    if (type != b.type)
+        throw runtimeError("bad order by");
+
+    if (type == ColumnType::Text || type == ColumnType::Char || type == ColumnType::Blob) {
+        if (std::lexicographical_compare(a.bytes.begin(), a.bytes.end(), b.bytes.begin(), b.bytes.end()))
+            return -1;
+        if (std::lexicographical_compare(b.bytes.begin(), b.bytes.end(), a.bytes.begin(), a.bytes.end()))
+            return 1;
+        return 0;
+    }
+    if (type == ColumnType::Boolean) {
+        if (a.u8v < b.u8v)
+            return -1;
+        if (a.u8v > b.u8v)
+            return 1;
+        return 0;
+    }
+    if (type == ColumnType::Int32 || type == ColumnType::Date) {
+        if (a.i32v < b.i32v)
+            return -1;
+        if (a.i32v > b.i32v)
+            return 1;
+        return 0;
+    }
+    if (type == ColumnType::Int64 || type == ColumnType::Timestamp) {
+        if (a.i64v < b.i64v)
+            return -1;
+        if (a.i64v > b.i64v)
+            return 1;
+        return 0;
+    }
+    if (type == ColumnType::Float32) {
+        bool aNan = std::isnan(a.f32v);
+        bool bNan = std::isnan(b.f32v);
+        if (aNan && bNan)
+            return 0;
+        if (aNan)
+            return -1;
+        if (bNan)
+            return 1;
+        if (a.f32v < b.f32v)
+            return -1;
+        if (a.f32v > b.f32v)
+            return 1;
+        return 0;
+    }
+
+    throw runtimeError("bad type");
+}
+
+static bool orderByKeyLess(const OrderByKey& a, const OrderByKey& b, bool desc) {
+    // NULL ordering: ASC => NULLS FIRST, DESC => NULLS LAST
+    if (a.isNull != b.isNull) {
+        if (!desc)
+            return a.isNull;
+        return !a.isNull;
+    }
+    if (a.isNull)
+        return false;
+
+    int cmp = orderByKeyCompareNonNull(a, b);
+    return desc ? (cmp > 0) : (cmp < 0);
 }
 
 void ServerTcp::handleClient(int clientFd) {
@@ -523,11 +680,37 @@ void ServerTcp::handleClient(int clientFd) {
                             response = string("{\"ok\":true,\"found\":true,\"row\":") + rowJson + "}";
                         }
                     } else {
-                        if (select->orderByColumn.has_value() && *select->orderByColumn != pkName)
-                            throw runtimeError("ORDER BY must use primary key");
+                        bool hasOrderBy = select->orderByColumn.has_value();
+                        bool desc = hasOrderBy ? select->orderDesc : false;
 
-                        bool desc = select->orderByColumn.has_value() ? select->orderDesc : false;
+                        // Base scan order is PK order; we reuse it as deterministic tie-break.
                         auto rows = retTable->scanAllRowsByPk(desc);
+
+                        if (hasOrderBy && *select->orderByColumn != pkName) {
+                            auto orderByIndex = findColumnIndex(retTable->schema(), *select->orderByColumn);
+                            if (!orderByIndex.has_value())
+                                throw runtimeError("unknown column");
+                            if (*orderByIndex == pkIndex)
+                                throw runtimeError("bad order by");
+
+                            std::vector<OrderByKey> keys;
+                            keys.reserve(rows.size());
+                            for (const auto& r : rows)
+                                keys.push_back(orderByKeyFromRowBytes(retTable->schema(), *orderByIndex, r.rowBytes));
+
+                            std::vector<usize> idx(rows.size());
+                            std::iota(idx.begin(), idx.end(), 0);
+                            std::stable_sort(idx.begin(), idx.end(), [&](usize a, usize b) {
+                                return orderByKeyLess(keys[a], keys[b], desc);
+                            });
+
+                            std::vector<Table::ScanRow> sorted;
+                            sorted.resize(rows.size());
+                            for (usize outI = 0; outI < idx.size(); outI++)
+                                sorted[outI] = std::move(rows[idx[outI]]);
+                            rows = std::move(sorted);
+                        }
+
                         string out = "{\"ok\":true,\"rows\":[";
                         bool first = true;
                         usize emitted = 0;

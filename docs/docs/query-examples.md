@@ -81,7 +81,7 @@ If the row doesn't exist:
 
 ## Scan + ORDER BY (ASC/DESC)
 
-To return multiple rows, omit `WHERE` and use `ORDER BY` on the primary key.
+To return multiple rows, omit `WHERE` and use `ORDER BY`.
 
 ```sql
 SELECT * FROM myapp.users ORDER BY id ASC;
@@ -98,7 +98,8 @@ Response shape:
 Notes:
 
 - `ASC` is the default if you omit it.
-- `ORDER BY` must use the primary key column.
+- `ORDER BY` supports any column. Ordering by a non-primary-key column does a full scan + in memory sort, so I reccommend using a `LIMIT`.
+- `NULL` sorts first in `ASC` and last in `DESC`.
 
 ## Update (upsert)
 
