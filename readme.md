@@ -8,8 +8,6 @@
     &nbsp;
     <a href="https://xeondb.com"><img src="https://img.shields.io/uptimerobot/ratio/7/m784409192-e472ca350bb615372ededed7?label=cloud%20uptime&style=flat-square"></a>
     &nbsp;
-    <a href="https://hub.docker.com/r/xeondb/Xeondb"><img src="https://img.shields.io/docker/pulls/xeondb/Xeondb?style=flat-square"></a>
-    &nbsp;
     <a href="https://github.com/xeondb/Xeondb/blob/master/LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-00bfff.svg?style=flat-square"></a>
 </p>
 
