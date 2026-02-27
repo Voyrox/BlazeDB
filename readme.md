@@ -1,6 +1,17 @@
-# Xeondb
-
 <img src="banner.png" alt="Xeondb Logo" width="100%"/>
+<p align="center">
+    <a href="https://github.com/xeondb/Xeondb"><img src="https://img.shields.io/github/v/release/xeondb/Xeondb?color=%23ff00a0&include_prereleases&label=Version&sort=semver&style=flat-square"></a>
+    &nbsp;
+    <a href="https://github.com/xeondb/Xeondb"><img src="https://img.shields.io/badge/Built_with-c++-dca282.svg?style=flat-square"></a>
+    &nbsp;
+	<a href="https://github.com/xeondb/Xeondb/actions"><img src="https://img.shields.io/github/actions/workflow/status/xeondb/Xeondb/ci.yml?style=flat-square&branch=main"></a>
+    &nbsp;
+    <a href="https://xeondb.com"><img src="https://img.shields.io/uptimerobot/ratio/7/m784409192-e472ca350bb615372ededed7?label=cloud%20uptime&style=flat-square"></a>
+    &nbsp;
+    <a href="https://hub.docker.com/r/xeondb/Xeondb"><img src="https://img.shields.io/docker/pulls/xeondb/Xeondb?style=flat-square"></a>
+    &nbsp;
+    <a href="https://github.com/xeondb/Xeondb/blob/master/LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-00bfff.svg?style=flat-square"></a>
+</p>
 
 ## What is Xeondb?
 Xeondb is a real-time big data database that is designed to be fast, efficient, and easy to use. It is built on top of a custom storage engine that is optimized for high performance and low latency.
