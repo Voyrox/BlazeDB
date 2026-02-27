@@ -15,6 +15,14 @@ If you already have the repo locally, you can also run:
 sudo ./install.sh
 ```
 
+## Updating
+
+To update Xeondb to the latest `main` and restart the service:
+
+```bash
+curl -fsSL https://xeondb.com/update | sudo bash
+```
+
 ## Option 2: Run the native binary
 
 Build `Xeondb` (see [Quick Start](quickstart.md)), then run it with a config file:
@@ -40,13 +48,6 @@ For real deployments you will typically also:
 
 ## Option 4: ISO
 Coming soon: a standalone ISO image with everything included, for easy deployment on bare metal or in the cloud.
-
-
-## Update
-To update an existing installation, run:
-```bash
-curl -fsSL https://xeondb.com/update | sudo bash
-```
 
 ## Configuration
 

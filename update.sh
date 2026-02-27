@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+PROMPT_FD=""
+PROMPT_AVAILABLE=0
+
 onError() {
 	local exitCode=$?
 	echo "update.sh failed (exit=$exitCode) at line $LINENO: $BASH_COMMAND" >&2
@@ -24,6 +27,92 @@ needCmd() {
 	command -v "$1" >/dev/null 2>&1
 }
 
+setupPrompts() {
+	PROMPT_AVAILABLE=0
+	PROMPT_FD=""
+	if [ -r /dev/tty ] && [ -w /dev/tty ]; then
+		exec 3</dev/tty
+		PROMPT_FD=3
+		PROMPT_AVAILABLE=1
+	fi
+}
+
+promptRead() {
+	local __var="$1"
+	local __prompt="$2"
+	local __val=""
+	if [ "$PROMPT_AVAILABLE" -eq 1 ]; then
+		printf "%s" "$__prompt" >/dev/tty
+		read -r -u "$PROMPT_FD" __val
+	else
+		die "Non-interactive update requires --yes"
+	fi
+	printf -v "$__var" "%s" "$__val"
+}
+
+promptConfirm() {
+	local __q="$1"
+	local __default_yes="$2"
+	local __reply=""
+	local __suffix="[y/N] "
+	if [ "$__default_yes" -eq 1 ]; then
+		__suffix="[Y/n] "
+	fi
+	if [ "$ASSUME_YES" -eq 1 ]; then
+		return 0
+	fi
+	promptRead __reply "$__q $__suffix"
+	case "$__reply" in
+		y|Y|yes|YES) return 0 ;;
+		n|N|no|NO) return 1 ;;
+		"") [ "$__default_yes" -eq 1 ] && return 0 || return 1 ;;
+		*) [ "$__default_yes" -eq 1 ] && return 0 || return 1 ;;
+	esac
+}
+
+installDep() {
+	dep="$1"
+	pkgname="$dep"
+	if needCmd apt-get; then
+		pkgmgr="apt-get"
+		case "$dep" in
+			ninja)
+				pkgname="ninja-build" ;;
+		esac
+		installcmd="apt-get install -y $pkgname"
+	elif needCmd dnf; then
+		pkgmgr="dnf"
+		installcmd="dnf install -y $dep"
+	elif needCmd yum; then
+		pkgmgr="yum"
+		installcmd="yum install -y $dep"
+	elif needCmd pacman; then
+		pkgmgr="pacman"
+		installcmd="pacman -Sy --noconfirm $dep"
+	else
+		die "Missing dependency: $dep (no supported package manager found)"
+	fi
+	echo "$dep is required but not installed."
+	if [ "$ASSUME_YES" -eq 1 ]; then
+		echo "Installing $pkgname..."
+		$installcmd || die "Failed to install $pkgname"
+		return 0
+	fi
+	if promptConfirm "Install $dep using $pkgmgr?" 1; then
+		echo "Installing $pkgname..."
+		$installcmd || die "Failed to install $pkgname"
+	else
+		die "Missing dependency: $dep"
+	fi
+}
+
+ensureCmd() {
+	if ! needCmd "$1"; then
+		installDep "$1"
+		needCmd "$1" || die "Missing dependency: $1 (install failed)"
+	fi
+}
+
 installGitIfMissing() {
 	if needCmd git; then
 		return 0
@@ -31,44 +120,14 @@ installGitIfMissing() {
 
 	echo "git is required to update Xeondb."
 	if [ "${ASSUME_YES}" -eq 1 ]; then
-		reply="y"
-	else
-		printf "Install git now? [Y/n] "
-		read -r reply
+		ensureCmd git
+		return 0
 	fi
-
-	case "$reply" in
-		n|N|no|NO)
-			die "git is not installed"
-			;;
-		*)
-			if needCmd apt-get; then
-				if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-					die "Installing git requires root. Re-run with sudo."
-				fi
-				apt-get update -y
-				apt-get install -y git
-			elif needCmd dnf; then
-				if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-					die "Installing git requires root. Re-run with sudo."
-				fi
-				dnf install -y git
-			elif needCmd yum; then
-				if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-					die "Installing git requires root. Re-run with sudo."
-				fi
-				yum install -y git
-			elif needCmd pacman; then
-				if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-					die "Installing git requires root. Re-run with sudo."
-				fi
-				pacman -Sy --noconfirm git
-			else
-				die "git missing and no supported package manager found (apt-get/dnf/yum/pacman)"
-			fi
-			needCmd git || die "git install failed"
-			;;
-	esac
+	if promptConfirm "Install git now?" 1; then
+		ensureCmd git
+	else
+		die "git is not installed"
+	fi
 }
 
 printUsage() {
@@ -96,6 +155,9 @@ Examples:
   ./update.sh
   ./update.sh --wipe
   ./update.sh --clone-dir /opt/xeondb-src --repo-url https://github.com/xeondb/Xeondb.git
+
+  # Curl installer-style update (recommended)
+  curl -fsSL https://xeondb.com/update | sudo bash
 EOF
 }
 
@@ -172,24 +234,38 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+setupPrompts
+
+if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+	die "This updater must run as root. Try: curl -fsSL https://xeondb.com/update | sudo bash"
+fi
+
+if [ "$PROMPT_AVAILABLE" -ne 1 ] && [ "$ASSUME_YES" -ne 1 ]; then
+	die "Non-interactive update requires --yes"
+fi
+
 installGitIfMissing
 
 repoDir=""
 if [ -n "$CLONE_DIR" ]; then
 	repoDir="$CLONE_DIR"
-	if [ ! -e "$repoDir" ]; then
-		echo "Cloning Xeondb into: $repoDir"
-		git clone "$REPO_URL" "$repoDir"
-	fi
-	[ -d "$repoDir" ] || die "Not a directory: $repoDir"
-	if [ ! -d "$repoDir/.git" ]; then
-		die "clone-dir is not a git repo: $repoDir"
-	fi
 else
-	repoDir="$(pwd)"
-	if ! git -C "$repoDir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-		die "Not a git repo. Run from the Xeondb checkout or use --clone-dir."
+	if git -C "$(pwd)" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		repoDir="$(git -C "$(pwd)" rev-parse --show-toplevel)"
+	else
+		repoDir="/opt/xeondb-src"
+		echo "No repo detected in current directory; using managed clone dir: $repoDir"
 	fi
+fi
+
+if [ ! -e "$repoDir" ]; then
+	echo "Cloning Xeondb into: $repoDir"
+	git clone "$REPO_URL" "$repoDir"
+fi
+
+[ -d "$repoDir" ] || die "Not a directory: $repoDir"
+if [ ! -d "$repoDir/.git" ]; then
+	die "Not a git repo: $repoDir (use --clone-dir to choose a different directory)"
 fi
 
 echo "Using repo: $repoDir"
@@ -202,12 +278,9 @@ if [ "$WIPE" -eq 1 ]; then
 	echo "It will NOT touch your database data unless your dataDir points inside this directory."
 	echo
 	if [ "$ASSUME_YES" -ne 1 ]; then
-		printf "Continue? [y/N] "
-		read -r reply
-		case "$reply" in
-			y|Y|yes|YES) : ;;
-			*) die "Aborted by user" ;;
-		esac
+		if ! promptConfirm "Continue?" 0; then
+			die "Aborted by user"
+		fi
 	fi
 	if [ "$ALLOW_REPO_DATA_DIR" -ne 1 ] && [ -r "/etc/xeondb/settings.yml" ]; then
 		dataDirLine="$(grep -E '^[[:space:]]*dataDir:[[:space:]]*' /etc/xeondb/settings.yml | head -n 1 || true)"
@@ -263,8 +336,9 @@ else
 	git -C "$repoDir" pull --ff-only "$REMOTE" "$BRANCH"
 fi
 
-needCmd cmake || die "cmake is required (install it first)"
-needCmd ninja || die "ninja is required (install it first)"
+ensureCmd cmake
+ensureCmd ninja
+ensureCmd g++
 
 echo "Building Xeondb..."
 buildDir="$repoDir/build"
@@ -282,42 +356,12 @@ binSrc="$buildDir/Xeondb"
 binDst="$PREFIX/bin/xeondb"
 
 echo "Installing binary to: $binDst"
-installCmd=(install -Dm755 "$binSrc" "$binDst")
-
-if [ "${EUID:-$(id -u)}" -eq 0 ]; then
-	"${installCmd[@]}"
-else
-	if needCmd sudo; then
-		if [ "$ASSUME_YES" -eq 1 ]; then
-			sudo "${installCmd[@]}"
-		else
-			printf "Root required to install to %s. Use sudo? [Y/n] " "$PREFIX"
-			read -r reply
-			case "$reply" in
-				n|N|no|NO) die "Not installed. Re-run with sudo or choose a writable --prefix." ;;
-				*) sudo "${installCmd[@]}" ;;
-			esac
-		fi
-	else
-		die "Not root and sudo not found. Re-run with sudo or choose a writable --prefix."
-	fi
-fi
+install -Dm755 "$binSrc" "$binDst"
 
 if [ "$NO_RESTART" -eq 0 ] && needCmd systemctl && systemctl list-unit-files 2>/dev/null | grep -q '^xeondb\.service'; then
 	echo "Restarting systemd service: xeondb"
-	restartCmd=(systemctl daemon-reload)
-	restartCmd2=(systemctl restart xeondb)
-	if [ "${EUID:-$(id -u)}" -eq 0 ]; then
-		"${restartCmd[@]}" || true
-		"${restartCmd2[@]}" || true
-	else
-		if needCmd sudo; then
-			sudo "${restartCmd[@]}" || true
-			sudo "${restartCmd2[@]}" || true
-		else
-			warn "systemd detected but not root and sudo missing; not restarting service"
-		fi
-	fi
+	systemctl daemon-reload || true
+	systemctl restart xeondb || true
 fi
 
 echo "Update complete."
