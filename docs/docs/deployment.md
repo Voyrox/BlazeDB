@@ -6,6 +6,12 @@ This page focuses on the basics: keeping your data durable, configuring the serv
 The install script sets up Xeondb as a systemd service on Linux, with sane defaults for durability and performance.
 
 ```bash
+curl -fsSL https://xeondb.com/install | sudo bash
+```
+
+If you already have the repo locally, you can also run:
+
+```bash
 sudo ./install.sh
 ```
 
@@ -34,6 +40,13 @@ For real deployments you will typically also:
 
 ## Option 4: ISO
 Coming soon: a standalone ISO image with everything included, for easy deployment on bare metal or in the cloud.
+
+
+## Update
+To update an existing installation, run:
+```bash
+curl -fsSL https://xeondb.com/update | sudo bash
+```
 
 ## Configuration
 

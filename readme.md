@@ -14,6 +14,17 @@
 ## What is Xeondb?
 Xeondb is a real-time big data database that is designed to be fast, efficient, and easy to use. It is built on top of a custom storage engine that is optimized for high performance and low latency.
 
+## Install & Update (Linux)
+
+```bash
+curl -fsSL https://xeondb.com/install | sudo bash
+```
+
+## Update
+```bash
+curl -fsSL https://xeondb.com/update | sudo bash
+```
+
 ## Build Prerequisites
 Xeondb is fussy about the build environment. It requires a C++15 compliant compiler and CMake 3.20 or higher. A pre-configured Docker image is available for those who want to avoid the hassle of setting up the build environment. You also have the option to build the project natively on your machine, but be prepared for some potential configuration challenges.
 
